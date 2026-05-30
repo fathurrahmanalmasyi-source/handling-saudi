@@ -3,7 +3,7 @@ import {
   User, Hotel, LogOut, Bell, Folder, Briefcase, Calendar, BookOpen, 
   Settings, CheckCircle, Smartphone, MapPin, Send, AlertTriangle, 
   Menu, X, Sparkles, ChevronRight, FileText, Compass, Info, Download, Eye, HelpCircle, Edit2,
-  Files, Bed, UserCheck, Users, FileSpreadsheet
+  Files, Bed, UserCheck, Users, FileSpreadsheet, RotateCw
 } from 'lucide-react';
 
 function BedHouseIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -413,6 +413,10 @@ export default function App() {
   const [editBioStatus, setEditBioStatus] = useState<'Aktif' | 'Standby' | 'Cuti'>('Aktif');
   const [bioSuccessMsg, setBioSuccessMsg] = useState('');
 
+  // States for general refresh action
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState('');
+
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState('Umroh Reguler 11 Juni 2026 (Madinah Awal)');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -591,6 +595,88 @@ export default function App() {
       setBioSuccessMsg('✓ Biodata berhasil diperbarui dan tersinkronisasi ke database tim!');
       setTimeout(() => setBioSuccessMsg(''), 4000);
     }
+  };
+
+  // Pull fresh database updates & reload states from LocalStorage for seamless integration
+  const handleRefreshAll = () => {
+    setIsRefreshing(true);
+    setRefreshMsg('Sinkronisasi...');
+    
+    setTimeout(() => {
+      // 1. Re-read rooms
+      const savedRooms = localStorage.getItem('ji_rooms_v3');
+      if (savedRooms) {
+        try { setRooms(JSON.parse(savedRooms)); } catch(e) {}
+      }
+      
+      // 2. Re-read team members
+      const savedTeam = localStorage.getItem('ji_team_members_v3');
+      if (savedTeam) {
+        try { setTeamMembers(JSON.parse(savedTeam)); } catch(e) {}
+      }
+      
+      // 3. Re-read duty tasks
+      const savedTasks = localStorage.getItem('ji_duty_tasks');
+      if (savedTasks) {
+        try { setDutyTasks(JSON.parse(savedTasks)); } catch(e) {}
+      }
+      
+      // 4. Re-read broadcasts
+      const savedBroadcasts = localStorage.getItem('ji_broadcasts');
+      if (savedBroadcasts) {
+        try { setBroadcasts(JSON.parse(savedBroadcasts)); } catch(e) {}
+      }
+      
+      // 5. Re-read SOPs
+      const savedSops = localStorage.getItem('ji_sops');
+      if (savedSops) {
+        try { setSops(JSON.parse(savedSops)); } catch(e) {}
+      }
+      
+      // 6. Re-read wallets / expenses
+      const savedWallets = localStorage.getItem('ji_wallets_v6');
+      if (savedWallets) {
+        try { setWallets(JSON.parse(savedWallets)); } catch(e) {}
+      }
+      const savedExpenses = localStorage.getItem('ji_expenses_v6');
+      if (savedExpenses) {
+        try { setExpenses(JSON.parse(savedExpenses)); } catch(e) {}
+      }
+
+      // 7. Re-read itineraries
+      const savedItin = localStorage.getItem('ji_itineraries_v3');
+      if (savedItin) {
+        try { setItineraries(JSON.parse(savedItin)); } catch(e) {}
+      }
+
+      // 8. Re-read checklists
+      const savedChecklists = localStorage.getItem('ji_task_checklists_v1');
+      if (savedChecklists) {
+        try { setTaskChecklists(JSON.parse(savedChecklists)); } catch(e) {}
+      }
+
+      // 9. Re-read documents
+      const savedDocs = localStorage.getItem('ji_documents');
+      if (savedDocs) {
+        try { setDocuments(JSON.parse(savedDocs)); } catch(e) {}
+      }
+
+      // 10. Re-read attendance logs
+      const savedAttendance = localStorage.getItem('ji_attendance_logs');
+      if (savedAttendance) {
+        try { setAttendanceLogs(JSON.parse(savedAttendance)); } catch(e) {}
+      }
+
+      // 11. Re-read incident logs
+      const savedIncidents = localStorage.getItem('ji_incident_logs');
+      if (savedIncidents) {
+        try { setIncidentLogs(JSON.parse(savedIncidents)); } catch(e) {}
+      }
+
+      setIsRefreshing(false);
+      setRefreshMsg('Data Terkini Terintegrasi!');
+      setTimeout(() => setRefreshMsg(''), 2000);
+    }, 700);
   };
 
   // Add Room implementation
@@ -964,23 +1050,39 @@ export default function App() {
               <h1 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight uppercase">Handling Saudi Arabia</h1>
             </div>
 
-            {/* Icon Bel (Bell) button */}
-            <button
-              onClick={() => setIsMessagesPopupOpen(true)}
-              className={`relative p-2 rounded-full border transition-all cursor-pointer ${
-                isMessagesPopupOpen 
-                  ? 'bg-amber-500/10 border-amber-400 text-amber-900' 
-                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
-              }`}
-              title="Notifikasi"
-            >
-              <Bell className="w-4 h-4 shrink-0" />
-              {unreadMessagesCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[9px] font-black leading-none animate-bounce shadow-sm">
-                  {unreadMessagesCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-1.5">
+              {/* Dynamic Refresh Button next to Bell notification */}
+              <button
+                onClick={handleRefreshAll}
+                disabled={isRefreshing}
+                className={`p-2 rounded-full border transition-all cursor-pointer relative ${
+                  isRefreshing 
+                    ? 'bg-amber-500/10 border-amber-400 text-amber-700' 
+                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                }`}
+                title="Refresh Integrasi Data"
+              >
+                <RotateCw className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+
+              {/* Icon Bel (Bell) button */}
+              <button
+                onClick={() => setIsMessagesPopupOpen(true)}
+                className={`relative p-2 rounded-full border transition-all cursor-pointer ${
+                  isMessagesPopupOpen 
+                    ? 'bg-amber-500/10 border-amber-400 text-amber-900' 
+                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                }`}
+                title="Notifikasi"
+              >
+                <Bell className="w-4 h-4 shrink-0" />
+                {unreadMessagesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[9px] font-black leading-none animate-bounce shadow-sm">
+                    {unreadMessagesCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Row 2: Gregorian and Hijri date walking update small */}
@@ -988,6 +1090,14 @@ export default function App() {
             <SaudiClockWidget compact={true} />
           </div>
         </header>
+
+        {/* Floating refresh success/loading notification inside viewport boundaries */}
+        {refreshMsg && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-amber-400 text-[10px] uppercase tracking-wide px-3 py-1.5 rounded-full font-black flex items-center gap-1.5 shadow-lg border border-amber-500/20 animate-in fade-in slide-in-from-top-3 duration-250">
+            <span className={`w-1.5 h-1.5 rounded-full bg-amber-400 ${isRefreshing ? 'animate-ping' : 'animate-pulse'}`}></span>
+            <span>{refreshMsg}</span>
+          </div>
+        )}
 
         {/* Removed Desktop Sidebar entirely in favor of murni Mobile view */}
 
