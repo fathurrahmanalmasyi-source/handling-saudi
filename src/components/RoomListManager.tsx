@@ -1562,17 +1562,17 @@ export default function RoomListManager({
 
       {/* PDF REPORT VIEW PREVIEW MODAL */}
       {isPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xs">
-          <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-3.5 py-3 bg-[#1A1A1A] text-white flex items-center justify-between border-b border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-slate-950/85 backdrop-blur-xs">
+          <div className="w-full max-w-5xl bg-white sm:rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 h-full sm:h-auto max-h-[100vh] flex flex-col">
+            <div className="px-3.5 py-3 bg-[#1A1A1A] text-white flex items-center justify-between border-b border-slate-700 shrink-0">
               <span className="font-bold text-xs text-[#D4AF37] uppercase font-black">PREVIEW MANIFES PDF</span>
               <button onClick={() => setIsPreviewOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto bg-slate-50 print:bg-white print:p-0 print:max-h-none print:overflow-visible">
-              <div id="printable-area" className="bg-white mx-auto print:mx-0 p-8 shadow-sm print:shadow-none min-h-[297mm] text-black w-full" style={{ maxWidth: '210mm' }}>
+            <div className="p-4 sm:p-8 overflow-y-auto bg-slate-200 print:bg-white print:p-0 print:overflow-visible flex-1">
+              <div id="printable-area" className="bg-white mx-auto shadow-md print:shadow-none min-h-[297mm] text-black w-full" style={{ width: '210mm', maxWidth: '100%', padding: '15mm' }}>
                 <div className="text-center border-b-[2px] border-black pb-4 mb-6">
                   <h3 className="font-bold text-[14pt] tracking-tight uppercase text-black">PT. JEJAK IMANI BERKAH BERSAMA</h3>
                   <p className="text-[12pt] font-semibold mt-1 uppercase text-black">MANIFES UTAMA DEPARTEMEN HANDLING KSA</p>
@@ -1587,9 +1587,9 @@ export default function RoomListManager({
                   <table className="w-full text-[11pt] text-left border-collapse border border-black mb-10">
                     <thead>
                       <tr className="bg-gray-100 border-b border-black text-black">
-                        <th className="p-2 border border-black text-center font-bold font-sans">No. RL</th>
-                        <th className="p-2 border border-black text-center font-bold font-sans">No. Kamar</th>
-                        <th className="p-2 border border-black text-center font-bold font-sans">Tipe Bed</th>
+                        <th className="p-2 border border-black text-center font-bold font-sans w-16">No. RL</th>
+                        <th className="p-2 border border-black text-center font-bold font-sans w-24">No. Kamar</th>
+                        <th className="p-2 border border-black text-center font-bold font-sans w-24">Tipe Bed</th>
                         <th className="p-2 border border-black font-bold font-sans">Nama-Nama Penghuni Kamar</th>
                         <th className="p-2 border border-black font-bold font-sans w-48">Catatan / Keterangan</th>
                       </tr>
@@ -1602,16 +1602,16 @@ export default function RoomListManager({
                           const roomlistNumber = room.id.split('-').pop() || '-';
                           return (
                             <tr key={room.id} className="text-black print:break-inside-avoid">
-                              <td className="p-2 border border-black text-center font-semibold">
+                              <td className="p-2 border border-black text-center font-semibold align-top">
                                 {roomlistNumber}
                               </td>
-                              <td className="p-2 border border-black text-center font-bold">
+                              <td className="p-2 border border-black text-center font-bold align-top">
                                 {room.roomNumber || 'TBD'}
                               </td>
-                              <td className="p-2 border border-black text-center font-semibold uppercase">
+                              <td className="p-2 border border-black text-center font-semibold uppercase align-top">
                                 {room.roomType}
                               </td>
-                              <td className="p-2 border border-black font-medium">
+                              <td className="p-2 border border-black font-medium align-top">
                                 <div className="space-y-1">
                                   {room.jamaahNames.map((name, i) => (
                                     <div key={i}>
@@ -1620,7 +1620,7 @@ export default function RoomListManager({
                                   ))}
                                 </div>
                               </td>
-                              <td className="p-2 border border-black font-medium text-[10.5pt]">
+                              <td className="p-2 border border-black font-medium text-[10.5pt] align-top">
                                 {isAdj && <span className="font-bold mr-1 uppercase">BERDEKATAN.</span>}
                                 {hasOther && <span className="font-bold mr-1 uppercase">KHUSUS.</span>}
                                 <span>{room.notes || '-'}</span>
@@ -1639,13 +1639,13 @@ export default function RoomListManager({
                   </table>
                 </div>
 
-                <div className="text-center text-[10pt] text-gray-800 border-t border-black pt-4 lowercase font-mono">
+                <div className="text-center text-[10pt] text-gray-800 border-t border-black pt-4 lowercase font-mono pb-4">
                   GENERATED SECARA ELEKTRONIK PADA PORTAL HANDLING SAUDI ARABIA. JEJAK IMANI.
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border-t flex justify-end gap-1.5">
+            <div className="p-3.5 bg-slate-50 border-t flex justify-end gap-1.5 shrink-0">
               <button 
                 onClick={() => {
                   const originalTitle = document.title;
