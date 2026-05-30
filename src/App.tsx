@@ -568,7 +568,7 @@ export default function App() {
         computedWalletId = `wallet-${activeTeam.username}`;
         handlingId = computedWalletId;
     } else {
-        if (userLower.includes('yusuf') || userLower.includes('manager')) {
+        if (userLower.includes('fathur') || userLower.includes('yusuf') || userLower.includes('manager')) {
             computedWalletId = 'wallet-manager';
             handlingId = 'wallet-manager';
         }
@@ -900,7 +900,15 @@ export default function App() {
           {/* Row 1: Title and Bell in 1 row */}
           <div className="flex items-center justify-between w-full h-8">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <img 
+                src="https://lh3.googleusercontent.com/d/1Q4xeukjms6dHqKLUqCdsTcpXQyzw7n6d" 
+                alt="Logo" 
+                className="h-6 w-auto object-contain rounded-xs"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
               <h1 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight uppercase">Handling Saudi Arabia</h1>
             </div>
 
@@ -1574,7 +1582,7 @@ export default function App() {
                           }
                           // Fallback to legacy
                           let computedWalletId = 'wallet-ahmad';
-                          if (userLower.includes('yusuf') || userLower.includes('manager')) computedWalletId = 'wallet-manager';
+                          if (userLower.includes('fathur') || userLower.includes('yusuf') || userLower.includes('manager')) computedWalletId = 'wallet-manager';
                           return wallets.find(w => w.id === computedWalletId)?.balanceSAR || 0;
                         })()}
                         currentUser={currentUser || ''}

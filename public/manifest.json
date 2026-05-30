@@ -1,0 +1,28 @@
+{
+  "name": "Handling jejak imani",
+  "short_name": "Handling JIW",
+  "description": "Sistem Manajemen Operasional Lapangan (Handling) Arab Saudi & Dashboard Manajemen Pusat untuk Jejak Imani.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/d/1G9k2fVGnN4IaDyvwafiHUfGptb-4MTFL",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/d/1G9k2fVGnN4IaDyvwafiHUfGptb-4MTFL",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/d/1G9k2fVGnN4IaDyvwafiHUfGptb-4MTFL",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "name": "Handling Saudi Jejak Imani",
+  "name": "Handling jejak imani",
   "description": "Sistem Manajemen Operasional Lapangan (Handling) Arab Saudi & Dashboard Manajemen Pusat untuk Jejak Imani.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
