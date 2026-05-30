@@ -1054,22 +1054,22 @@ export default function App() {
           
           {/* GROUP FILTER SELECTOR BANNER FOR JAMAAH RELATED MENUS */}
           {['packages', 'documents'].includes(activeTab) && (
-            <div className="bg-white p-4 rounded-xl border border-[#D4AF37]/35 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200" id="global-group-selector">
+            <div className="bg-white p-4 rounded-xl border border-slate-250 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200" id="global-group-selector">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-bold text-lg select-none shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg select-none shrink-0">
                   👥
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-[#D4AF37] tracking-wider block">FILTER DATA KOORDINASI GRUP</span>
-                  <h3 className="text-slate-900 text-sm font-black font-serif">Memantau data khusus untuk pilihan rombongan grup berikut:</h3>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">FILTER DATA KOORDINASI GRUP</span>
+                  <h3 className="text-slate-900 text-sm font-bold">Memantau data khusus untuk pilihan rombongan grup berikut:</h3>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-700 font-bold whitespace-nowrap">PILIH GRUP AKTIF:</span>
+                <span className="text-xs text-slate-700 font-semibold whitespace-nowrap">PILIH GRUP AKTIF:</span>
                 <select
                   value={selectedGroupFilter}
                   onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                  className="bg-white text-slate-900 border border-[#D4AF37] hover:border-[#D4AF37]/75 px-3 py-2 rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37] cursor-pointer shadow-sm pr-8 transition-colors"
+                  className="bg-white text-slate-950 border border-slate-200 hover:border-slate-350 px-3 py-2 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer shadow-3xs transition-colors"
                 >
                   <option value="Umroh Syawal Gold 2026">Umroh Syawal Gold 2026 (SV 816)</option>
                   <option value="Haji Furoda Premium 2026">Haji Furoda Premium 2026 (SV 820)</option>

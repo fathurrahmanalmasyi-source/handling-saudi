@@ -296,25 +296,25 @@ export default function ManagerManifest({
               return nameMatch || numMatch || roomMatch;
             });
             return (
-              <div className="bg-amber-50/20 p-4 rounded-xl border border-amber-300 space-y-3 shadow-xs animate-in slide-in-from-top-1 duration-100">
-                <div className="flex justify-between items-center pb-1.5 border-b border-amber-200">
-                  <h4 className="text-xs font-black text-amber-900 uppercase flex items-center gap-1.5">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 shadow-xs animate-in slide-in-from-top-1 duration-100">
+                <div className="flex justify-between items-center pb-1.5 border-b border-slate-200">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                     🔍 Hasil Pencarian Jemaah ({matches.length} ditemukan)
                   </h4>
                   <button 
                     onClick={() => setDirectorySearchName('')}
-                    className="text-[10px] text-amber-800 bg-white border border-amber-200 px-2.5 py-0.5 rounded font-black uppercase cursor-pointer"
+                    className="text-[10px] text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 px-2.5 py-0.5 rounded font-semibold uppercase cursor-pointer transition-all"
                   >
                     Hapus
                   </button>
                 </div>
 
                 {matches.length > 0 ? (
-                  <div className="bg-white rounded-lg border border-amber-100 overflow-hidden shadow-xs">
+                  <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="bg-amber-50/30 border-b border-amber-100 text-[#8C6B1B] font-extrabold uppercase text-[9.5px]">
+                          <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase text-[9.5px]">
                             <th className="py-2.5 px-3">No. Jemaah</th>
                             <th className="py-2.5 px-3">Nama Jamaah & Paket</th>
                             <th className="py-2.5 px-3">No Roomlist</th>
@@ -328,7 +328,7 @@ export default function ManagerManifest({
                           {matches.map((item) => {
                             const pTag = getPackageTag(item);
                             return (
-                              <tr key={item.id} className="hover:bg-amber-50/10 transition-colors">
+                              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="py-2 px-3 font-mono font-bold text-slate-600">{item.nomorJamaah}</td>
                                 <td className="py-2 px-3">
                                   <span className="font-extrabold text-slate-900 block">{item.namaJamaah}</span>
@@ -611,9 +611,9 @@ export default function ManagerManifest({
         </div>
       ) : (
         <>
-          <div className="bg-[#D4AF37]/5 p-3 text-xs font-semibold text-slate-800 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between border border-[#D4AF37]/20 mb-3 hover:bg-[#D4AF37]/10 transition-colors gap-2">
+          <div className="bg-slate-100/80 p-3 text-xs font-semibold text-slate-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between border border-slate-200 mb-3 hover:bg-slate-100 transition-colors gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-amber-700 font-bold">📂</span>
+              <span className="text-slate-500 font-bold">📂</span>
               <span className="font-bold">
                 Detail Manifest Jemaah untuk: <strong className="text-slate-900">{selectedGroupDirectory === 'All' ? 'Semua Rombongan' : selectedGroupDirectory}</strong>
               </span>
@@ -626,7 +626,7 @@ export default function ManagerManifest({
             <button 
               type="button" 
               onClick={() => setSelectedGroupDirectory(null)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-lg font-black text-[10px] uppercase cursor-pointer transition-all tracking-wide shadow-2xs"
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-350 rounded-lg font-semibold text-[10px] uppercase cursor-pointer transition-all tracking-wide shadow-2xs"
             >
               ◀ Kembali ke Direktori Grup
             </button>

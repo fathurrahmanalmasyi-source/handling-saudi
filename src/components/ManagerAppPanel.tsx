@@ -154,13 +154,13 @@ export default function ManagerAppPanel({
           </div>
 
           {/* Sidebar Menu items */}
-          <nav className="p-2.5 space-y-1 font-bold text-xs text-slate-600 flex-1">
+          <nav className="p-2.5 space-y-1 font-semibold text-xs text-slate-600 flex-1">
             <button
               onClick={() => setManagerTab('m-dashboard')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-dashboard' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Compass className="w-4 h-4 shrink-0" />
@@ -171,8 +171,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-manifest')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-manifest' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <FileSpreadsheet className="w-4 h-4 shrink-0" />
@@ -183,8 +183,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-itinerary')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-itinerary' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Calendar className="w-4 h-4 shrink-0" />
@@ -195,8 +195,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-schedule')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-schedule' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Clock className="w-4 h-4 shrink-0" />
@@ -207,8 +207,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-roomlist')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-roomlist' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Hotel className="w-4 h-4 shrink-0" />
@@ -219,8 +219,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-documents')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-documents' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Files className="w-4 h-4 shrink-0" />
@@ -231,8 +231,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-team')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-team' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <Users className="w-4 h-4 shrink-0" />
@@ -243,8 +243,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-cashflow')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-cashflow' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <DollarSign className="w-4 h-4 shrink-0" />
@@ -255,8 +255,8 @@ export default function ManagerAppPanel({
               onClick={() => setManagerTab('m-reports')}
               className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 managerTab === 'm-reports' 
-                  ? 'bg-amber-500 text-white font-extrabold shadow-sm' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-600'
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
               }`}
             >
               <ClipboardList className="w-4 h-4 shrink-0" />

@@ -49,7 +49,7 @@ export default function SOPList({ sops }: SOPListProps) {
               onClick={() => setSelectedCategory(cat)}
               className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-all ${
                 selectedCategory === cat
-                  ? 'bg-[#1A1A1A] text-[#D4AF37] border border-[#D4AF37]/20'
+                  ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-650 border border-slate-200'
               }`}
             >
@@ -114,7 +114,7 @@ export default function SOPList({ sops }: SOPListProps) {
                     <div className="space-y-2 mt-3">
                       {sop.content.map((step, idx) => (
                         <div key={idx} className="flex gap-2.5 items-start">
-                          <span className="w-5 h-5 rounded bg-[#1A1A1A] text-[#D4AF37] border border-[#D4AF37]/15 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">
+                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">
                             {idx + 1}
                           </span>
                           <div className="text-[11px] sm:text-xs text-slate-600 leading-relaxed pt-0.5 font-medium">
