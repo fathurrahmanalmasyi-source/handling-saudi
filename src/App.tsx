@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Hotel, LogOut, Bell, Folder, Briefcase, Calendar, BookOpen, 
   Settings, CheckCircle, Smartphone, MapPin, Send, AlertTriangle, 
-  Menu, X, Sparkles, ChevronRight, FileText, Compass, Info, Download, Eye, HelpCircle,
+  Menu, X, Sparkles, ChevronRight, FileText, Compass, Info, Download, Eye, HelpCircle, Edit2,
   Files, Bed, UserCheck, Users, FileSpreadsheet
 } from 'lucide-react';
 
@@ -406,6 +406,13 @@ export default function App() {
   });
 
   // Navigation states
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editBioName, setEditBioName] = useState('');
+  const [editBioPhone, setEditBioPhone] = useState('');
+  const [editBioUsername, setEditBioUsername] = useState('');
+  const [editBioStatus, setEditBioStatus] = useState<'Aktif' | 'Standby' | 'Cuti'>('Aktif');
+  const [bioSuccessMsg, setBioSuccessMsg] = useState('');
+
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState('Umroh Reguler 11 Juni 2026 (Madinah Awal)');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -557,6 +564,33 @@ export default function App() {
     setCurrentRole(null);
     localStorage.removeItem('ji_username');
     localStorage.removeItem('ji_role');
+  };
+
+  // Update own handling biodata and sync automatically with team list
+  const handleUpdateSelfBiodata = (updatedFields: { name: string; phone: string; username: string; status: 'Aktif' | 'Standby' | 'Cuti' }) => {
+    const userLower = (currentUser || '').toLowerCase();
+    const idx = teamMembers.findIndex(t => 
+      t.name.toLowerCase() === userLower || t.username.toLowerCase() === userLower
+    );
+    if (idx !== -1) {
+      const updatedList = [...teamMembers];
+      updatedList[idx] = {
+        ...updatedList[idx],
+        name: updatedFields.name,
+        phone: updatedFields.phone,
+        username: updatedFields.username,
+        status: updatedFields.status
+      };
+      setTeamMembers(updatedList);
+      localStorage.setItem('ji_team_members_v3', JSON.stringify(updatedList));
+      
+      // Update logged in user state so their session is updated
+      setCurrentUser(updatedFields.name);
+      localStorage.setItem('ji_username', updatedFields.name);
+      
+      setBioSuccessMsg('✓ Biodata berhasil diperbarui dan tersinkronisasi ke database tim!');
+      setTimeout(() => setBioSuccessMsg(''), 4000);
+    }
   };
 
   // Add Room implementation
@@ -849,7 +883,12 @@ export default function App() {
 
   // Render Login state first
   if (!currentUser || !currentRole) {
-    return <Login onLoginSuccess={handleLoginSuccess} teamList={TEAMS} />;
+    const mappedTeamList = teamMembers.map(tm => ({
+      id: tm.id,
+      name: tm.name,
+      sector: tm.role as any
+    }));
+    return <Login onLoginSuccess={handleLoginSuccess} teamList={mappedTeamList} />;
   }
 
   // --- RENDERING OPERATIONS MANAGER ROLE (FULLSCREEN SIDEBAR LAYOUT) ---
@@ -1130,20 +1169,42 @@ export default function App() {
                           </div>
                           <h4 className="font-bold text-slate-900 leading-tight">{task.groupName}</h4>
                           <span className="text-[11px] text-slate-500 font-semibold mt-0.5">📍 {task.location} ({task.timeRange})</span>
-                          <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-100">
+                          <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-100 gap-2">
                             <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
                               task.status === 'Selesai' 
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-250 border' 
+                                : task.status === 'Sedang Berjalan'
+                                ? 'bg-blue-50 text-blue-800 border border-blue-250'
                                 : 'bg-amber-50 text-amber-800 border border-amber-250'
                             }`}>
-                              {task.status}
+                              {task.status === 'Sedang Berjalan' ? 'Sedang Berjalan' : task.status}
                             </span>
-                            <button
-                              onClick={() => handleToggleTaskStatus(task.id)}
-                              className="px-2 py-0.5 bg-white hover:bg-black hover:text-[#D4AF37] text-slate-800 font-bold text-[9px] rounded border border-slate-200 transition-all cursor-pointer shadow-2xs"
-                            >
-                              Selesai
-                            </button>
+                            
+                            {task.status === 'Selesai' ? (
+                              <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5 animate-pulse">
+                                <span>✓</span> Selesai
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActiveTab('reports');
+                                  setHandlingReportSubTab('attendance');
+                                  setPresensiDutyId(task.id);
+                                  setPresensiStatus(task.status === 'Belum Selesai' ? 'Masuk Tugas' : 'Selesai Tugas');
+                                }}
+                                className="px-2 py-0.5 bg-slate-900 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-slate-950 font-extrabold text-[9px] rounded border border-slate-800 transition-all cursor-pointer shadow-2xs flex items-center gap-1 uppercase"
+                              >
+                                {task.status === 'Belum Selesai' ? (
+                                  <>
+                                    <span>⏱️</span> Presensi Masuk
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>📤</span> Presensi Selesai
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -2123,61 +2184,211 @@ export default function App() {
           )}
 
           {/* AKUN / ACCOUNT TAB SECTION */}
-          {activeTab === 'account' && (
-            <div className="space-y-4 animate-in fade-in duration-200" id="account-tab-section">
-              <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
-                <h2 className="text-xs font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
-                  <User className="w-4 h-4 text-[#D4AF37]" />
-                  <span>Biodata Tim & Akun Aktif</span>
-                </h2>
-                <p className="text-[10px] text-slate-500 mt-0.5">Detail kordinator lapangan operasional PT. JEJAK IMANI BERKAH BERSAMA</p>
+          {activeTab === 'account' && (() => {
+            const userLower = (currentUser || '').toLowerCase();
+            const matchingMemberIndex = teamMembers.findIndex(t => 
+              t.name.toLowerCase() === userLower || t.username.toLowerCase() === userLower
+            );
+            const matchingMember = matchingMemberIndex !== -1 ? teamMembers[matchingMemberIndex] : null;
+
+            return (
+              <div className="space-y-4 animate-in fade-in duration-200" id="account-tab-section">
+                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+                  <h2 className="text-xs font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
+                    <User className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Biodata Tim & Akun Aktif</span>
+                  </h2>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Detail kordinator lapangan operasional PT. JEJAK IMANI BERKAH BERSAMA</p>
+                </div>
+
+                {bioSuccessMsg && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-250 text-xs text-emerald-800 font-extrabold rounded-xl animate-bounce flex items-center gap-2">
+                    <span className="text-sm">✓</span>
+                    <span>{bioSuccessMsg}</span>
+                  </div>
+                )}
+
+                {/* Biodata Tim Card */}
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                  
+                  {isEditingBio && matchingMember ? (
+                    /* EDIT BIODATA FORM (Direct state update synchronizing to team list) */
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <User className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wide">Edit Biodata Akun Terintegrasi</span>
+                      </div>
+                      
+                      <div className="space-y-2.5 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">Nama Lengkap</label>
+                          <input 
+                            type="text" 
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                            value={editBioName}
+                            onChange={(e) => setEditBioName(e.target.value)}
+                            placeholder="Contoh: Ahmad Syarif"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">WhatsApp / No. Telepon</label>
+                          <input 
+                            type="text" 
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                            value={editBioPhone}
+                            onChange={(e) => setEditBioPhone(e.target.value)}
+                            placeholder="Contoh: +966 50 123 4567"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Username Login</label>
+                          <input 
+                            type="text" 
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                            value={editBioUsername}
+                            onChange={(e) => setEditBioUsername(e.target.value)}
+                            placeholder="Contoh: ahmad_syarif"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Status Lapangan</label>
+                          <select
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                            value={editBioStatus}
+                            onChange={(e) => setEditBioStatus(e.target.value as any)}
+                          >
+                            <option value="Aktif">Aktif di Lapangan</option>
+                            <option value="Standby">Standby / Cadangan</option>
+                            <option value="Cuti">Sedang Cuti Kerja</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleUpdateSelfBiodata({
+                              name: editBioName,
+                              phone: editBioPhone,
+                              username: editBioUsername,
+                              status: editBioStatus
+                            });
+                            setIsEditingBio(false);
+                          }}
+                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-lg cursor-pointer transition-colors shadow-xs"
+                        >
+                          Simpan Perubahan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingBio(false)}
+                          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-705 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* VIEW PROFILE MODE */
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-inner text-xl font-black">
+                            {matchingMember ? matchingMember.name.charAt(0) : currentUser?.charAt(0) || 'U'}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-sm">👨‍✈️ {matchingMember ? matchingMember.name : currentUser}</h3>
+                            <p className="text-[10px] font-bold text-[#D4AF37] uppercase">
+                              {matchingMember ? matchingMember.role : (currentRole === 'HANDLING' ? 'Handling Executive' : 'Operations Manager')}
+                            </p>
+                            <p className="text-[10px] text-emerald-700 font-bold mt-0.5 uppercase">
+                              ● STATUS: {matchingMember ? matchingMember.status : 'AKTIF'} DI TANAH SUCI
+                            </p>
+                          </div>
+                        </div>
+
+                        {matchingMember && (
+                          <button
+                            onClick={() => {
+                              setEditBioName(matchingMember.name);
+                              setEditBioPhone(matchingMember.phone);
+                              setEditBioUsername(matchingMember.username);
+                              setEditBioStatus(matchingMember.status);
+                              setIsEditingBio(true);
+                            }}
+                            className="bg-amber-50 hover:bg-amber-100 text-[#A47F17] hover:text-[#8e6b10] p-1.5 px-3 rounded-lg border border-amber-200/55 text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95 duration-100"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit Bio</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-3.5 space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">Divisi Kerja</span>
+                          <span className="font-bold text-slate-800">
+                            {matchingMember ? matchingMember.role : 'Ground Handling Saudi'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">Username Login</span>
+                          <span className="font-mono font-bold text-slate-700">
+                            {matchingMember ? matchingMember.username : 'manager_fathur'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">Wilayah Kerja</span>
+                          <span className="font-bold text-[#D4AF37]">
+                            {matchingMember 
+                              ? (matchingMember.role.toLowerCase().includes('jeddah') ? 'Bandara King Abdulaziz Jeddah' 
+                                 : matchingMember.role.toLowerCase().includes('makkah') ? 'Haram Makkah Sector' 
+                                 : 'Makkah - Madinah - Jeddah') 
+                              : (currentRole === 'HANDLING' ? 'Makkah - Madinah - Jeddah' : 'Sentral HQ Jakarta & KSA')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium font-mono">ID Karyawan</span>
+                          <span className="font-mono font-bold text-[#A47F17]">
+                            {matchingMember ? `JI-SA-2026-${matchingMember.id.replace(/\D/g, '').slice(-3) || '092'}` : 'JI-MG-2026-001'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">WhatsApp / No. Telepon</span>
+                          <span className="font-bold text-slate-800">
+                            {matchingMember ? matchingMember.phone : '+966 50 123 4567'}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Sync Indicator Notice */}
+                  <div className="bg-emerald-50/40 p-2.5 rounded-lg border border-emerald-100/50 text-[9.5px] text-emerald-900 flex items-start gap-1.5 font-semibold text-justify">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>
+                      BIODATA TERINTEGRASI: Seluruh data akun di atas terhubung langsung secara dua arah dengan database portal manager. Jika ada perubahan dari portal manager atau edits mandiri, data akan otomatis berubah seketika.
+                    </span>
+                  </div>
+
+                  {/* Log Out Button */}
+                  <div className="pt-3 border-t border-slate-100">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-lg text-xs tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 border border-rose-500"
+                    >
+                      <LogOut className="w-4 h-4 shrink-0" />
+                      <span>KELUAR APLIKASI (LOG OUT)</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              {/* Biodata Tim Card */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-inner text-xl font-black">
-                    {currentUser?.charAt(0) || 'U'}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">👨‍✈️ {currentUser}</h3>
-                    <p className="text-[10px] font-bold text-[#D4AF37] uppercase">{currentRole === 'HANDLING' ? 'Handling Executive' : 'Operations Manager'}</p>
-                    <p className="text-[10px] text-emerald-700 font-bold mt-0.5">● STATUS: AKTIF DI TANAH SUCI</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-100 pt-3.5 space-y-2.5 text-xs">
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400 font-medium">Divisi Kerja</span>
-                    <span className="font-bold text-slate-800">Ground Handling Saudi</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400 font-medium font-sans">Wilayah Kerja</span>
-                    <span className="font-bold text-[#D4AF37]">{currentRole === 'HANDLING' ? 'Makkah - Madinah - Jeddah' : 'Sentral HQ Jakarta & KSA'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400 font-medium font-mono">ID Karyawan</span>
-                    <span className="font-mono font-bold text-[#A47F17]">JI-SA-2026-092</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400 font-medium">WhatsApp</span>
-                    <span className="font-bold text-slate-800">+966 50 123 4567</span>
-                  </div>
-                </div>
-
-                {/* Log Out Button */}
-                <div className="pt-3 border-t border-slate-100">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-lg text-xs tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 border border-rose-500"
-                  >
-                    <LogOut className="w-4 h-4 shrink-0" />
-                    <span>KELUAR APLIKASI (LOG OUT)</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
         </main>
       </div>

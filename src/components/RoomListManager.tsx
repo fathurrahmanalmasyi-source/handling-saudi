@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Search, Hotel, X, Check, Edit2, Info, UserPlus, Filter, CheckCircle2, Sliders, Palette, Trash2, MoreVertical } from 'lucide-react';
+import { Download, Search, Hotel, X, Check, Edit2, Info, UserPlus, Filter, CheckCircle2, Sliders, Palette, Trash2, MoreVertical, AlertTriangle } from 'lucide-react';
 import { RoomManifest } from '../types';
 import { Jamaah } from './ManagerManifest';
 
@@ -89,6 +89,164 @@ export const resolveColorTag = (room: RoomManifest): 'red' | 'green' | 'blue' | 
     return 'purple';
   }
   return 'slate';
+};
+
+// Helper to check if a text indicates an adjacent room request
+export const checkIsAdjacentText = (notes: string, colorTag?: string): boolean => {
+  if (colorTag === 'purple') return true;
+  const text = (notes || '').toLowerCase();
+  return (
+    text.includes('dekat dengan') || 
+    text.includes('berdekatan') || 
+    text.includes('sebelahan') || 
+    text.includes('berdampingan') ||
+    text.includes('keluarga') ||
+    text.includes('sampingan')
+  );
+};
+
+// Helper to check if a text indicates other special requests
+export const checkHasOtherSpecialRequest = (notes: string, colorTag?: string): boolean => {
+  if (!notes) return false;
+  const text = notes.toLowerCase();
+  
+  // If notes exist and it is just auto plotting standard note, ignore
+  if (text.trim() === 'grup plotting otomatis') return false;
+  
+  const hasAdj = checkIsAdjacentText(notes, colorTag);
+  
+  const specialKeywords = [
+    'mahrom', 'istri', 'suami', 'pasutri',
+    'dekat lift', 'lantai bawah', 'lift',
+    'view', 'kabah', 'lansia', 'tua',
+    'ekstra', 'pillow', 'kursi', 'kasur', 'extra', 'roda', 'wheelchair',
+    'sakit', 'rendah', 'vip', 'khusus', 'minta'
+  ];
+  
+  const hasSpecialKeyword = specialKeywords.some(kw => text.includes(kw));
+  const hasSpecialColorTag = colorTag && colorTag !== 'slate' && colorTag !== 'purple';
+  
+  if (!hasAdj && text.trim().length > 0) {
+    return true;
+  }
+  
+  return hasSpecialKeyword || hasSpecialColorTag;
+};
+
+// Standard styling for adjacent groups to allocate when rendering
+export const ADJACENT_GROUP_COLORS = [
+  {
+    name: 'Orange',
+    dot: 'bg-orange-500',
+    ring: 'ring-orange-400',
+    bg: 'bg-orange-50/70 hover:bg-orange-100/70',
+    border: 'border-l-4 border-l-orange-500',
+    badge: 'bg-orange-500 text-white border-orange-600 font-black'
+  },
+  {
+    name: 'Ungu',
+    dot: 'bg-purple-500',
+    ring: 'ring-purple-400',
+    bg: 'bg-purple-50/70 hover:bg-purple-100/70',
+    border: 'border-l-4 border-l-purple-500',
+    badge: 'bg-purple-500 text-white border-purple-600 font-black'
+  },
+  {
+    name: 'Biru',
+    dot: 'bg-blue-500',
+    ring: 'ring-blue-400',
+    bg: 'bg-blue-50/70 hover:bg-blue-100/70',
+    border: 'border-l-4 border-l-blue-500',
+    badge: 'bg-blue-500 text-white border-blue-600 font-black'
+  },
+  {
+    name: 'Fuchsia',
+    dot: 'bg-fuchsia-500',
+    ring: 'ring-fuchsia-400',
+    bg: 'bg-fuchsia-50/70 hover:bg-fuchsia-100/70',
+    border: 'border-l-4 border-l-fuchsia-500',
+    badge: 'bg-fuchsia-500 text-white border-fuchsia-600 font-black'
+  },
+  {
+    name: 'Hijau',
+    dot: 'bg-emerald-500',
+    ring: 'ring-emerald-400',
+    bg: 'bg-emerald-50/70 hover:bg-emerald-100/70',
+    border: 'border-l-4 border-l-emerald-500',
+    badge: 'bg-emerald-500 text-white border-emerald-600 font-black'
+  },
+  {
+    name: 'Kuning',
+    dot: 'bg-amber-500',
+    ring: 'ring-amber-400',
+    bg: 'bg-amber-50/70 hover:bg-amber-100/70',
+    border: 'border-l-4 border-l-amber-500',
+    badge: 'bg-amber-500 text-white border-amber-600 font-black'
+  }
+];
+
+export const getAdjacentGroups = (roomsInScope: RoomManifest[]): RoomManifest[][] => {
+  const reqRooms = roomsInScope.filter(r => checkIsAdjacentText(r.notes || '', r.colorTag));
+  const groups: RoomManifest[][] = [];
+  const visited = new Set<string>();
+  
+  const isConnected = (a: RoomManifest, b: RoomManifest) => {
+    const aNotes = (a.notes || '').toLowerCase();
+    const bNotes = (b.notes || '').toLowerCase();
+    const aNum = a.roomNumber || '';
+    const bNum = b.roomNumber || '';
+    
+    if (aNum && bNum && aNum === bNum) return true;
+    if (aNum && bNotes.includes(aNum)) return true;
+    if (bNum && aNotes.includes(bNum)) return true;
+    
+    const ignoreList = ['minta', 'berdekatan', 'dengan', 'kamar', 'keluarga', 'hotel', 'makkah', 'madinah', 'sampingan', 'sebelahan', 'sebelah', 'berdampingan', 'grup', 'plotting', 'otomatis'];
+    const getSignificantWords = (notes: string) => {
+      return notes.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .split(/\s+/)
+        .filter(w => w.length >= 4 && !ignoreList.includes(w));
+    };
+    
+    const aWords = getSignificantWords(a.notes || '');
+    const bWords = getSignificantWords(b.notes || '');
+    const hasSharedWord = aWords.some(w => bWords.includes(w));
+    if (hasSharedWord && aWords.length > 0) return true;
+    
+    if (aNum && bNum && a.groupName === b.groupName) {
+      const aInt = parseInt(aNum.replace(/\D/g, ''));
+      const bInt = parseInt(bNum.replace(/\D/g, ''));
+      if (!isNaN(aInt) && !isNaN(bInt) && Math.abs(aInt - bInt) === 1) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+  
+  reqRooms.forEach(room => {
+    if (visited.has(room.id)) return;
+    
+    const queue = [room];
+    const currentGroup: RoomManifest[] = [];
+    visited.add(room.id);
+    
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      currentGroup.push(curr);
+      
+      reqRooms.forEach(other => {
+        if (!visited.has(other.id) && isConnected(curr, other)) {
+          visited.add(other.id);
+          queue.push(other);
+        }
+      });
+    }
+    
+    groups.push(currentGroup);
+  });
+  
+  return groups;
 };
 
 export default function RoomListManager({ 
@@ -325,6 +483,22 @@ export default function RoomListManager({
       return matchesSearch && matchesGroup && matchesHotel;
     });
   }, [localRooms, searchTerm, selectedGroup, selectedHotelFilter]);
+
+  // Precompute adjacent groups of the visible filtered rooms to assign their colors
+  const adjacentGroups = React.useMemo(() => {
+    return getAdjacentGroups(filteredRooms);
+  }, [filteredRooms]);
+
+  const roomToAdjacentGroup = React.useMemo(() => {
+    const map: Record<string, { index: number; colorInfo: typeof ADJACENT_GROUP_COLORS[0] }> = {};
+    adjacentGroups.forEach((group, index) => {
+      const colorInfo = ADJACENT_GROUP_COLORS[index % ADJACENT_GROUP_COLORS.length];
+      group.forEach(r => {
+        map[r.id] = { index, colorInfo };
+      });
+    });
+    return map;
+  }, [adjacentGroups]);
 
   // Filter Jamaah for selected Plotting group
   const filteredJamaahForPlotting = React.useMemo(() => {
@@ -723,28 +897,24 @@ export default function RoomListManager({
             </div>
 
             {/* COLOR LEGEND EXPLANATION BADGES */}
-            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-              <span className="block text-[8px] font-black text-slate-400 uppercase mb-1 tracking-wide font-mono">LEGENDA WARNA UTAMA TRANSIT / REKOMENDASI (HQ):</span>
-              <div className="flex flex-wrap gap-1 md:gap-2">
-                <span className="inline-flex items-center gap-1 text-[9px] bg-rose-50 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-bold whitespace-nowrap font-mono">
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                  <span>Pasutri / Mahrom</span>
+            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-1.5">
+              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wide font-mono">LEGENDA ARTI WARNA & INDIKATOR UTAMA:</span>
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 items-center">
+                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                  <span>Berdekatan Group A</span>
                 </span>
-                <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-250 font-bold whitespace-nowrap font-mono">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                  <span>Dekat Lift</span>
+                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
+                  <span>Berdekatan Group B</span>
                 </span>
-                <span className="inline-flex items-center gap-1 text-[9px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200 font-bold whitespace-nowrap font-mono">
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                  <span>Lansia / Scenic View</span>
+                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  <span>Berdekatan Group C</span>
                 </span>
-                <span className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200 font-bold whitespace-nowrap font-mono">
-                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-                  <span>Extra Bed</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[9px] bg-purple-50 text-purple-800 px-1.5 py-0.5 rounded border border-purple-200 font-bold whitespace-nowrap font-mono">
-                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                  <span>Berdekatan</span>
+                <span className="inline-flex items-center gap-1 text-[9.5px] text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-bold font-mono">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
+                  <span>Request Khusus Lainnya</span>
                 </span>
               </div>
             </div>
@@ -809,14 +979,26 @@ export default function RoomListManager({
                       // No. Roomlist (No. RL)
                       const roomlistNumber = matchingJamaah[0]?.nomorRoomlist || room.id.split('-').pop() || '-';
                       
-                      // Resolve simple custom color classes
-                      const tag = resolveColorTag(room);
-                      const colorStyles = getRowStyles(tag);
+                      // Resolve customized dynamic request styling
+                      const isAdjacent = checkIsAdjacentText(room.notes || '', room.colorTag);
+                      const hasOtherRequest = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
+                      const adjInfo = roomToAdjacentGroup[room.id];
+                      
+                      let rowBg = 'bg-white hover:bg-slate-50/60';
+                      let rowBorder = 'border-l-4 border-l-slate-200';
+                      
+                      if (adjInfo) {
+                        rowBg = adjInfo.colorInfo.bg;
+                        rowBorder = adjInfo.colorInfo.border;
+                      } else if (hasOtherRequest) {
+                        rowBg = 'bg-amber-50/15 hover:bg-amber-50/30';
+                        rowBorder = 'border-l-4 border-l-amber-400';
+                      }
 
                       return (
                         <tr 
                           key={room.id} 
-                          className={`transition-all duration-700 ${colorStyles.bg} ${colorStyles.border}`}
+                          className={`transition-all duration-300 ${rowBg} ${rowBorder} border-b border-slate-100`}
                         >
                           
                           {/* 1. NOMOR JAMAAH */}
@@ -832,23 +1014,23 @@ export default function RoomListManager({
                           {/* 3. NOMOR KAMAR INTERACTIVE ACTION */}
                           <td className="py-2 px-3 font-mono whitespace-nowrap">
                             {currentRole === 'HANDLING' && editingRoomId === room.id ? (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="text"
-                                  value={editingRoomNum}
-                                  onChange={(e) => setEditingRoomNum(e.target.value)}
-                                  className="w-12 px-1 py-0.5 bg-amber-50 border border-amber-300 font-bold text-slate-900 rounded font-mono text-center focus:outline-none"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleSaveRoomNumber(room.id)}
-                                  className="p-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded cursor-pointer"
-                                >
-                                  <Check className="w-3 h-3" />
-                                </button>
-                              </div>
+                               <div className="flex items-center gap-1">
+                                 <input
+                                   type="text"
+                                   value={editingRoomNum}
+                                   onChange={(e) => setEditingRoomNum(e.target.value)}
+                                   className="w-12 px-1 py-0.5 bg-amber-50 border border-amber-300 font-bold text-slate-900 rounded font-mono text-center focus:outline-none"
+                                   autoFocus
+                                 />
+                                 <button
+                                   onClick={() => handleSaveRoomNumber(room.id)}
+                                   className="p-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded cursor-pointer"
+                                 >
+                                   <Check className="w-3 h-3" />
+                                 </button>
+                               </div>
                             ) : (
-                              <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
+                               <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
                             )}
                           </td>
 
@@ -863,20 +1045,33 @@ export default function RoomListManager({
                           <td className="py-2 px-3">
                             <div className="flex items-center justify-center gap-3">
                               
-                              {/* Color Flag / Category indicator (Only Color Circle with hover detailed Tooltip & animated Ping) */}
-                              <div 
-                                className={`w-3.5 h-3.5 rounded-full border border-slate-305 shadow-3xs cursor-help shrink-0 flex items-center justify-center relative group ${colorStyles.dot}`}
-                                title={room.notes || colorStyles.label}
-                              >
-                                {tag !== 'slate' && (
+                              {/* If adjacent, render colored loop circle */}
+                              {adjInfo ? (
+                                <div 
+                                  className={`w-3.5 h-3.5 rounded-full border border-slate-300 shadow-3xs cursor-help shrink-0 flex items-center justify-center relative group ${adjInfo.colorInfo.dot}`}
+                                >
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-25 bg-current"></span>
-                                )}
-                                
-                                {/* Hover Tooltip Portal */}
-                                <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap font-bold leading-none font-sans">
-                                  {room.notes || colorStyles.label}
+                                  {/* Hover Tooltip Portal */}
+                                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap font-bold leading-none font-sans">
+                                    [Keluarga Berdekatan - Grup {adjInfo.colorInfo.name}] {room.notes}
+                                  </div>
                                 </div>
-                              </div>
+                              ) : null}
+
+                              {/* If other special request, render warning icon */}
+                              {hasOtherRequest ? (
+                                <div className="relative group shrink-0">
+                                  <AlertTriangle className="w-4.5 h-4.5 text-amber-500 hover:text-amber-600 cursor-help animate-pulse" />
+                                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap font-bold leading-none font-sans">
+                                    [⚠️ Request Khusus] {room.notes || 'Permintaan Khusus'}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              {/* If neither, render a simple clean separator */}
+                              {!adjInfo && !hasOtherRequest ? (
+                                <span className="text-slate-300 text-[10px] select-none font-mono">-</span>
+                              ) : null}
 
                               {/* Actions Group depending on role permission */}
                               <div className="relative inline-block text-left overflow-visible shrink-0">
@@ -1337,17 +1532,30 @@ export default function RoomListManager({
 
               <div className="space-y-2">
                 {localRooms.map((room) => {
+                  const isAdj = checkIsAdjacentText(room.notes || '', room.colorTag);
+                  const hasOther = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
                   const tag = resolveColorTag(room);
                   const colorStyles = getRowStyles(tag);
+                  
+                  let labelText = "Umum / Standar";
+                  let bgClass = "bg-slate-100 text-slate-700 border-slate-200 border";
+                  if (isAdj) {
+                    labelText = "Keluarga Berdekatan";
+                    bgClass = "bg-purple-100 text-purple-700 border-purple-255 border font-semibold";
+                  } else if (hasOther) {
+                    labelText = "⚠️ Request Khusus";
+                    bgClass = "bg-amber-100 text-amber-800 border-amber-250 border font-semibold";
+                  }
+
                   return (
-                    <div key={room.id} className={`p-2 border rounded text-[11px] leading-relaxed ${colorStyles.bg} ${colorStyles.border}`}>
-                      <div className="flex justify-between items-center p-1 px-2 rounded mb-1 bg-slate-150">
+                    <div key={room.id} className={`p-2 border rounded text-[11px] leading-relaxed ${isAdj ? 'bg-purple-50/50 border-purple-200' : hasOther ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-slate-201'}`}>
+                      <div className="flex justify-between items-center p-1 px-2 rounded mb-1 bg-slate-100/80">
                         <span className="font-black text-slate-850">Kamar {room.roomNumber} ({room.roomType})</span>
-                        <span className={`text-[9px] font-black uppercase px-1 rounded ${colorStyles.badge}`}>{colorStyles.label}</span>
+                        <span className={`text-[8.5px] uppercase px-1.5 py-0.5 rounded font-bold ${bgClass}`}>{labelText}</span>
                       </div>
                       <p className="font-bold text-slate-800">🏨 Hotel: {room.hotelDetailName} ({room.hotelName})</p>
                       <p className="mt-1 font-semibold text-slate-655">👥 Penghuni Kamar: {room.jamaahNames.join(', ')}</p>
-                      {room.notes && <p className="text-[10px] text-indigo-900 bg-indigo-50 p-1 rounded mt-1 font-mono">⚠️ Notes: {room.notes}</p>}
+                      {room.notes && <p className="text-[10px] text-slate-700 bg-slate-50 p-1.5 rounded mt-1 font-mono">{isAdj ? '🔁 ' : '⚠️ '}Notes: {room.notes}</p>}
                     </div>
                   );
                 })}
