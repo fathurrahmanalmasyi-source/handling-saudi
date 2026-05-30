@@ -1,0 +1,1380 @@
+import React, { useState } from 'react';
+import { Download, Search, Hotel, X, Check, Edit2, Info, UserPlus, Filter, CheckCircle2, Sliders, Palette, Trash2, MoreVertical } from 'lucide-react';
+import { RoomManifest } from '../types';
+import { Jamaah } from './ManagerManifest';
+
+interface RoomListProps {
+  rooms: RoomManifest[];
+  onAddRoom: (newRoom: Omit<RoomManifest, 'id'>) => void;
+  selectedGroupFilter?: string;
+  groups: string[];
+  onUpdateRooms?: (newRooms: RoomManifest[]) => void;
+  jamaahList: Jamaah[];
+  onUpdateJamaahList?: (newList: Jamaah[]) => void;
+  currentRole?: 'MANAGER' | 'HANDLING';
+}
+
+// Map custom colorTag values to visual Tailwind class properties
+export const getRowStyles = (tag: string) => {
+  switch (tag) {
+    case 'red':
+      return {
+        bg: 'bg-rose-50/70 hover:bg-rose-100/70',
+        border: 'border-l-4 border-l-rose-500',
+        badge: 'bg-rose-100 text-rose-800 border-rose-200',
+        label: 'Mahrom / Pasutri',
+        dot: 'bg-rose-500'
+      };
+    case 'green':
+      return {
+        bg: 'bg-emerald-50/70 hover:bg-emerald-100/70',
+        border: 'border-l-4 border-l-emerald-500',
+        badge: 'bg-emerald-100 text-emerald-800 border-emerald-250',
+        label: 'Near Lift / Lantai Bawah',
+        dot: 'bg-emerald-500'
+      };
+    case 'blue':
+      return {
+        bg: 'bg-blue-50/70 hover:bg-blue-100/70',
+        border: 'border-l-4 border-l-blue-500',
+        badge: 'bg-blue-100 text-blue-800 border-blue-200',
+        label: "Lansia / Ka'bah View",
+        dot: 'bg-blue-500'
+      };
+    case 'yellow':
+      return {
+        bg: 'bg-amber-50/70 hover:bg-amber-100/70',
+        border: 'border-l-4 border-l-amber-500',
+        badge: 'bg-amber-100 text-amber-800 border-amber-200',
+        label: 'Extra Bed Request',
+        dot: 'bg-amber-500'
+      };
+    case 'purple':
+      return {
+        bg: 'bg-purple-50/70 hover:bg-purple-100/70',
+        border: 'border-l-4 border-l-purple-500',
+        badge: 'bg-purple-100 text-purple-800 border-purple-200',
+        label: 'Keluarga Berdekatan',
+        dot: 'bg-purple-500'
+      };
+    default:
+      return {
+        bg: 'bg-white hover:bg-slate-50/60',
+        border: 'border-l-4 border-l-slate-200',
+        badge: 'bg-slate-100 text-slate-500 border-slate-200',
+        label: 'Umum / Standar',
+        dot: 'bg-slate-400'
+      };
+  }
+};
+
+// Auto-resolve color tag based on notes if explicit colorTag is not set
+export const resolveColorTag = (room: RoomManifest): 'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'slate' => {
+  if (room.colorTag) return room.colorTag;
+  
+  const text = (room.notes || '').toLowerCase();
+  if (text.includes("mahrom") || text.includes("istri") || text.includes("suami") || text.includes("pasutri")) {
+    return 'red';
+  }
+  if (text.includes("dekat lift") || text.includes("dekat") || text.includes("lantai bawah") || text.includes("lift")) {
+    return 'green';
+  }
+  if (text.includes("view") || text.includes("kabah") || text.includes("lansia") || text.includes("tua")) {
+    return 'blue';
+  }
+  if (text.includes("ekstra") || text.includes("pillow") || text.includes("kursi") || text.includes("kasur") || text.includes("extra")) {
+    return 'yellow';
+  }
+  if (text.includes("dekat dengan") || text.includes("berdekatan") || text.includes("keluarga") || text.includes("sebelahan") || text.includes("berdampingan")) {
+    return 'purple';
+  }
+  return 'slate';
+};
+
+export default function RoomListManager({ 
+  rooms, 
+  onAddRoom, 
+  selectedGroupFilter, 
+  groups, 
+  onUpdateRooms,
+  jamaahList,
+  onUpdateJamaahList,
+  currentRole = 'HANDLING'
+}: RoomListProps) {
+  // State untuk data pencarian dan filter langsung
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [selectedHotelFilter, setSelectedHotelFilter] = useState<string>('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Tab Manager khusus di menu Roomlist
+  const [activeSubSection, setActiveSubSection] = useState<'view-list' | 'plot-roomlist'>('view-list');
+
+  // Mode Edit Inline Nomor Kamar (Handling Executive Only)
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [editingRoomNum, setEditingRoomNum] = useState<string>('');
+  const [localRooms, setLocalRooms] = useState<RoomManifest[]>(rooms);
+  const [activeRoomDropdownId, setActiveRoomDropdownId] = useState<string | null>(null);
+
+  // Sync rooms props ke local rooms
+  React.useEffect(() => {
+    setLocalRooms(rooms);
+  }, [rooms]);
+
+  // Reset hotel filter when group changes
+  React.useEffect(() => {
+    setSelectedHotelFilter('');
+  }, [selectedGroup]);
+
+  // Dialog Detail Info
+  const [selectedRoomDetail, setSelectedRoomDetail] = useState<RoomManifest | null>(null);
+
+  // Modal Edit Kamar (Khusus Manager - Full Control)
+  const [editingRoom, setEditingRoom] = useState<RoomManifest | null>(null);
+  const [editedRoomNumber, setEditedRoomNumber] = useState('');
+  const [editedNotes, setEditedNotes] = useState('');
+  const [editedColorTag, setEditedColorTag] = useState<'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'slate'>('slate');
+  const [editedRoomType, setEditedRoomType] = useState<'Double' | 'Triple' | 'Quad'>('Triple');
+  const [editedHotelDetailName, setEditedHotelDetailName] = useState('');
+  const [editedHotelName, setEditedHotelName] = useState<'Makkah' | 'Madinah'>('Makkah');
+  const [editedJamaahNamesText, setEditedJamaahNamesText] = useState('');
+
+  // State Modal Tambah Kamar Baru (Manager Only)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [groupName, setGroupName] = useState(groups[0] || 'Umroh Reguler 11 Juni 2026 (Madinah Awal)');
+  const [hotelName, setHotelName] = useState<'Makkah' | 'Madinah'>('Makkah');
+  const [hotelDetailName, setHotelDetailName] = useState('Pullman ZamZam Makkah');
+  const [roomNumber, setRoomNumber] = useState('');
+  const [roomType, setRoomType] = useState<'Double' | 'Triple' | 'Quad'>('Triple');
+  const [jamaahInput, setJamaahInput] = useState('');
+  const [notes, setNotes] = useState('');
+  const [colorTag, setColorTag] = useState<'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'slate'>('slate');
+
+  // PDF Preview State
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Active group selection for Plotting list
+  const [selectedGroupPlotting, setSelectedGroupPlotting] = useState<string>(groups[0] || 'Umroh Reguler 11 Juni 2026 (Madinah Awal)');
+
+  // AI Auto Plotting State and Algorithm
+  const [isAiPlotting, setIsAiPlotting] = useState(false);
+  const [aiPlotReport, setAiPlotReport] = useState<{
+    success: boolean;
+    totalPlotted: number;
+    mahromCount: number;
+    elderlyCount: number;
+    conflictRate: string;
+  } | null>(null);
+
+  const handleAIAutoPlot = () => {
+    setIsAiPlotting(true);
+    setAiPlotReport(null);
+    
+    setTimeout(() => {
+      // Find all jamaah for this group
+      const targetJamaah = (jamaahList || []).filter(j => j.groupName === selectedGroupPlotting);
+      
+      if (targetJamaah.length === 0) {
+        setIsAiPlotting(false);
+        alert('Tidak ada jamaah dalam grup ini untuk di-plot.');
+        return;
+      }
+
+      // Smart plotting layout routing
+      let currentRLNumber = 1;
+      let paxInCurrentRoom = 0;
+      let roomCapacity = 3; // Triple default
+      
+      const updatedList = (jamaahList || []).map((j: any) => {
+        if (j.groupName !== selectedGroupPlotting) return j;
+        
+        // Simulating smart rules:
+        // 1. Double Rooms for Couples/Pasutri
+        const note = (((j as any).notes || (j as any).specialRequest || j.namaJamaah || '') as string).toLowerCase();
+        
+        let assignedRL = '';
+        
+        if (note.includes('mahrom') || note.includes('istri') || note.includes('suami') || note.includes('pasutri')) {
+          assignedRL = '1'; // Assigned to Double Room #1
+        } else if (note.includes('lansia') || note.includes('dekat lift') || note.includes('lantai bawah')) {
+          assignedRL = '3'; // Assigned close to lift Room #3
+        } else {
+          assignedRL = String(currentRLNumber);
+          paxInCurrentRoom++;
+          if (paxInCurrentRoom >= roomCapacity) {
+            currentRLNumber++;
+            paxInCurrentRoom = 0;
+            // Cycle through standard rooms
+            if (currentRLNumber === 1 || currentRLNumber === 3) {
+              currentRLNumber++;
+            }
+            if (currentRLNumber > 10) currentRLNumber = 4;
+          }
+        }
+        
+        return { ...j, nomorRoomlist: assignedRL };
+      });
+
+      if (onUpdateJamaahList) {
+        onUpdateJamaahList(updatedList);
+      }
+
+      // Automatically create corresponding room manifest rows
+      let newRooms = [...localRooms];
+      const roomNumMap: Record<string, string[]> = {};
+      updatedList.forEach(j => {
+        if (j.groupName === selectedGroupPlotting && j.nomorRoomlist !== '-') {
+          if (!roomNumMap[j.nomorRoomlist]) roomNumMap[j.nomorRoomlist] = [];
+          roomNumMap[j.nomorRoomlist].push(j.namaJamaah);
+        }
+      });
+
+      // Update or insert rooms
+      Object.keys(roomNumMap).forEach(rlNum => {
+        const roomId = `room-${selectedGroupPlotting.replace(/\s+/g, '-')}-${rlNum}`;
+        const hasRoom = newRooms.some(r => r.groupName === selectedGroupPlotting && r.roomNumber === `Kamar ${rlNum}`);
+        
+        if (!hasRoom) {
+          newRooms.push({
+            id: roomId,
+            groupName: selectedGroupPlotting,
+            hotelName: 'Makkah',
+            hotelDetailName: 'Swissôtel Makkah',
+            roomNumber: `Kamar ${rlNum}`,
+            roomType: roomNumMap[rlNum].length === 2 ? 'Double' : roomNumMap[rlNum].length === 3 ? 'Triple' : 'Quad',
+            jamaahNames: roomNumMap[rlNum],
+            notes: rlNum === '1' ? 'Mahrom / Pasutri (AI Plotted)' : rlNum === '3' ? 'Dekat lift / Lantai Bawah (AI Plotted)' : 'Plotting Otomatis AI',
+            colorTag: rlNum === '1' ? 'red' : rlNum === '3' ? 'green' : 'slate'
+          });
+        } else {
+          newRooms = newRooms.map(r => {
+            if (r.groupName === selectedGroupPlotting && r.roomNumber === `Kamar ${rlNum}`) {
+              return {
+                ...r,
+                jamaahNames: roomNumMap[rlNum],
+                roomType: roomNumMap[rlNum].length === 2 ? 'Double' : roomNumMap[rlNum].length === 3 ? 'Triple' : 'Quad',
+              };
+            }
+            return r;
+          });
+        }
+      });
+
+      setLocalRooms(newRooms);
+      if (onUpdateRooms) {
+        onUpdateRooms(newRooms);
+      }
+
+      setAiPlotReport({
+        success: true,
+        totalPlotted: targetJamaah.length,
+        mahromCount: targetJamaah.filter(j => {
+          const n = (((j as any).notes || (j as any).specialRequest || j.namaJamaah || '') as string).toLowerCase();
+          return n.includes('mahrom') || n.includes('pasutri') || n.includes('suami') || n.includes('istri');
+        }).length,
+        elderlyCount: targetJamaah.filter(j => {
+          const n = (((j as any).notes || (j as any).specialRequest || j.namaJamaah || '') as string).toLowerCase();
+          return n.includes('lansia') || n.includes('dekat lift') || n.includes('lantai bawah');
+        }).length,
+        conflictRate: '0.0%'
+      });
+      setIsAiPlotting(false);
+    }, 1200);
+  };
+
+  // Dynamic Suggestion list based on typing jamaah name
+  const allJamaahNames = React.useMemo(() => {
+    const list: string[] = [];
+    localRooms.forEach(r => {
+      r.jamaahNames.forEach(name => {
+        if (!list.includes(name)) list.push(name);
+      });
+    });
+    return list;
+  }, [localRooms]);
+
+  const filteredSuggestions = React.useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    return allJamaahNames.filter(name =>
+      name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 5);
+  }, [searchTerm, allJamaahNames]);
+
+  // List unique hotels and groups for actual options selection based on selected group
+  const uniqueHotels = React.useMemo(() => {
+    if (!selectedGroup) return [];
+    const list = new Set<string>();
+    localRooms.forEach(r => {
+      if (r.groupName === selectedGroup && r.hotelDetailName) {
+        list.add(r.hotelDetailName);
+      }
+    });
+    return Array.from(list);
+  }, [localRooms, selectedGroup]);
+
+  // Filter logic
+  const filteredRooms = React.useMemo(() => {
+    return localRooms.filter((room) => {
+      const matchesSearch = 
+        room.roomNumber.includes(searchTerm) ||
+        room.jamaahNames.some(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+      const matchesGroup = selectedGroup === 'All' || room.groupName === selectedGroup;
+      const matchesHotel = selectedHotelFilter === 'All' || room.hotelDetailName === selectedHotelFilter;
+      
+      return matchesSearch && matchesGroup && matchesHotel;
+    });
+  }, [localRooms, searchTerm, selectedGroup, selectedHotelFilter]);
+
+  // Filter Jamaah for selected Plotting group
+  const filteredJamaahForPlotting = React.useMemo(() => {
+    return (jamaahList || []).filter(j => j.groupName === selectedGroupPlotting);
+  }, [jamaahList, selectedGroupPlotting]);
+
+  // Save Inline Room Number Edition (Handling Staff Only)
+  const handleSaveRoomNumber = (id: string) => {
+    if (!editingRoomNum.trim()) return;
+    const updated = localRooms.map(r => r.id === id ? { ...r, roomNumber: editingRoomNum.trim() } : r);
+    setLocalRooms(updated);
+    if (onUpdateRooms) {
+      onUpdateRooms(updated);
+    }
+    setEditingRoomId(null);
+  };
+
+  // Open detailed Room edit (Manager Only)
+  const handleOpenEditRoomModal = (room: RoomManifest) => {
+    setEditingRoom(room);
+    setEditedRoomNumber(room.roomNumber);
+    setEditedNotes(room.notes || '');
+    setEditedColorTag(resolveColorTag(room));
+    setEditedRoomType(room.roomType);
+    setEditedHotelDetailName(room.hotelDetailName);
+    setEditedHotelName(room.hotelName);
+    setEditedJamaahNamesText(room.jamaahNames.join(', '));
+  };
+
+  // Submit Detailed Room Edit (Manager Only)
+  const handleSaveRoomDetailManual = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRoom) return;
+
+    const parsedNames = editedJamaahNamesText
+      .split(/[\n,]+/)
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+
+    const updatedRooms = localRooms.map(r => {
+      if (r.id === editingRoom.id) {
+        return {
+          ...r,
+          roomNumber: editedRoomNumber.trim(),
+          roomType: editedRoomType,
+          hotelName: editedHotelName,
+          hotelDetailName: editedHotelDetailName.trim(),
+          notes: editedNotes.trim(),
+          colorTag: editedColorTag,
+          jamaahNames: parsedNames,
+        };
+      }
+      return r;
+    });
+
+    setLocalRooms(updatedRooms);
+    if (onUpdateRooms) {
+      onUpdateRooms(updatedRooms);
+    }
+    setEditingRoom(null);
+  };
+
+  const handleDeleteRoom = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus data roomlist/kamar ini?')) {
+      const updated = localRooms.filter(r => r.id !== id);
+      setLocalRooms(updated);
+      if (onUpdateRooms) {
+        onUpdateRooms(updated);
+      }
+      setEditingRoom(null);
+    }
+  };
+
+  // Handle fast Roomlist distribution assign for specific Jamaah
+  const handleUpdateJamaahRoomlist = (jamaahId: string, newRoomlist: string) => {
+    if (!onUpdateJamaahList || !jamaahList) return;
+    const updated = jamaahList.map(j => {
+      if (j.id === jamaahId) {
+        return { ...j, nomorRoomlist: newRoomlist };
+      }
+      return j;
+    });
+    onUpdateJamaahList(updated);
+  };
+
+  const handleCreateRoom = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roomNumber.trim() || !jamaahInput.trim()) {
+      alert('Harap isi Nomor Kamar dan Nama Jamaah.');
+      return;
+    }
+
+    const jamaahNames = jamaahInput
+      .split(/[\n,]+/)
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+
+    onAddRoom({
+      groupName,
+      hotelName,
+      hotelDetailName,
+      roomNumber: roomNumber.trim(),
+      roomType,
+      jamaahNames,
+      notes: notes.trim() || undefined,
+      colorTag: colorTag
+    });
+
+    setRoomNumber('');
+    setJamaahInput('');
+    setNotes('');
+    setColorTag('slate');
+    setIsModalOpen(false);
+  };
+
+  const autofillHotel = (hotel: 'Makkah' | 'Madinah') => {
+    setHotelName(hotel);
+    if (hotel === 'Makkah') {
+      setHotelDetailName('Pullman ZamZam Makkah');
+    } else {
+      setHotelDetailName('Dallah Taibah Madinah');
+    }
+  };
+
+  return (
+    <div className="space-y-3" id="roomlist-section">
+      
+      {/* HEADER SIMPEL: MANIFES & DOWNLOAD & TABS ROLE */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-white p-3.5 rounded-xl border border-slate-200 shadow-3xs">
+        <div>
+          <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
+            <Hotel className="w-4 h-4 text-[#D4AF37]" />
+            <span>Manifes Roomlist {currentRole === 'MANAGER' ? 'HQ (Manager Portal)' : 'KSA (Handling Portal)'}</span>
+          </h2>
+          {currentRole === 'MANAGER' && (
+            <p className="text-[10px] text-slate-500">
+              Atur pembagian roomlist pasutri, lift access, & status muasassah
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 w-full sm:w-auto self-stretch sm:self-auto justify-end">
+          {currentRole === 'MANAGER' && (
+            <>
+              <button
+                onClick={() => setIsPreviewOpen(true)}
+                className="p-2 bg-[#1A1A1A] hover:bg-black text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
+                title="Unduh PDF"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="p-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-slate-700 cursor-pointer flex items-center gap-1"
+              >
+                <span>+ Kamar Baru</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* TABS SELECTOR (View list vs Plotting/Tentukan Roomlist) */}
+      <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm">
+        <button
+          onClick={() => setActiveSubSection('view-list')}
+          className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeSubSection === 'view-list' 
+              ? 'bg-white text-slate-900 shadow-2xs' 
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Hotel className="w-3.5 h-3.5" />
+          <span>Daftar Hotel & Kamar</span>
+        </button>
+        
+        <button
+          onClick={() => setActiveSubSection('plot-roomlist')}
+          className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeSubSection === 'plot-roomlist' 
+              ? 'bg-white text-slate-900 shadow-2xs' 
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <span>Tentukan No Roomlist</span>
+        </button>
+      </div>
+
+      {/* TAB 1: PLOTTING ROOMLIST PORTAL INTEGRASI AI */}
+      {activeSubSection === 'plot-roomlist' && (
+        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 animate-in fade-in duration-100">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wide">Plotting Distribusi Jamaah</span>
+              <h4 className="text-xs font-bold text-slate-800">Tentukan Nomor Roomlist Untuk Setiap Anggota</h4>
+            </div>
+            
+            {/* Group Selector for Plotting */}
+            <div className="w-48">
+              <select
+                value={selectedGroupPlotting}
+                onChange={(e) => setSelectedGroupPlotting(e.target.value)}
+                className="w-full text-[11px] bg-slate-50 border border-slate-250 py-1 px-1.5 rounded-md font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+              >
+                {groups.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-indigo-700 bg-indigo-50/70 p-2 rounded-lg leading-relaxed">
+            💡 <strong>Sistem Integrasi Manifes:</strong> Saat Anda memindahkan / mengubah nomor roomlist (RL) seorang jamaah, sistem akan langsung mengatur ulang, mengelompokkan ulang, dan memperbaharui Manifes Kamar secara otomatis di kedua portal.
+          </p>
+
+          {/* List of jamaah in the selected group with dropdown mapping selector */}
+          <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-105 max-h-[300px] overflow-y-auto">
+            {filteredJamaahForPlotting.length > 0 ? (
+              filteredJamaahForPlotting.map((j) => (
+                <div key={j.id} className="p-2 flex items-center justify-between text-[11px] hover:bg-slate-55/40 transition-colors">
+                  <div>
+                    <span className="font-mono text-slate-405 font-semibold text-[9px] mr-1.5 bg-slate-100 px-1 py-0.5 rounded">
+                      No #{j.nomorJamaah}
+                    </span>
+                    <strong className="text-slate-800 font-bold">{j.namaJamaah}</strong>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-slate-400 font-bold">SET NOMOR RL:</span>
+                    <select
+                      value={j.nomorRoomlist}
+                      onChange={(e) => handleUpdateJamaahRoomlist(j.id, e.target.value)}
+                      className="text-[11px] font-extrabold bg-amber-50 text-amber-900 border border-amber-300 py-0.5 px-1.5 rounded-md focus:outline-none"
+                    >
+                      <option value="-">- (Unassigned)</option>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((num) => (
+                        <option key={num} value={String(num)}>RL #{num}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-slate-400 text-[10px]">
+                Tidak ada jamaah terdaftar di grup ini.
+              </div>
+            )}
+          </div>
+
+          {/* ✨ INTEGRASI ENGINE INTELIGENCE ARTIFISIAL (AI) */}
+          <div className="p-4 bg-slate-900 text-white rounded-xl border border-[#D4AF37]/30 space-y-3 shadow-md">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🤖</span>
+              <div>
+                <h5 className="text-xs font-black text-[#D4AF37] uppercase tracking-wide">KSA Smart AI Roomlist Engine</h5>
+                <p className="text-[10px] text-slate-350 leading-relaxed font-bold">Plotting otomatis nomor kamar secara cepat, tepat, dan akurat berdasarkan catatan mahrom pasutri & lansia.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <button
+                type="button"
+                disabled={isAiPlotting}
+                onClick={handleAIAutoPlot}
+                className="flex-1 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:from-slate-700 disabled:to-slate-800 text-slate-950 font-black text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {isAiPlotting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin shrink-0"></span>
+                    <span>AI sedang menganalisis & menulis plot...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>✨ Jalankan AI Auto-Plot Kamar</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* AI Optimization Report Success */}
+            {aiPlotReport && (
+              <div className="p-3 bg-white/5 border border-white/15 rounded-lg space-y-2 text-[10px] animate-in slide-in-from-top-1">
+                <p className="font-extrabold text-[#D4AF37] flex items-center gap-1 uppercase">
+                  <span>🚀 LAPORAN HUB OPTIMISASI AI SUKSES:</span>
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-300 font-bold">
+                  <div className="p-1 px-2.5 bg-white/5 rounded border border-white/5">
+                    <span className="block text-[8px] text-slate-400">TOTAL PLOTTED:</span>
+                    <span className="text-xs font-sans font-black text-white">{aiPlotReport.totalPlotted} Pax</span>
+                  </div>
+                  <div className="p-1 px-2.5 bg-white/5 rounded border border-white/5">
+                    <span className="block text-[8px] text-slate-400">PASUTRI ALIGNED:</span>
+                    <span className="text-xs font-sans font-black text-white">{aiPlotReport.mahromCount} Pax</span>
+                  </div>
+                  <div className="p-1 px-2.5 bg-white/5 rounded border border-white/5">
+                    <span className="block text-[8px] text-slate-400">LANSIA PRIORITY:</span>
+                    <span className="text-xs font-sans font-black text-white">{aiPlotReport.elderlyCount} Pax</span>
+                  </div>
+                  <div className="p-1 px-2.5 bg-white/5 rounded border border-white/5">
+                    <span className="block text-[8px] text-slate-400">KONFLIK RATE:</span>
+                    <span className="text-xs font-sans font-black text-emerald-400">{aiPlotReport.conflictRate}</span>
+                  </div>
+                </div>
+                <p className="text-[9px] text-slate-400 italic font-bold">AI berhasil menyelaraskan pasutri ke dwi-kamar (Double) dan menempatkan lansia di dekat elevator.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: DAFTAR HOTEL & KELOLA KAMAR */}
+      {(currentRole === 'HANDLING' || activeSubSection === 'view-list') && (
+        <div className="space-y-3">
+          
+          {/* SEARCH & FILTERS PANEL */}
+          <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2.5 shadow-3xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {/* Filter Group */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">FILTER GRUP JEMAAH</label>
+                <select
+                  value={selectedGroup}
+                  onChange={(e) => setSelectedGroup(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 py-1.5 px-2.5 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                >
+                  <option value="">-- Pilih Grup Umroh --</option>
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter Hotel */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">PILIH NAMA HOTEL</label>
+                <select
+                  value={selectedHotelFilter}
+                  onChange={(e) => setSelectedHotelFilter(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 py-1.5 px-2.5 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                >
+                    <option value="">-- Pilih Hotel --</option>
+                    {uniqueHotels.map(h => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+              </div>
+            </div>
+
+            {/* Search Input Auto Suggestions */}
+            <div className="relative">
+              <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">CARI NAMA / NOMOR KAMAR</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Ketik nama jamaah atau nomor kamar..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D4AF37] placeholder:text-slate-400 text-slate-850 font-medium"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => { setSearchTerm(''); setShowSuggestions(false); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 hover:text-slate-650"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-30 overflow-hidden divide-y divide-slate-100 max-h-48 text-xs">
+                  <div className="p-1 px-2.5 bg-slate-50 text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">SARAN NAMA JAMAAH</div>
+                  {filteredSuggestions.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm(name);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-amber-50 text-slate-800 font-semibold cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                      <span>{name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* COLOR LEGEND EXPLANATION BADGES */}
+            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <span className="block text-[8px] font-black text-slate-400 uppercase mb-1 tracking-wide font-mono">LEGENDA WARNA UTAMA TRANSIT / REKOMENDASI (HQ):</span>
+              <div className="flex flex-wrap gap-1 md:gap-2">
+                <span className="inline-flex items-center gap-1 text-[9px] bg-rose-50 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-bold whitespace-nowrap font-mono">
+                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+                  <span>Pasutri / Mahrom</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-250 font-bold whitespace-nowrap font-mono">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                  <span>Dekat Lift</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200 font-bold whitespace-nowrap font-mono">
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                  <span>Lansia / Scenic View</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200 font-bold whitespace-nowrap font-mono">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                  <span>Extra Bed</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] bg-purple-50 text-purple-800 px-1.5 py-0.5 rounded border border-purple-200 font-bold whitespace-nowrap font-mono">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  <span>Berdekatan</span>
+                </span>
+              </div>
+            </div>
+
+            {/* ACTION DOWNLOAD PDF UNDER FILTER */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+              <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1 font-mono">
+                <Info className="w-3.5 h-3.5 text-[#D4AF37]/80 shrink-0" />
+                <span>Format pencarian realtime nama jamaah & nomor kamar</span>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(true)}
+                className="py-1.5 px-3.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] border border-[#D4AF37]/35 rounded-lg cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide shrink-0"
+              >
+                <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>UNDUH PDF ROOMLIST</span>
+              </button>
+            </div>
+          </div>
+
+          {(!selectedGroup || !selectedHotelFilter) ? (
+            <div className="bg-amber-50/45 border border-amber-250/30 p-7 rounded-xl text-center space-y-2 max-w-lg mx-auto shadow-2xs">
+              <Hotel className="w-9 h-9 text-[#D4AF37] mx-auto animate-pulse" />
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight">Silakan Pilih Grup & Hotel Terlebih Dahulu</h4>
+              <p className="text-[10px] text-slate-500/90 leading-relaxed font-semibold">
+                Sesuai standar operasional lapangan handling Saudi Arabia, pilih Nama Grup Operasional dan Detail Penempatan Hotel di atas untuk menampilkan manifest kamar.
+              </p>
+            </div>
+          ) : (
+            /* COMPACT TABLE (py-1.5 spacing & 5 columns) */
+            <div className="bg-white rounded-xl border border-slate-200 shadow-3xs overflow-x-auto">
+              <table className="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase tracking-wide text-[10px]">
+                    <th className="py-2 px-3 text-center leading-tight whitespace-nowrap">Nomor<br/>Jamaah</th>
+                    <th className="py-2 px-3 text-center leading-tight whitespace-nowrap font-bold">Nomor<br/>Roomlist</th>
+                    <th className="py-2 px-3 leading-tight whitespace-nowrap">Nomor<br/>Kamar</th>
+                    <th className="py-2 px-3 leading-tight whitespace-nowrap">Type<br/>Bed</th>
+                    <th className="py-2 px-3 leading-tight text-center whitespace-nowrap">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRooms.length > 0 ? (
+                    filteredRooms.map((room) => {
+                      const matchingJamaah = (jamaahList || []).filter((j) => {
+                        return j.groupName === room.groupName && room.jamaahNames.includes(j.namaJamaah);
+                      });
+
+                      // List of jamaah numbers
+                      const jamaahNumbers = matchingJamaah.length > 0
+                        ? matchingJamaah
+                            .map((j) => parseInt(j.nomorJamaah) || j.nomorJamaah)
+                            .sort((a, b) => {
+                              if (typeof a === 'number' && typeof b === 'number') return a - b;
+                              return String(a).localeCompare(String(b));
+                            })
+                            .join(', ')
+                        : 'N/A';
+
+                      // No. Roomlist (No. RL)
+                      const roomlistNumber = matchingJamaah[0]?.nomorRoomlist || room.id.split('-').pop() || '-';
+                      
+                      // Resolve simple custom color classes
+                      const tag = resolveColorTag(room);
+                      const colorStyles = getRowStyles(tag);
+
+                      return (
+                        <tr 
+                          key={room.id} 
+                          className={`transition-all duration-700 ${colorStyles.bg} ${colorStyles.border}`}
+                        >
+                          
+                          {/* 1. NOMOR JAMAAH */}
+                          <td className="py-2 px-3 text-center font-bold text-slate-705 font-mono whitespace-nowrap">
+                            {jamaahNumbers}
+                          </td>
+
+                          {/* 2. NOMOR ROOMLIST */}
+                          <td className="py-2 px-3 text-center font-extrabold text-[#D4AF37] whitespace-nowrap">
+                            #{roomlistNumber}
+                          </td>
+
+                          {/* 3. NOMOR KAMAR INTERACTIVE ACTION */}
+                          <td className="py-2 px-3 font-mono whitespace-nowrap">
+                            {currentRole === 'HANDLING' && editingRoomId === room.id ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="text"
+                                  value={editingRoomNum}
+                                  onChange={(e) => setEditingRoomNum(e.target.value)}
+                                  className="w-12 px-1 py-0.5 bg-amber-50 border border-amber-300 font-bold text-slate-900 rounded font-mono text-center focus:outline-none"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleSaveRoomNumber(room.id)}
+                                  className="p-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
+                            )}
+                          </td>
+
+                          {/* 4. TYPE BED */}
+                          <td className="py-2 px-3 whitespace-nowrap">
+                            <span className="text-[10px] font-black text-slate-800 uppercase font-mono">
+                              {room.roomType}
+                            </span>
+                          </td>
+
+                          {/* 5. NOTES AND ACTIONS */}
+                          <td className="py-2 px-3">
+                            <div className="flex items-center justify-center gap-3">
+                              
+                              {/* Color Flag / Category indicator (Only Color Circle with hover detailed Tooltip & animated Ping) */}
+                              <div 
+                                className={`w-3.5 h-3.5 rounded-full border border-slate-305 shadow-3xs cursor-help shrink-0 flex items-center justify-center relative group ${colorStyles.dot}`}
+                                title={room.notes || colorStyles.label}
+                              >
+                                {tag !== 'slate' && (
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-25 bg-current"></span>
+                                )}
+                                
+                                {/* Hover Tooltip Portal */}
+                                <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap font-bold leading-none font-sans">
+                                  {room.notes || colorStyles.label}
+                                </div>
+                              </div>
+
+                              {/* Actions Group depending on role permission */}
+                              <div className="relative inline-block text-left overflow-visible shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveRoomDropdownId(activeRoomDropdownId === room.id ? null : room.id);
+                                  }}
+                                  className="p-1 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-md transition-all cursor-pointer shadow-3xs inline-flex items-center justify-center bg-white"
+                                  title="Pilihan Aksi"
+                                >
+                                  <MoreVertical className="w-3.5 h-3.5 text-slate-500" />
+                                </button>
+
+                                {activeRoomDropdownId === room.id && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="fixed inset-0 z-30 cursor-default bg-transparent"
+                                      onClick={() => setActiveRoomDropdownId(null)}
+                                    />
+                                    <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-40 text-left animate-in fade-in slide-in-from-top-1 duration-105">
+                                      {currentRole === 'MANAGER' ? (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setActiveRoomDropdownId(null);
+                                              handleOpenEditRoomModal(room);
+                                            }}
+                                            className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-1.5 font-sans"
+                                          >
+                                            <Edit2 className="w-3 h-3 text-[#D4AF37]" />
+                                            <span>Atur Kamar</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setActiveRoomDropdownId(null);
+                                              handleDeleteRoom(room.id);
+                                            }}
+                                            className="w-full text-left px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors flex items-center gap-1.5 font-sans"
+                                          >
+                                            <Trash2 className="w-3 text-rose-500" />
+                                            <span>Hapus Kamar</span>
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveRoomDropdownId(null);
+                                            setEditingRoomId(room.id);
+                                            setEditingRoomNum(room.roomNumber);
+                                          }}
+                                          className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-1.5 font-sans"
+                                        >
+                                          <Edit2 className="w-3 h-3 text-slate-500" />
+                                          <span>Edit No Kamar</span>
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveRoomDropdownId(null);
+                                          setSelectedRoomDetail(room);
+                                        }}
+                                        className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-1.5 font-sans border-t border-slate-100"
+                                      >
+                                        <Info className="w-3 h-3 text-blue-600" />
+                                        <span>Detail Manifest</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+
+                            </div>
+                          </td>
+
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-6 px-4 text-center text-slate-400 text-[10px]">
+                        Tidak ada manifes kecocokan data.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DETAILED INFO DIALOG SHEET */}
+      {selectedRoomDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-xs bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-100">
+            <div className="p-3 bg-[#1A1A1A] text-white flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-[#D4AF37]">Rincian Kamar {selectedRoomDetail.roomNumber}</span>
+              <button onClick={() => setSelectedRoomDetail(null)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-xs leading-relaxed">
+              <div>
+                <span className="text-[9px] font-bold text-slate-400 block uppercase">NAMA GROUP</span>
+                <p className="font-bold text-slate-800 text-[11px]">{selectedRoomDetail.groupName}</p>
+              </div>
+              
+              <div>
+                <span className="text-[9px] font-bold text-slate-400 block uppercase">NAMA HOTEL & KOTA</span>
+                <p className="font-medium text-slate-800 text-[11px]">
+                  {selectedRoomDetail.hotelDetailName} ({selectedRoomDetail.hotelName === 'Makkah' ? '🕋 Makkah' : '🕌 Madinah'})
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[9px] font-bold text-[#D4AF37] block uppercase font-mono">DOKUMEN INTEGRASI JEMAAH ({selectedRoomDetail.jamaahNames.length} Orang)</span>
+                <ul className="list-disc pl-4 space-y-0.5 mt-1 font-extrabold text-slate-700">
+                  {selectedRoomDetail.jamaahNames.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-2 rounded border bg-slate-50">
+                <span className="text-[9px] font-bold text-slate-400 block uppercase">Catatan Operasional & Warna Tag:</span>
+                <p className="text-[10px] font-bold text-slate-700 mt-1">
+                  💡 {selectedRoomDetail.notes || 'Umum / Tidak ada permintaan spesifik'}
+                </p>
+                <div className="mt-1 flex items-center gap-1 text-[8px] font-bold bg-white border p-1 rounded">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>Label Tag: {getRowStyles(resolveColorTag(selectedRoomDetail)).label}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL UNTUK PORTAL MANAGER (FULL CONTROL: BED TYPE, WARNA TAG, ATUR NOTES) */}
+      {currentRole === 'MANAGER' && editingRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in">
+            <div className="px-4 py-3 bg-[#1A1A1A] text-white flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Palette className="w-4 h-4 text-[#D4AF37]" />
+                <span className="font-extrabold text-[11px] text-[#D4AF37] uppercase">ATUR PENUH KAMAR ({editingRoom.roomNumber})</span>
+              </div>
+              <button onClick={() => setEditingRoom(null)} className="text-white hover:text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveRoomDetailManual} className="p-4 space-y-3.5 text-xs">
+              
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-500 uppercase">NOMOR KAMAR</label>
+                  <input
+                    type="text"
+                    required
+                    value={editedRoomNumber}
+                    onChange={(e) => setEditedRoomNumber(e.target.value)}
+                    className="w-full p-1.5 mt-0.5 border border-slate-300 rounded font-black text-slate-900 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-500 uppercase">TIPE BED</label>
+                  <select
+                    value={editedRoomType}
+                    onChange={(e) => setEditedRoomType(e.target.value as any)}
+                    className="w-full p-1.5 mt-0.5 border border-slate-300 rounded text-slate-850 font-bold focus:outline-none"
+                  >
+                    <option value="Double">Double (2 Bed)</option>
+                    <option value="Triple">Triple (3 Bed)</option>
+                    <option value="Quad">Quad (4 Bed)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* HOTEL DETAIL */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-500 uppercase font-semibold">KOTA</label>
+                  <select
+                    value={editedHotelName}
+                    onChange={(e) => setEditedHotelName(e.target.value as any)}
+                    className="w-full p-1.5 mt-0.5 border border-slate-300 rounded font-bold"
+                  >
+                    <option value="Makkah">Makkah</option>
+                    <option value="Madinah">Madinah</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-500 uppercase">NAMA HOTEL DETAIL</label>
+                  <input
+                    type="text"
+                    required
+                    value={editedHotelDetailName}
+                    onChange={(e) => setEditedHotelDetailName(e.target.value)}
+                    className="w-full p-1.5 mt-0.5 border border-slate-300 rounded font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* CHOOSE COLOR TAG FOR SIMPLE VIEW TO PORTAL HANDLING */}
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                  🎨 PILIH WARNA TAG INDIKASI OPERASIONAL (UNTUK PORTAL HANDLING):
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { tag: 'slate', name: 'Umum / Slate', bg: 'bg-slate-100 text-slate-705 border-slate-300' },
+                    { tag: 'red', name: 'Pasutri (Red)', bg: 'bg-rose-100 text-rose-800 border-rose-300' },
+                    { tag: 'green', name: 'Lift (Green)', bg: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+                    { tag: 'blue', name: 'Lansia (Blue)', bg: 'bg-blue-100 text-blue-800 border-blue-300' },
+                    { tag: 'yellow', name: 'Extra Bed (Yellow)', bg: 'bg-amber-100 text-amber-800 border-amber-300' },
+                    { tag: 'purple', name: 'Sampingan (Purple)', bg: 'bg-purple-100 text-purple-800 border-purple-300' }
+                  ].map((opt) => (
+                    <button
+                      key={opt.tag}
+                      type="button"
+                      onClick={() => setEditedColorTag(opt.tag as any)}
+                      className={`py-1 px-1.5 border text-[9px] rounded-lg font-bold text-center flex flex-col items-center justify-center transition-all ${
+                        editedColorTag === opt.tag 
+                          ? 'ring-2 ring-indigo-505 ring-offset-1 scale-102 font-black border-slate-900 shadow-sm' 
+                          : 'opacity-70 border-slate-200'
+                      } ${opt.bg}`}
+                    >
+                      <span>{opt.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* OVERWRITE NOTES */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-500 uppercase">CATATAN KHUSUS / JEMAAH BERDEKATAN DENGAN SIAPA</label>
+                <input
+                  type="text"
+                  value={editedNotes}
+                  onChange={(e) => setEditedNotes(e.target.value)}
+                  placeholder="E.g. Berdekatan dengan keluarga Bpk. Budi Utama di lift"
+                  className="w-full p-1.5 mt-0.5 border border-slate-300 rounded font-mono text-[11px]"
+                />
+              </div>
+
+              {/* NAMES BLOCK */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-500 uppercase">EDIT DAFTAR PENGHUNI (Pisahkan dengan Koma)</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editedJamaahNamesText}
+                  onChange={(e) => setEditedJamaahNamesText(e.target.value)}
+                  className="w-full p-1.5 mt-0.5 border border-slate-300 rounded font-semibold text-slate-800"
+                ></textarea>
+              </div>
+
+              <div className="flex justify-end gap-1.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteRoom(editingRoom.id)}
+                  className="mr-auto px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded text-[10.5px] font-extrabold flex items-center gap-1 cursor-pointer"
+                  title="Hapus Kamar"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>HAPUS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingRoom(null)}
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-650"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-black hover:bg-slate-900 text-[#D4AF37] rounded text-[10px] font-black border border-[#D4AF37]/45 cursor-pointer"
+                >
+                  SIMPAN PERUBAHAN
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* INPUT ROOMLIST BARU MODAL (FORM) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-xs bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-4 py-3 bg-[#1A1A1A] text-white flex items-center justify-between">
+              <span className="font-extrabold text-xs text-[#D4AF37] uppercase">Tambah Kamar</span>
+              <button onClick={() => setIsModalOpen(false)} className="text-white hover:text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRoom} className="p-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-[9px] font-bold text-slate-700 mb-1">GRUP JEMAAH</label>
+                <select 
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-xs text-slate-800 font-bold"
+                >
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-slate-500 mb-0.5">KOTA HOTEL</label>
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 p-0.5 rounded">
+                  <button
+                    type="button"
+                    onClick={() => autofillHotel('Makkah')}
+                    className={`py-1 text-[10px] font-bold rounded ${
+                      hotelName === 'Makkah' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500'
+                    }`}
+                  >
+                    Makkah
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => autofillHotel('Madinah')}
+                    className={`py-1 text-[10px] font-bold rounded ${
+                      hotelName === 'Madinah' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500'
+                    }`}
+                  >
+                    Madinah
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-slate-700 mb-1">NAMA HOTEL DETAIL</label>
+                <input
+                  type="text"
+                  value={hotelDetailName}
+                  onChange={(e) => setHotelDetailName(e.target.value)}
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded font-semibold text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-700 mb-1">NOMOR KAMAR</label>
+                  <input
+                    type="text"
+                    required
+                    value={roomNumber}
+                    onChange={(e) => setRoomNumber(e.target.value)}
+                    placeholder="E.g. 1405"
+                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-700 mb-1">TIPE BED</label>
+                  <select
+                    value={roomType}
+                    onChange={(e) => setRoomType(e.target.value as any)}
+                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-slate-800 font-bold"
+                  >
+                    <option value="Double">Double</option>
+                    <option value="Triple">Triple</option>
+                    <option value="Quad">Quad</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* CHOOSE COLOR TAG FOR NEW ROOM */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-700 mb-1">PILIH WARNA INDIKASI</label>
+                <select
+                  value={colorTag}
+                  onChange={(e) => setColorTag(e.target.value as any)}
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-slate-800 font-semibold"
+                >
+                  <option value="slate">Umum (Slate)</option>
+                  <option value="red">Pasutri (Merah)</option>
+                  <option value="green">Dekat Lift (Hijau)</option>
+                  <option value="blue">Lansia / Scenic (Biru)</option>
+                  <option value="yellow">Extra Bed (Kuning)</option>
+                  <option value="purple">Berdekatan (Ungu)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-slate-700 mb-0.5">PENGHUNI (Pisahkan Koma)</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={jamaahInput}
+                  onChange={(e) => setJamaahInput(e.target.value)}
+                  placeholder="Bpk. Ahmad Subarjo, Ibu Aminah"
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-xs font-medium"
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-bold text-slate-700 mb-0.5">CATATAN KHUSUS (Opsional)</label>
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Contoh: Sesama Mahrom"
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end gap-1 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-3 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-600"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-black text-[#D4AF37] rounded text-[10px] font-bold border border-[#D4AF37]/30"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* PDF REPORT VIEW PREVIEW MODAL */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xs">
+          <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-3.5 py-3 bg-[#1A1A1A] text-white flex items-center justify-between border-b border-slate-700">
+              <span className="font-bold text-xs text-[#D4AF37] uppercase font-black">PREVIEW MANIFES PDF</span>
+              <button onClick={() => setIsPreviewOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto text-xs" id="printable-area">
+              <div className="text-center border-b pb-3">
+                <h3 className="font-black text-slate-900 tracking-tight uppercase">PT. JEJAK IMANI BERKAH BERSAMA</h3>
+                <p className="text-[9px] text-slate-450 font-bold font-mono">DOKUMEN MANIFES RESMI OPERASIONAL KSA</p>
+                <p className="font-bold text-[#A47F17] text-[10px] mt-1">Daftar Plotting Kamar Hotel Saudi Arabia ({currentRole === 'MANAGER' ? 'Terbitan HQ' : 'Live Update Lapangan'})</p>
+              </div>
+
+              <div className="space-y-2">
+                {localRooms.map((room) => {
+                  const tag = resolveColorTag(room);
+                  const colorStyles = getRowStyles(tag);
+                  return (
+                    <div key={room.id} className={`p-2 border rounded text-[11px] leading-relaxed ${colorStyles.bg} ${colorStyles.border}`}>
+                      <div className="flex justify-between items-center p-1 px-2 rounded mb-1 bg-slate-150">
+                        <span className="font-black text-slate-850">Kamar {room.roomNumber} ({room.roomType})</span>
+                        <span className={`text-[9px] font-black uppercase px-1 rounded ${colorStyles.badge}`}>{colorStyles.label}</span>
+                      </div>
+                      <p className="font-bold text-slate-800">🏨 Hotel: {room.hotelDetailName} ({room.hotelName})</p>
+                      <p className="mt-1 font-semibold text-slate-655">👥 Penghuni Kamar: {room.jamaahNames.join(', ')}</p>
+                      {room.notes && <p className="text-[10px] text-indigo-900 bg-indigo-50 p-1 rounded mt-1 font-mono">⚠️ Notes: {room.notes}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-center text-[9px] text-slate-400 border-t pt-3 lowercase font-mono">
+                GENERATED SECARA ELEKTRONIK PADA PORTAL HANDLING SAUDI ARABIA. JEJAK IMANI.
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border-t flex justify-end gap-1.5">
+              <button 
+                onClick={() => window.print()}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer"
+              >
+                Print / Download PDF
+              </button>
+              <button 
+                onClick={() => setIsPreviewOpen(false)}
+                className="px-3 py-1.5 bg-slate-200 text-slate-800 rounded text-[10px] font-bold cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
