@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Hotel, LogOut, Bell, Folder, Briefcase, Calendar, BookOpen, 
   Settings, CheckCircle, Smartphone, MapPin, Send, AlertTriangle, 
-  Menu, X, Sparkles, ChevronRight, FileText, Compass, Info, Download, Eye, HelpCircle, Edit2,
-  Files, Bed, UserCheck, Users, FileSpreadsheet, RotateCw
+  Menu, X, Sparkles, ChevronRight, FileText, Compass, Info, Download, Eye, EyeOff, HelpCircle, Edit2,
+  Files, Bed, UserCheck, Users, FileSpreadsheet, RotateCw, Wallet, Clock, DollarSign, Camera, ShieldAlert
 } from 'lucide-react';
 
 function BedHouseIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -410,6 +410,8 @@ export default function App() {
   const [editBioName, setEditBioName] = useState('');
   const [editBioPhone, setEditBioPhone] = useState('');
   const [editBioUsername, setEditBioUsername] = useState('');
+  const [editBioPassword, setEditBioPassword] = useState('');
+  const [showBioPassword, setShowBioPassword] = useState(false);
   const [editBioStatus, setEditBioStatus] = useState<'Aktif' | 'Standby' | 'Cuti'>('Aktif');
   const [bioSuccessMsg, setBioSuccessMsg] = useState('');
 
@@ -571,7 +573,7 @@ export default function App() {
   };
 
   // Update own handling biodata and sync automatically with team list
-  const handleUpdateSelfBiodata = (updatedFields: { name: string; phone: string; username: string; status: 'Aktif' | 'Standby' | 'Cuti' }) => {
+  const handleUpdateSelfBiodata = (updatedFields: { name: string; phone: string; username: string; password?: string; status: 'Aktif' | 'Standby' | 'Cuti' }) => {
     const userLower = (currentUser || '').toLowerCase();
     const idx = teamMembers.findIndex(t => 
       t.name.toLowerCase() === userLower || t.username.toLowerCase() === userLower
@@ -583,7 +585,8 @@ export default function App() {
         name: updatedFields.name,
         phone: updatedFields.phone,
         username: updatedFields.username,
-        status: updatedFields.status
+        status: updatedFields.status,
+        ...(updatedFields.password !== undefined ? { password: updatedFields.password } : {})
       };
       setTeamMembers(updatedList);
       localStorage.setItem('ji_team_members_v3', JSON.stringify(updatedList));
@@ -1306,11 +1309,13 @@ export default function App() {
                               >
                                 {task.status === 'Belum Selesai' ? (
                                   <>
-                                    <span>⏱️</span> Presensi Masuk
+                                    <Clock className="w-2.5 h-2.5 shrink-0" />
+                                    <span>Presensi Masuk</span>
                                   </>
                                 ) : (
                                   <>
-                                    <span>📤</span> Presensi Selesai
+                                    <LogOut className="w-2.5 h-2.5 shrink-0" />
+                                    <span>Presensi Selesai</span>
                                   </>
                                 )}
                               </button>
@@ -1477,36 +1482,34 @@ export default function App() {
           {activeTab === 'resources' && (
             <div className="space-y-6 animate-in fade-in duration-200" id="resources-hub-tab">
               {/* Tabs nav bar for Resources */}
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Folder className="w-4.5 h-4.5 text-[#D4AF37]" />
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wide">DOKUMEN INTEGRATED PORTAL</span>
-                </div>
-
-                <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 w-full md:w-auto overflow-x-auto select-none font-bold text-[10px]">
+              <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex justify-center items-center">
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-md w-full select-none font-bold text-[10px]">
                   <button
                     onClick={() => setActiveResourceTab('sop')}
-                    className={`px-3 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
-                      activeResourceTab === 'sop' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold shadow-xs' : 'text-slate-600 hover:text-slate-905'
+                    className={`flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+                      activeResourceTab === 'sop' ? 'bg-white text-slate-900 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    📖 SOP Handling Lapangan
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>SOP Handling</span>
                   </button>
                   <button
                     onClick={() => setActiveResourceTab('packages')}
-                    className={`px-3 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
-                      activeResourceTab === 'packages' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold shadow-xs' : 'text-slate-600 hover:text-slate-905'
+                    className={`flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+                      activeResourceTab === 'packages' ? 'bg-white text-slate-900 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    📦 Paket Info Keberangkatan
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span>Paket Info</span>
                   </button>
                   <button
                     onClick={() => setActiveResourceTab('documents')}
-                    className={`px-3 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
-                      activeResourceTab === 'documents' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold shadow-xs' : 'text-slate-600 hover:text-slate-905'
+                    className={`flex-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+                      activeResourceTab === 'documents' ? 'bg-white text-slate-900 font-extrabold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    📁 Arsip Berkas Digital
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Arsip Berkas</span>
                   </button>
                 </div>
               </div>
@@ -1701,46 +1704,51 @@ export default function App() {
                       <>
                         <button
                           onClick={() => setHandlingReportSubTab('expenses')}
-                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
+                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
                             handlingReportSubTab === 'expenses' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold' : 'text-slate-600 hover:text-slate-905'
                           }`}
                         >
-                          💵 Lapor Kas
+                          <Wallet className="w-3.5 h-3.5 shrink-0" />
+                          <span>Lapor Kas</span>
                         </button>
                         <button
                           onClick={() => setHandlingReportSubTab('attendance')}
-                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
+                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
                             handlingReportSubTab === 'attendance' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold' : 'text-slate-600 hover:text-slate-905'
                           }`}
                         >
-                          ⏱️ Presensi
+                          <Clock className="w-3.5 h-3.5 shrink-0" />
+                          <span>Presensi</span>
                         </button>
                         <button
                           onClick={() => setHandlingReportSubTab('incident')}
-                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
+                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
                             handlingReportSubTab === 'incident' ? 'bg-[#0F172A] text-[#D4AF37] font-extrabold' : 'text-slate-600 hover:text-slate-905'
                           }`}
                         >
-                          🚨 Lapor Kejadian
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <span>Lapor Kejadian</span>
                         </button>
                       </>
                     ) : (
                       <>
                         <button
                           onClick={() => setManagerReportSubTab('cashflow')}
-                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
+                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
                             managerReportSubTab === 'cashflow' ? 'bg-[#D4AF37] text-slate-950 font-extrabold' : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          💰 Cashflow & Approval Riyadh
+                          <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                          <span>Cashflow & Approval Riyadh</span>
                         </button>
                         <button
                           onClick={() => setManagerReportSubTab('schedule')}
-                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap ${
+                          className={`flex-1 px-4 py-1.5 rounded transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
                             managerReportSubTab === 'schedule' ? 'bg-[#D4AF37] text-slate-950 font-extrabold' : 'text-slate-600 hover:text-slate-905'
                           }`}
                         >
-                          📅 Jadwal Tugas Squad
+                          <Calendar className="w-3.5 h-3.5 shrink-0" />
+                          <span>Jadwal Tugas Squad</span>
                         </button>
                       </>
                     )}
@@ -1901,7 +1909,7 @@ export default function App() {
                                 return (
                                   <div className="p-3.5 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg space-y-2.5">
                                     <div className="flex items-center gap-1.5 border-b border-[#D4AF37]/10 pb-1.5">
-                                      <span className="text-xs">📋</span>
+                                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
                                       <span className="text-[10px] text-[#A47F17] uppercase font-black block tracking-wide">
                                         Checklist Verifikasi: {activeCategory}
                                       </span>
@@ -1935,7 +1943,7 @@ export default function App() {
                             <div className="space-y-1.5">
                               <label className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">Absensi Foto</label>
                               <div className="border border-dashed border-slate-250 rounded-lg p-3.5 bg-slate-50/50 flex flex-col items-center justify-center text-center">
-                                <span className="text-xl">📷</span>
+                                <Camera className="w-5 h-5 text-[#D4AF37] shrink-0" />
                                 <span className="text-[10px] text-slate-500 font-extrabold mt-1 uppercase">Kamera Selfie Aktif</span>
                                 <span className="text-[9px] text-slate-400 mt-0.5">Sertifikasi Wajah & Latar Penugasan</span>
                               </div>
@@ -1964,7 +1972,7 @@ export default function App() {
                               <div key={log.id} className="py-3 flex flex-col gap-2.5 text-xs font-semibold">
                                 <div className="flex justify-between items-center gap-3">
                                   <div className="flex items-start gap-2">
-                                    <span className="text-base shrink-0 mt-0.5">👤</span>
+                                    <User className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                                     <div>
                                       <strong className="text-slate-850 font-extrabold">{log.name}</strong>
                                       <span className="text-[10px] text-slate-400 block mt-0.5 font-bold">
@@ -1985,12 +1993,15 @@ export default function App() {
                                 {log.sopItems && log.sopItems.length > 0 && (
                                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] space-y-1 text-slate-600 block pl-3.5">
                                     <p className="font-extrabold text-[#A47F17] flex items-center gap-1.5 uppercase tracking-wide text-[10px]">
-                                      <span>📋 SOP Checklist Realisasi Kegiatan:</span>
+                                      <CheckCircle className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                                      <span>SOP Checklist Realisasi Kegiatan:</span>
                                     </p>
                                     <ul className="space-y-1 font-bold">
                                       {log.sopItems.map((sop: any, sIdx: number) => (
                                         <li key={sIdx} className="flex items-start gap-1.5">
-                                          <span className="shrink-0 mt-0.5">{sop.completed ? '✅' : '❌'}</span>
+                                          <span className={`shrink-0 mt-0.5 text-xs font-black ${sop.completed ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                            {sop.completed ? '✓' : '✗'}
+                                          </span>
                                           <span className={sop.completed ? 'text-slate-800 font-semibold' : 'text-slate-400 font-normal line-through'}>
                                             {sop.task}
                                           </span>
@@ -2104,14 +2115,22 @@ export default function App() {
                               <p className="text-xs text-slate-700 leading-relaxed">{inc.text}</p>
                               
                               {inc.groupName && (
-                                <div className="text-[10px] text-indigo-700 font-bold">
-                                  📂 Grup: {inc.groupName}
+                                <div className="text-[10px] text-indigo-700 font-bold flex items-center gap-1">
+                                  <Folder className="w-3 h-3 text-indigo-700 shrink-0" />
+                                  <span>Grup: {inc.groupName}</span>
                                 </div>
                               )}
 
                               <div className="flex justify-between items-center text-[10px] pt-1.5 border-t border-slate-200/40">
-                                <span className="font-bold text-slate-450">Oleh: 👨‍✈️ {inc.name}</span>
-                                <span className="text-emerald-700 font-bold">✓ Terkirim ke Manager</span>
+                                <span className="font-bold text-slate-450 flex items-center gap-1">
+                                  <span>Oleh:</span>
+                                  <User className="w-3 h-3 text-slate-450 shrink-0" />
+                                  <span>{inc.name}</span>
+                                </span>
+                                <span className="text-emerald-700 font-bold flex items-center gap-0.5">
+                                  <span>✓</span>
+                                  <span>Terkirim ke Manager</span>
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -2306,9 +2325,8 @@ export default function App() {
                 <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
                   <h2 className="text-xs font-black text-slate-900 flex items-center gap-2 uppercase tracking-tight">
                     <User className="w-4 h-4 text-[#D4AF37]" />
-                    <span>Biodata Tim & Akun Aktif</span>
+                    <span>Profil Akun</span>
                   </h2>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Detail kordinator lapangan operasional PT. JEJAK IMANI BERKAH BERSAMA</p>
                 </div>
 
                 {bioSuccessMsg && (
@@ -2375,6 +2393,31 @@ export default function App() {
                             <option value="Cuti">Sedang Cuti Kerja</option>
                           </select>
                         </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Password Baru</label>
+                          <div className="relative">
+                            <input 
+                              type={showBioPassword ? "text" : "password"} 
+                              className="w-full p-2 pr-9 bg-slate-50 border border-slate-200 rounded text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                              value={editBioPassword}
+                              onChange={(e) => setEditBioPassword(e.target.value)}
+                              placeholder="Ketik password baru jika ingin mengubah"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowBioPassword(!showBioPassword)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                              title={showBioPassword ? "Sembunyikan Password" : "Tampilkan Password"}
+                            >
+                              {showBioPassword ? (
+                                <EyeOff className="w-3.5 h-3.5" />
+                              ) : (
+                                <Eye className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                       <div className="flex gap-2 pt-2">
@@ -2385,6 +2428,7 @@ export default function App() {
                               name: editBioName,
                               phone: editBioPhone,
                               username: editBioUsername,
+                              password: editBioPassword,
                               status: editBioStatus
                             });
                             setIsEditingBio(false);
@@ -2411,12 +2455,12 @@ export default function App() {
                             {matchingMember ? matchingMember.name.charAt(0) : currentUser?.charAt(0) || 'U'}
                           </div>
                           <div>
-                            <h3 className="font-bold text-slate-900 text-sm">👨‍✈️ {matchingMember ? matchingMember.name : currentUser}</h3>
+                            <h3 className="font-bold text-slate-900 text-sm">{matchingMember ? matchingMember.name : currentUser}</h3>
                             <p className="text-[10px] font-bold text-[#D4AF37] uppercase">
                               {matchingMember ? matchingMember.role : (currentRole === 'HANDLING' ? 'Handling Executive' : 'Operations Manager')}
                             </p>
                             <p className="text-[10px] text-emerald-700 font-bold mt-0.5 uppercase">
-                              ● STATUS: {matchingMember ? matchingMember.status : 'AKTIF'} DI TANAH SUCI
+                              STATUS: {matchingMember ? matchingMember.status : 'AKTIF'} DI TANAH SUCI
                             </p>
                           </div>
                         </div>
@@ -2428,6 +2472,7 @@ export default function App() {
                               setEditBioPhone(matchingMember.phone);
                               setEditBioUsername(matchingMember.username);
                               setEditBioStatus(matchingMember.status);
+                              setEditBioPassword(matchingMember.password || 'pass');
                               setIsEditingBio(true);
                             }}
                             className="bg-amber-50 hover:bg-amber-100 text-[#A47F17] hover:text-[#8e6b10] p-1.5 px-3 rounded-lg border border-amber-200/55 text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95 duration-100"
@@ -2462,28 +2507,20 @@ export default function App() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center py-1">
-                          <span className="text-slate-400 font-medium font-mono">ID Karyawan</span>
-                          <span className="font-mono font-bold text-[#A47F17]">
-                            {matchingMember ? `JI-SA-2026-${matchingMember.id.replace(/\D/g, '').slice(-3) || '092'}` : 'JI-MG-2026-001'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center py-1">
                           <span className="text-slate-400 font-medium">WhatsApp / No. Telepon</span>
                           <span className="font-bold text-slate-800">
                             {matchingMember ? matchingMember.phone : '+966 50 123 4567'}
                           </span>
                         </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">Password</span>
+                          <span className="font-mono font-bold text-slate-700">
+                            ••••••••
+                          </span>
+                        </div>
                       </div>
                     </>
                   )}
-
-                  {/* Sync Indicator Notice */}
-                  <div className="bg-emerald-50/40 p-2.5 rounded-lg border border-emerald-100/50 text-[9.5px] text-emerald-900 flex items-start gap-1.5 font-semibold text-justify">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>
-                      BIODATA TERINTEGRASI: Seluruh data akun di atas terhubung langsung secara dua arah dengan database portal manager. Jika ada perubahan dari portal manager atau edits mandiri, data akan otomatis berubah seketika.
-                    </span>
-                  </div>
 
                   {/* Log Out Button */}
                   <div className="pt-3 border-t border-slate-100">
@@ -2511,7 +2548,7 @@ export default function App() {
             activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Compass className={`w-4.5 h-4.5 ${activeTab === 'dashboard' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+          <Compass className="w-4.5 h-4.5 stroke-2" />
           <span className="text-[9px] font-black mt-1 uppercase tracking-tight">Dashboard</span>
         </button>
 
@@ -2521,7 +2558,7 @@ export default function App() {
             activeTab === 'roomlist' ? 'text-[#D4AF37]' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Hotel className={`w-4.5 h-4.5 ${activeTab === 'roomlist' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+          <Hotel className="w-4.5 h-4.5 stroke-2" />
           <span className="text-[9px] font-black mt-1 uppercase tracking-tight">Room List</span>
         </button>
 
@@ -2531,7 +2568,7 @@ export default function App() {
             activeTab === 'resources' ? 'text-[#D4AF37]' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Folder className={`w-4.5 h-4.5 ${activeTab === 'resources' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+          <Folder className="w-4.5 h-4.5 stroke-2" />
           <span className="text-[9px] font-black mt-1 uppercase tracking-tight">Dokumen</span>
         </button>
 
@@ -2541,7 +2578,7 @@ export default function App() {
             activeTab === 'reports' ? 'text-[#D4AF37]' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <FileText className={`w-4.5 h-4.5 ${activeTab === 'reports' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+          <FileText className="w-4.5 h-4.5 stroke-2" />
           <span className="text-[9px] font-black mt-1 uppercase tracking-tight">Laporan</span>
         </button>
 
@@ -2551,7 +2588,7 @@ export default function App() {
             activeTab === 'account' ? 'text-[#D4AF37]' : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <User className={`w-4.5 h-4.5 ${activeTab === 'account' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+          <User className="w-4.5 h-4.5 stroke-2" />
           <span className="text-[9px] font-black mt-1 uppercase tracking-tight">Akun</span>
         </button>
       </div>
@@ -2564,7 +2601,7 @@ export default function App() {
             {/* Header */}
             <div className="p-3 bg-slate-900 text-white border-b border-[#D4AF37]/20 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-[#D4AF37] stroke-[2.5px]" />
+                <Bell className="w-4 h-4 text-[#D4AF37] stroke-2" />
                 <span className="text-xs font-black tracking-wide uppercase text-white">Notifikasi</span>
               </div>
               <button 

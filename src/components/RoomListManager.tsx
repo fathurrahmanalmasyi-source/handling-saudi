@@ -627,67 +627,65 @@ export default function RoomListManager({
     <div className="space-y-3" id="roomlist-section">
       
       {/* HEADER SIMPEL: MANIFES & DOWNLOAD & TABS ROLE */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-white p-3.5 rounded-xl border border-slate-200 shadow-3xs">
-        <div>
-          <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
-            <Hotel className="w-4 h-4 text-[#D4AF37]" />
-            <span>Manifes Roomlist {currentRole === 'MANAGER' ? 'HQ (Manager Portal)' : 'KSA (Handling Portal)'}</span>
-          </h2>
-          {currentRole === 'MANAGER' && (
+      {currentRole === 'MANAGER' && (
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-white p-3.5 rounded-xl border border-slate-200 shadow-3xs">
+          <div>
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
+              <Hotel className="w-4 h-4 text-[#D4AF37]" />
+              <span>Manifes Roomlist HQ (Manager Portal)</span>
+            </h2>
             <p className="text-[10px] text-slate-500">
               Atur pembagian roomlist pasutri, lift access, & status muasassah
             </p>
-          )}
-        </div>
+          </div>
 
-        <div className="flex items-center gap-1.5 w-full sm:w-auto self-stretch sm:self-auto justify-end">
-          {currentRole === 'MANAGER' && (
-            <>
-              <button
-                onClick={() => setIsPreviewOpen(true)}
-                className="p-2 bg-[#1A1A1A] hover:bg-black text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
-                title="Unduh PDF"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="p-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-slate-700 cursor-pointer flex items-center gap-1"
-              >
-                <span>+ Kamar Baru</span>
-              </button>
-            </>
-          )}
+          <div className="flex items-center gap-1.5 w-full sm:w-auto self-stretch sm:self-auto justify-end">
+            <button
+              onClick={() => setIsPreviewOpen(true)}
+              className="p-2 bg-[#1A1A1A] hover:bg-black text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
+              title="Unduh PDF"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="p-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-slate-700 cursor-pointer flex items-center gap-1"
+            >
+              <span>+ Kamar Baru</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* TABS SELECTOR (View list vs Plotting/Tentukan Roomlist) */}
-      <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm">
-        <button
-          onClick={() => setActiveSubSection('view-list')}
-          className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeSubSection === 'view-list' 
-              ? 'bg-white text-slate-900 shadow-2xs' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Hotel className="w-3.5 h-3.5" />
-          <span>Daftar Hotel & Kamar</span>
-        </button>
-        
-        <button
-          onClick={() => setActiveSubSection('plot-roomlist')}
-          className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeSubSection === 'plot-roomlist' 
-              ? 'bg-white text-slate-900 shadow-2xs' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>Tentukan No Roomlist</span>
-        </button>
-      </div>
+      {/* TABS SELECTOR (View list vs Plotting/Tentukan Roomlist) - Only for MANAGER */}
+      {currentRole === 'MANAGER' && (
+        <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm">
+          <button
+            onClick={() => setActiveSubSection('view-list')}
+            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeSubSection === 'view-list' 
+                ? 'bg-white text-slate-900 shadow-2xs' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Hotel className="w-3.5 h-3.5" />
+            <span>Daftar Hotel & Kamar</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveSubSection('plot-roomlist')}
+            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeSubSection === 'plot-roomlist' 
+                ? 'bg-white text-slate-900 shadow-2xs' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Tentukan No Roomlist</span>
+          </button>
+        </div>
+      )}
 
       {/* TAB 1: PLOTTING ROOMLIST PORTAL INTEGRASI AI */}
       {activeSubSection === 'plot-roomlist' && (
@@ -820,7 +818,7 @@ export default function RoomListManager({
             <div className="grid grid-cols-2 gap-2 text-xs">
               {/* Filter Group */}
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">FILTER GRUP JEMAAH</label>
+                <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">PILIH GRUP</label>
                 <select
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
@@ -868,7 +866,7 @@ export default function RoomListManager({
                 {searchTerm && (
                   <button 
                     onClick={() => { setSearchTerm(''); setShowSuggestions(false); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 hover:text-slate-650"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 hover:text-slate-655"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -896,36 +894,8 @@ export default function RoomListManager({
               )}
             </div>
 
-            {/* COLOR LEGEND EXPLANATION BADGES */}
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-1.5">
-              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wide font-mono">LEGENDA ARTI WARNA & INDIKATOR UTAMA:</span>
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5 items-center">
-                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-                  <span>Berdekatan Group A</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
-                  <span>Berdekatan Group B</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[9.5px] text-slate-705 font-bold uppercase font-mono">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-                  <span>Berdekatan Group C</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[9.5px] text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-bold font-mono">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
-                  <span>Request Khusus Lainnya</span>
-                </span>
-              </div>
-            </div>
-
             {/* ACTION DOWNLOAD PDF UNDER FILTER */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
-              <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1 font-mono">
-                <Info className="w-3.5 h-3.5 text-[#D4AF37]/80 shrink-0" />
-                <span>Format pencarian realtime nama jamaah & nomor kamar</span>
-              </div>
-              
+            <div className="flex justify-end pt-2.5 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsPreviewOpen(true)}
@@ -942,7 +912,7 @@ export default function RoomListManager({
               <Hotel className="w-9 h-9 text-[#D4AF37] mx-auto animate-pulse" />
               <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight">Silakan Pilih Grup & Hotel Terlebih Dahulu</h4>
               <p className="text-[10px] text-slate-500/90 leading-relaxed font-semibold">
-                Sesuai standar operasional lapangan handling Saudi Arabia, pilih Nama Grup Operasional dan Detail Penempatan Hotel di atas untuk menampilkan manifest kamar.
+                Pilih nama grup and nama hotel di atas untuk menampilkan roomlist
               </p>
             </div>
           ) : (
@@ -1013,25 +983,7 @@ export default function RoomListManager({
 
                           {/* 3. NOMOR KAMAR INTERACTIVE ACTION */}
                           <td className="py-2 px-3 font-mono whitespace-nowrap">
-                            {currentRole === 'HANDLING' && editingRoomId === room.id ? (
-                               <div className="flex items-center gap-1">
-                                 <input
-                                   type="text"
-                                   value={editingRoomNum}
-                                   onChange={(e) => setEditingRoomNum(e.target.value)}
-                                   className="w-12 px-1 py-0.5 bg-amber-50 border border-amber-300 font-bold text-slate-900 rounded font-mono text-center focus:outline-none"
-                                   autoFocus
-                                 />
-                                 <button
-                                   onClick={() => handleSaveRoomNumber(room.id)}
-                                   className="p-0.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded cursor-pointer"
-                                 >
-                                   <Check className="w-3 h-3" />
-                                 </button>
-                               </div>
-                            ) : (
-                               <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
-                            )}
+                            <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
                           </td>
 
                           {/* 4. TYPE BED */}
@@ -1512,6 +1464,102 @@ export default function RoomListManager({
         </div>
       )}
 
+      {/* POPUP EDIT NOMOR KAMAR KHUSUS HANDLING PORTAL */}
+      {currentRole === 'HANDLING' && editingRoomId && (() => {
+        const targetRoom = localRooms.find(r => r.id === editingRoomId);
+        if (!targetRoom) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              {/* Header */}
+              <div className="p-4 bg-slate-900 text-white border-b border-[#D4AF37]/20 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Edit2 className="w-4 h-4 text-[#D4AF37]" />
+                  <span className="text-xs font-black tracking-wide uppercase text-white font-sans">Edit Nomor Kamar</span>
+                </div>
+                <button 
+                  onClick={() => setEditingRoomId(null)}
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 space-y-4 text-xs font-semibold font-sans">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Grup Umroh / Paket</span>
+                  <p className="text-slate-800 font-bold">{targetRoom.groupName}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">No. Roomlist (RL)</span>
+                    <p className="text-amber-600 font-extrabold text-sm">#{targetRoom.id.split('-').pop()}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Tipe Kamar</span>
+                    <p className="text-slate-800 font-extrabold text-sm uppercase">{targetRoom.roomType}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Hotel Penempatan</span>
+                  <p className="text-slate-800 font-bold">{targetRoom.hotelDetailName} ({targetRoom.hotelName})</p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Daftar Jamaah ({targetRoom.jamaahNames.length})</span>
+                  <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-150 space-y-1 font-semibold text-slate-700">
+                    {targetRoom.jamaahNames.map((name, index) => (
+                      <div key={index} className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        <span>{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] text-slate-400 uppercase font-black block tracking-wider">Masukkan Nomor Kamar Baru</label>
+                  <input
+                    type="text"
+                    value={editingRoomNum}
+                    onChange={(e) => setEditingRoomNum(e.target.value)}
+                    placeholder="Contoh: 1215, 804"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-250 rounded-lg text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:bg-white text-center font-mono"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveRoomNumber(targetRoom.id);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-3 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditingRoomId(null)}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-extrabold rounded-lg cursor-pointer transition-colors font-sans"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveRoomNumber(targetRoom.id)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-850 text-[#D4AF37] text-xs font-extrabold rounded-lg cursor-pointer transition-all shadow-xs font-sans"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* PDF REPORT VIEW PREVIEW MODAL */}
       {isPreviewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xs">
@@ -1524,41 +1572,71 @@ export default function RoomListManager({
             </div>
 
             <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto text-xs" id="printable-area">
-              <div className="text-center border-b pb-3">
-                <h3 className="font-black text-slate-900 tracking-tight uppercase">PT. JEJAK IMANI BERKAH BERSAMA</h3>
-                <p className="text-[9px] text-slate-450 font-bold font-mono">DOKUMEN MANIFES RESMI OPERASIONAL KSA</p>
-                <p className="font-bold text-[#A47F17] text-[10px] mt-1">Daftar Plotting Kamar Hotel Saudi Arabia ({currentRole === 'MANAGER' ? 'Terbitan HQ' : 'Live Update Lapangan'})</p>
+              <div className="text-center border-b border-slate-200 pb-3">
+                <h3 className="font-black text-slate-950 text-sm tracking-tight uppercase">PT. JEJAK IMANI BERKAH BERSAMA</h3>
+                <p className="text-[9px] text-slate-400 font-extrabold font-mono tracking-widest mt-0.5 uppercase">MANIFES UTAMA DEPARTEMEN HANDLING KSA</p>
+                <div className="mt-2 text-slate-805 text-[10px] font-bold space-y-0.5">
+                  <p><span className="text-slate-400 uppercase text-[8.5px] font-mono">Grup:</span> {selectedGroup || 'Semua Grup'}</p>
+                  <p><span className="text-slate-400 uppercase text-[8.5px] font-mono">Hotel:</span> {selectedHotelFilter || 'Semua Hotel'}</p>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                {localRooms.map((room) => {
-                  const isAdj = checkIsAdjacentText(room.notes || '', room.colorTag);
-                  const hasOther = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
-                  const tag = resolveColorTag(room);
-                  const colorStyles = getRowStyles(tag);
-                  
-                  let labelText = "Umum / Standar";
-                  let bgClass = "bg-slate-100 text-slate-700 border-slate-200 border";
-                  if (isAdj) {
-                    labelText = "Keluarga Berdekatan";
-                    bgClass = "bg-purple-100 text-purple-700 border-purple-255 border font-semibold";
-                  } else if (hasOther) {
-                    labelText = "⚠️ Request Khusus";
-                    bgClass = "bg-amber-100 text-amber-800 border-amber-250 border font-semibold";
-                  }
-
-                  return (
-                    <div key={room.id} className={`p-2 border rounded text-[11px] leading-relaxed ${isAdj ? 'bg-purple-50/50 border-purple-200' : hasOther ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-slate-201'}`}>
-                      <div className="flex justify-between items-center p-1 px-2 rounded mb-1 bg-slate-100/80">
-                        <span className="font-black text-slate-850">Kamar {room.roomNumber} ({room.roomType})</span>
-                        <span className={`text-[8.5px] uppercase px-1.5 py-0.5 rounded font-bold ${bgClass}`}>{labelText}</span>
-                      </div>
-                      <p className="font-bold text-slate-800">🏨 Hotel: {room.hotelDetailName} ({room.hotelName})</p>
-                      <p className="mt-1 font-semibold text-slate-655">👥 Penghuni Kamar: {room.jamaahNames.join(', ')}</p>
-                      {room.notes && <p className="text-[10px] text-slate-700 bg-slate-50 p-1.5 rounded mt-1 font-mono">{isAdj ? '🔁 ' : '⚠️ '}Notes: {room.notes}</p>}
-                    </div>
-                  );
-                })}
+              {/* Tabel Detail */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px] text-left border-collapse border border-slate-300">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-black uppercase text-[8.5px] tracking-wider">
+                      <th className="p-2 border border-slate-300 text-center w-12">No. RL</th>
+                      <th className="p-2 border border-slate-300 text-center w-20">No. Kamar</th>
+                      <th className="p-2 border border-slate-300 text-center w-16">Tipe Bed</th>
+                      <th className="p-2 border border-slate-300">Nama-Nama Penghuni Kamar</th>
+                      <th className="p-2 border border-slate-300 w-44">Catatan / Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white leading-relaxed">
+                    {filteredRooms.length > 0 ? (
+                      filteredRooms.map((room) => {
+                        const isAdj = checkIsAdjacentText(room.notes || '', room.colorTag);
+                        const hasOther = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
+                        const roomlistNumber = room.id.split('-').pop() || '-';
+                        return (
+                          <tr key={room.id} className="text-slate-800 hover:bg-slate-50">
+                            <td className="p-2 border border-slate-300 text-center font-extrabold text-[#A47F17] font-mono">
+                              #{roomlistNumber}
+                            </td>
+                            <td className="p-2 border border-slate-300 text-center font-mono font-bold text-slate-950">
+                              {room.roomNumber || 'TBD'}
+                            </td>
+                            <td className="p-2 border border-slate-300 text-center font-extrabold uppercase text-slate-700">
+                              {room.roomType}
+                            </td>
+                            <td className="p-2 border border-slate-300 font-bold">
+                              <div className="space-y-0.5">
+                                {room.jamaahNames.map((name, i) => (
+                                  <div key={i} className="flex items-center gap-1.5">
+                                    <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0" />
+                                    <span>{name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-2 border border-slate-300 font-medium text-slate-600 text-[9.5px]">
+                              {isAdj && <span className="inline-block text-[7.5px] bg-purple-50 text-purple-700 border border-purple-200 rounded px-1 font-black mr-1 uppercase">BERDEKATAN</span>}
+                              {hasOther && <span className="inline-block text-[7.5px] bg-amber-50 text-amber-800 border border-amber-200 rounded px-1 font-black mr-1 uppercase">KHUSUS</span>}
+                              <span>{room.notes || '-'}</span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-slate-450 font-extrabold text-[10px]">
+                          Tidak ada data roomlist yang cocok untuk filter terpilih.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
 
               <div className="text-center text-[9px] text-slate-400 border-t pt-3 lowercase font-mono">
@@ -1568,7 +1646,16 @@ export default function RoomListManager({
 
             <div className="p-3.5 bg-slate-50 border-t flex justify-end gap-1.5">
               <button 
-                onClick={() => window.print()}
+                onClick={() => {
+                  const originalTitle = document.title;
+                  const hotelNameClean = selectedHotelFilter || 'Semua Hotel';
+                  const groupNameClean = selectedGroup || 'Semua Grup';
+                  document.title = `Roomlist - ${hotelNameClean} - ${groupNameClean}`;
+                  window.print();
+                  setTimeout(() => {
+                    document.title = originalTitle;
+                  }, 500);
+                }}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer"
               >
                 Print / Download PDF

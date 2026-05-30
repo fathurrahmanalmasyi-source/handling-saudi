@@ -11,7 +11,9 @@ import {
   FileSpreadsheet, 
   X, 
   ChevronRight, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  Folder,
+  Tag
 } from 'lucide-react';
 import { FieldExpenseReport } from '../types';
 
@@ -224,7 +226,10 @@ export default function FieldReport({
                     
                     {/* Date / Group */}
                     <td className="py-3 px-4 text-xs">
-                      <div className="font-mono text-[10.5px] text-slate-400 font-bold">📅 {expense.date}</div>
+                      <div className="font-mono text-[10.5px] text-slate-400 font-bold flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{expense.date}</span>
+                      </div>
                       <div className="font-extrabold text-slate-800 text-[11px] mt-0.5 truncate max-w-[200px]" title={expense.groupName}>
                         {expense.groupName}
                       </div>
@@ -240,8 +245,9 @@ export default function FieldReport({
 
                     {/* Category Sektor */}
                     <td className="py-3 px-4 text-xs">
-                      <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-[9.5px] uppercase font-black">
-                        ⚙️ {expense.category}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-[9.5px] uppercase font-black">
+                        <Tag className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+                        <span>{expense.category}</span>
                       </span>
                     </td>
 
@@ -290,8 +296,9 @@ export default function FieldReport({
               >
                 {/* Mobile Header: Date & Status Badge */}
                 <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-slate-400 font-mono font-black flex items-center gap-0.5 text-[10px]">
-                    📅 {expense.date}
+                  <span className="text-slate-400 font-mono font-black flex items-center gap-1.5 text-[10px]">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>{expense.date}</span>
                   </span>
                   
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black border uppercase ${
@@ -310,12 +317,14 @@ export default function FieldReport({
                   </p>
                   
                   <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-450 font-bold">
-                    <span className="text-slate-500">
-                      📂 {expense.groupName.split('(')[0].trim()}
+                    <span className="text-slate-500 flex items-center gap-1">
+                      <Folder className="w-3 h-3 text-slate-450 shrink-0" />
+                      <span>{expense.groupName.split('(')[0].trim()}</span>
                     </span>
                     <span>•</span>
-                    <span className="text-slate-500">
-                      💡 {expense.category}
+                    <span className="text-slate-500 flex items-center gap-1">
+                      <Tag className="w-3 h-3 text-slate-450 shrink-0" />
+                      <span>{expense.category}</span>
                     </span>
                   </div>
                 </div>
@@ -490,8 +499,9 @@ export default function FieldReport({
                     className="flex items-center justify-center border border-dashed border-slate-250 bg-slate-50 p-2.5 rounded-lg text-center cursor-pointer hover:bg-slate-100 transition-colors select-none"
                     title="Klik untuk simulasi upload kuitansi"
                   >
-                    <span className="text-[9.5px] uppercase font-black text-emerald-600 flex items-center gap-1">
-                      📄 TER-UNGGAH
+                    <span className="text-[9.5px] uppercase font-black text-emerald-600 flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 shrink-0" />
+                      <span>TER-UNGGAH</span>
                     </span>
                   </div>
                 </div>
