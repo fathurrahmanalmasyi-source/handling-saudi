@@ -1571,76 +1571,77 @@ export default function RoomListManager({
               </button>
             </div>
 
-            <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto text-xs" id="printable-area">
-              <div className="text-center border-b border-slate-200 pb-3">
-                <h3 className="font-black text-slate-950 text-sm tracking-tight uppercase">PT. JEJAK IMANI BERKAH BERSAMA</h3>
-                <p className="text-[9px] text-slate-400 font-extrabold font-mono tracking-widest mt-0.5 uppercase">MANIFES UTAMA DEPARTEMEN HANDLING KSA</p>
-                <div className="mt-2 text-slate-805 text-[10px] font-bold space-y-0.5">
-                  <p><span className="text-slate-400 uppercase text-[8.5px] font-mono">Grup:</span> {selectedGroup || 'Semua Grup'}</p>
-                  <p><span className="text-slate-400 uppercase text-[8.5px] font-mono">Hotel:</span> {selectedHotelFilter || 'Semua Hotel'}</p>
+            <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto bg-slate-50 print:bg-white print:p-0 print:max-h-none print:overflow-visible">
+              <div id="printable-area" className="bg-white mx-auto print:mx-0 p-8 shadow-sm print:shadow-none min-h-[297mm] text-black w-full" style={{ maxWidth: '210mm' }}>
+                <div className="text-center border-b-[2px] border-black pb-4 mb-6">
+                  <h3 className="font-bold text-[14pt] tracking-tight uppercase text-black">PT. JEJAK IMANI BERKAH BERSAMA</h3>
+                  <p className="text-[12pt] font-semibold mt-1 uppercase text-black">MANIFES UTAMA DEPARTEMEN HANDLING KSA</p>
+                  <div className="mt-4 text-[11pt] font-medium space-y-1.5 text-left mb-2 text-black">
+                    <p><span className="font-semibold uppercase w-20 inline-block">Grup</span>: {selectedGroup || 'Semua Grup'}</p>
+                    <p><span className="font-semibold uppercase w-20 inline-block">Hotel</span>: {selectedHotelFilter || 'Semua Hotel'}</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Tabel Detail */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-[10px] text-left border-collapse border border-slate-300">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-black uppercase text-[8.5px] tracking-wider">
-                      <th className="p-2 border border-slate-300 text-center w-12">No. RL</th>
-                      <th className="p-2 border border-slate-300 text-center w-20">No. Kamar</th>
-                      <th className="p-2 border border-slate-300 text-center w-16">Tipe Bed</th>
-                      <th className="p-2 border border-slate-300">Nama-Nama Penghuni Kamar</th>
-                      <th className="p-2 border border-slate-300 w-44">Catatan / Keterangan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white leading-relaxed">
-                    {filteredRooms.length > 0 ? (
-                      filteredRooms.map((room) => {
-                        const isAdj = checkIsAdjacentText(room.notes || '', room.colorTag);
-                        const hasOther = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
-                        const roomlistNumber = room.id.split('-').pop() || '-';
-                        return (
-                          <tr key={room.id} className="text-slate-800 hover:bg-slate-50">
-                            <td className="p-2 border border-slate-300 text-center font-extrabold text-[#A47F17] font-mono">
-                              #{roomlistNumber}
-                            </td>
-                            <td className="p-2 border border-slate-300 text-center font-mono font-bold text-slate-950">
-                              {room.roomNumber || 'TBD'}
-                            </td>
-                            <td className="p-2 border border-slate-300 text-center font-extrabold uppercase text-slate-700">
-                              {room.roomType}
-                            </td>
-                            <td className="p-2 border border-slate-300 font-bold">
-                              <div className="space-y-0.5">
-                                {room.jamaahNames.map((name, i) => (
-                                  <div key={i} className="flex items-center gap-1.5">
-                                    <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0" />
-                                    <span>{name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </td>
-                            <td className="p-2 border border-slate-300 font-medium text-slate-600 text-[9.5px]">
-                              {isAdj && <span className="inline-block text-[7.5px] bg-purple-50 text-purple-700 border border-purple-200 rounded px-1 font-black mr-1 uppercase">BERDEKATAN</span>}
-                              {hasOther && <span className="inline-block text-[7.5px] bg-amber-50 text-amber-800 border border-amber-200 rounded px-1 font-black mr-1 uppercase">KHUSUS</span>}
-                              <span>{room.notes || '-'}</span>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="p-4 text-center text-slate-450 font-extrabold text-[10px]">
-                          Tidak ada data roomlist yang cocok untuk filter terpilih.
-                        </td>
+                {/* Tabel Detail */}
+                <div className="w-full">
+                  <table className="w-full text-[11pt] text-left border-collapse border border-black mb-10">
+                    <thead>
+                      <tr className="bg-gray-100 border-b border-black text-black">
+                        <th className="p-2 border border-black text-center font-bold font-sans">No. RL</th>
+                        <th className="p-2 border border-black text-center font-bold font-sans">No. Kamar</th>
+                        <th className="p-2 border border-black text-center font-bold font-sans">Tipe Bed</th>
+                        <th className="p-2 border border-black font-bold font-sans">Nama-Nama Penghuni Kamar</th>
+                        <th className="p-2 border border-black font-bold font-sans w-48">Catatan / Keterangan</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-black bg-white leading-relaxed text-black">
+                      {filteredRooms.length > 0 ? (
+                        filteredRooms.map((room) => {
+                          const isAdj = checkIsAdjacentText(room.notes || '', room.colorTag);
+                          const hasOther = checkHasOtherSpecialRequest(room.notes || '', room.colorTag);
+                          const roomlistNumber = room.id.split('-').pop() || '-';
+                          return (
+                            <tr key={room.id} className="text-black print:break-inside-avoid">
+                              <td className="p-2 border border-black text-center font-semibold">
+                                {roomlistNumber}
+                              </td>
+                              <td className="p-2 border border-black text-center font-bold">
+                                {room.roomNumber || 'TBD'}
+                              </td>
+                              <td className="p-2 border border-black text-center font-semibold uppercase">
+                                {room.roomType}
+                              </td>
+                              <td className="p-2 border border-black font-medium">
+                                <div className="space-y-1">
+                                  {room.jamaahNames.map((name, i) => (
+                                    <div key={i}>
+                                      {i + 1}. {name}
+                                    </div>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="p-2 border border-black font-medium text-[10.5pt]">
+                                {isAdj && <span className="font-bold mr-1 uppercase">BERDEKATAN.</span>}
+                                {hasOther && <span className="font-bold mr-1 uppercase">KHUSUS.</span>}
+                                <span>{room.notes || '-'}</span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="p-4 text-center text-gray-500 font-bold text-[11pt]">
+                            Tidak ada data roomlist yang cocok untuk filter terpilih.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className="text-center text-[9px] text-slate-400 border-t pt-3 lowercase font-mono">
-                GENERATED SECARA ELEKTRONIK PADA PORTAL HANDLING SAUDI ARABIA. JEJAK IMANI.
+                <div className="text-center text-[10pt] text-gray-800 border-t border-black pt-4 lowercase font-mono">
+                  GENERATED SECARA ELEKTRONIK PADA PORTAL HANDLING SAUDI ARABIA. JEJAK IMANI.
+                </div>
               </div>
             </div>
 
@@ -1650,7 +1651,7 @@ export default function RoomListManager({
                   const originalTitle = document.title;
                   const hotelNameClean = selectedHotelFilter || 'Semua Hotel';
                   const groupNameClean = selectedGroup || 'Semua Grup';
-                  document.title = `Roomlist - ${hotelNameClean} - ${groupNameClean}`;
+                  document.title = `Roomlist [${hotelNameClean}] - [${groupNameClean}]`;
                   
                   const printableArea = document.getElementById('printable-area');
                   let printContainer = document.getElementById('print-container');
