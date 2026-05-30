@@ -1651,7 +1651,29 @@ export default function RoomListManager({
                   const hotelNameClean = selectedHotelFilter || 'Semua Hotel';
                   const groupNameClean = selectedGroup || 'Semua Grup';
                   document.title = `Roomlist - ${hotelNameClean} - ${groupNameClean}`;
-                  window.print();
+                  
+                  const printableArea = document.getElementById('printable-area');
+                  let printContainer = document.getElementById('print-container');
+                  
+                  if (printableArea) {
+                    if (!printContainer) {
+                      printContainer = document.createElement('div');
+                      printContainer.id = 'print-container';
+                      document.body.appendChild(printContainer);
+                    }
+                    
+                    printContainer.innerHTML = printableArea.innerHTML;
+                    document.body.classList.add('print-mode');
+                    
+                    window.setTimeout(() => {
+                      window.print();
+                      document.body.classList.remove('print-mode');
+                      if (printContainer) printContainer.innerHTML = '';
+                    }, 50);
+                  } else {
+                    window.print();
+                  }
+
                   setTimeout(() => {
                     document.title = originalTitle;
                   }, 500);

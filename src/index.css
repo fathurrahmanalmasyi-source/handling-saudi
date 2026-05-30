@@ -33,3 +33,27 @@
 .glow-active {
   animation: pulseGlow 2s infinite ease-in-out;
 }
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+  
+  body.print-mode #root {
+    display: none !important;
+  }
+  
+  #print-container {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+}
+
+@media screen {
+  #print-container {
+    display: none !important;
+  }
+}
