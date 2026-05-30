@@ -40,7 +40,7 @@
     size: A4 portrait;
   }
   
-  body.print-mode #root {
+  #root {
     display: none !important;
   }
   
@@ -50,40 +50,6 @@
     margin: 0;
     padding: 0;
     overflow: visible;
-  }
-
-  /* Pure CSS print approach for printable-area */
-  body.print-active * {
-    visibility: hidden;
-  }
-  
-  body.print-active #printable-area, 
-  body.print-active #printable-area * {
-    visibility: visible;
-  }
-  
-  body.print-active #printable-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    min-height: 100vh;
-  }
-
-  /* Flatten structure to prevent clipping from fixed/overflow ancestors */
-  body.print-active .fixed,
-  body.print-active .absolute,
-  body.print-active [class*="fixed"],
-  body.print-active [class*="absolute"] {
-    position: static !important;
-    transform: none !important;
-  }
-
-  body.print-active .overflow-hidden,
-  body.print-active .overflow-y-auto,
-  body.print-active [class*="overflow-"] {
-    overflow: visible !important;
-    max-height: none !important;
   }
 }
 

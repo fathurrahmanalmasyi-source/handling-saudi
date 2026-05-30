@@ -1653,16 +1653,27 @@ export default function RoomListManager({
                   const groupNameClean = selectedGroup || 'Semua Grup';
                   document.title = `Roomlist [${hotelNameClean}] - [${groupNameClean}]`;
                   
-                  document.body.classList.add('print-active');
+                  const printableArea = document.getElementById('printable-area');
+                  let printContainer = document.getElementById('print-container');
                   
-                  const afterPrint = () => {
-                    document.body.classList.remove('print-active');
+                  if (printableArea) {
+                    if (!printContainer) {
+                      printContainer = document.createElement('div');
+                      printContainer.id = 'print-container';
+                      document.body.appendChild(printContainer);
+                    }
+                    
+                    printContainer.innerHTML = printableArea.innerHTML;
+                    
+                    window.setTimeout(() => {
+                      window.print();
+                      if (printContainer) printContainer.innerHTML = '';
+                      document.title = originalTitle;
+                    }, 100);
+                  } else {
+                    window.print();
                     document.title = originalTitle;
-                    window.removeEventListener('afterprint', afterPrint);
-                  };
-                  
-                  window.addEventListener('afterprint', afterPrint);
-                  window.setTimeout(() => window.print(), 100);
+                  }
                 }}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer"
               >
