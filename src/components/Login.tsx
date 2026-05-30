@@ -80,14 +80,11 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
             </div>
             
             <h1 className="text-base font-bold text-slate-900 tracking-tight mt-2">Handling Saudi Arabia</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Sistem Manajemen & Koordinasi Lapangan
-            </p>
           </div>
 
           {/* Role selector tabs */}
           <div className="mb-4">
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1.5 tracking-wider text-center">MASUK SEBAGAI LOG IN :</label>
+            <label className="block text-[10px] font-semibold text-slate-500 mb-1.5 tracking-wider text-center">MASUK SEBAGAI :</label>
             <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-lg">
               <button
                 type="button"
@@ -115,7 +112,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Manager Pusat
+                Manager
               </button>
             </div>
           </div>
@@ -142,7 +139,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                     setError('');
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  placeholder={loginRole === 'HANDLING' ? 'Cari / ketik nama Tim Lapangan...' : 'Masukkan nama Manager Pusat...'}
+                  placeholder={loginRole === 'HANDLING' ? 'Cari / ketik nama Tim Lapangan...' : 'Masukkan nama Manager...'}
                   className="w-full py-2 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 />
                 {username && (
@@ -175,7 +172,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                           );
                         } else {
                           const mgrs = ['fathur'];
-                          filtered = mgrs.filter(m => !query || m.includes(query)).map(m => ({ name: m, sector: 'Manager Pusat' }));
+                          filtered = mgrs.filter(m => !query || m.includes(query)).map(m => ({ name: m, sector: 'Manager' }));
                         }
 
                         if (filtered.length === 0) {
@@ -189,7 +186,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                         return filtered.map((item, idx) => {
                           const isTeam = 'sector' in item;
                           const nameValue = isTeam ? item.name : (item as any).name;
-                          const sectorTag = isTeam ? item.sector : 'Manager Pusat';
+                          const sectorTag = isTeam ? item.sector : 'Manager';
                           return (
                             <button
                               key={idx}
@@ -287,7 +284,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
               >
                 <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
                   <span className="w-1 h-1 rounded-full bg-[#D4AF37]"></span>
-                  <span>Manager Pusat</span>
+                  <span>Manager</span>
                 </div>
                 <div className="text-[9px] text-slate-450 mt-0.5">Atur jadwal & kasir</div>
               </button>
