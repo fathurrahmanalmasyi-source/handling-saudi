@@ -601,10 +601,36 @@ export default function App() {
   };
 
   // Pull fresh database updates & reload states from LocalStorage for seamless integration
-  const handleRefreshAll = () => {
+  const handleRefreshAll = async () => {
     setIsRefreshing(true);
-    setRefreshMsg('Sinkronisasi...');
+    setRefreshMsg('Memeriksa Versi & Update...');
     
+    // 1. Clear PWA / Browser Cache Storage if available
+    try {
+      if ('caches' in window) {
+        const cacheNames = await window.caches.keys();
+        await Promise.all(
+          cacheNames.map((cacheName) => window.caches.delete(cacheName))
+        );
+        console.log('Cache storage cleared successfully.');
+      }
+    } catch (e) {
+      console.error('Error clearing cache storage:', e);
+    }
+
+    // 2. Unregister all service workers if any exist
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        console.log('Service workers unregistered.');
+      }
+    } catch (e) {
+      console.error('Error unregistering service workers:', e);
+    }
+
     setTimeout(() => {
       // 1. Re-read rooms
       const savedRooms = localStorage.getItem('ji_rooms_v3');
@@ -676,9 +702,14 @@ export default function App() {
         try { setIncidentLogs(JSON.parse(savedIncidents)); } catch(e) {}
       }
 
-      setIsRefreshing(false);
-      setRefreshMsg('Data Terkini Terintegrasi!');
-      setTimeout(() => setRefreshMsg(''), 2000);
+      setRefreshMsg('Mengunduh Sistem Terbaru...');
+      
+      setTimeout(() => {
+        setIsRefreshing(false);
+        // Force full page reload from network by changing the version parameter
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.location.href = cleanUrl + '?v=' + Date.now();
+      }, 850);
     }, 700);
   };
 
