@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserPlus, Search, Edit2, Trash2, FileSpreadsheet, X, Check, Filter, MoreVertical, LogIn, CheckCircle2 } from 'lucide-react';
 import { ItineraryItem } from './ManagerItinerary';
-import { PackageDetail } from '../types';
+import { PackageDetail, HotelInfographic } from '../types';
 
 export interface Jamaah {
   id: string;
@@ -28,6 +28,7 @@ interface ManagerManifestProps {
   itineraries?: ItineraryItem[];
   packages?: PackageDetail[];
   onUpdatePackages?: (newList: PackageDetail[]) => void;
+  hotelInfos?: HotelInfographic[];
 }
 
 export default function ManagerManifest({ 
@@ -38,7 +39,8 @@ export default function ManagerManifest({
   onRemoveGroup,
   itineraries = [],
   packages = [],
-  onUpdatePackages
+  onUpdatePackages,
+  hotelInfos = []
 }: ManagerManifestProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupDirectory, setSelectedGroupDirectory] = useState<string | null>(null);
@@ -1470,6 +1472,34 @@ export default function ManagerManifest({
                         <div>
                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Hotel Masing-masing Paket</label>
                           <textarea rows={3} value={pkg.hotelDetails} onChange={e => handleChange('hotelDetails', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: Hotel Sapphire: Al Marwa (Makkah), Maden Rawdah (Madinah)..." />
+                        </div>
+                        <div className="pt-2">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tautkan Infografis Hotel (Untuk Tampilan Aplikasi)</label>
+                          <div className="space-y-2">
+                            {hotelInfos.map(hotel => {
+                              const isChecked = pkg.connectedHotels?.includes(hotel.id) || false;
+                              return (
+                                <label key={hotel.id} className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer p-2 border rounded hover:bg-slate-50">
+                                  <input 
+                                    type="checkbox" 
+                                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      const current = pkg.connectedHotels || [];
+                                      const next = e.target.checked 
+                                        ? [...current, hotel.id]
+                                        : current.filter(id => id !== hotel.id);
+                                      handleChange('connectedHotels', next);
+                                    }}
+                                  />
+                                  <span>{hotel.hotelName} ({hotel.city})</span>
+                                </label>
+                              );
+                            })}
+                            {hotelInfos.length === 0 && (
+                              <span className="text-xs text-slate-500 italic">Belum ada infografis hotel, buat terlebih dahulu di Menu Hotel.</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

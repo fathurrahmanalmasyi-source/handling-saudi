@@ -28,8 +28,8 @@ function BedHouseIcon({ className = "w-5 h-5" }: { className?: string }) {
 import { 
   UserRole, SOPDoc, RoomManifest, PackageDetail, DocumentGroup, 
   BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, 
-  CashflowTransaction,
-  INITIAL_SOPS, INITIAL_ROOMLIST, INITIAL_PACKAGES, INITIAL_DOCUMENTS, 
+  CashflowTransaction, HotelInfographic,
+  INITIAL_SOPS, INITIAL_ROOMLIST, INITIAL_PACKAGES, INITIAL_HOTEL_INFOS, INITIAL_DOCUMENTS, 
   INITIAL_BROADCASTS, INITIAL_DUTY_TASKS, INITIAL_WALLETS, 
   INITIAL_EXPENSE_REPORTS, INITIAL_CASHFLOW, TEAMS 
 } from './types';
@@ -49,6 +49,7 @@ import ManagerDocumentEditor from './components/ManagerDocumentEditor';
 import ManagerStaffTeam, { TeamMember } from './components/ManagerStaffTeam';
 import ManagerAppPanel from './components/ManagerAppPanel';
 import { INITIAL_6_GROUPS_ITINERARIES } from './data/initialItineraries';
+import HotelInfographicModal from './components/HotelInfographicModal';
 
 export default function App() {
   // Authentication states
@@ -58,6 +59,8 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(() => {
     return (localStorage.getItem('ji_role') as UserRole) || null;
   });
+
+  const [selectedInfographic, setSelectedInfographic] = useState<string | null>(null);
 
   // Database / Interactive State in LocalStorage to persist changes
   const [sops, setSops] = useState<SOPDoc[]>(() => {
@@ -190,6 +193,11 @@ export default function App() {
   const [packages, setPackages] = useState<PackageDetail[]>(() => {
     const saved = localStorage.getItem('ji_packages_v1');
     return saved ? JSON.parse(saved) : INITIAL_PACKAGES;
+  });
+
+  const [hotelInfos, setHotelInfos] = useState<HotelInfographic[]>(() => {
+    const saved = localStorage.getItem('ji_hotel_infos_v1');
+    return saved ? JSON.parse(saved) : INITIAL_HOTEL_INFOS;
   });
 
   const [documents, setDocuments] = useState<DocumentGroup[]>(() => {
@@ -474,7 +482,8 @@ export default function App() {
     localStorage.setItem('ji_team_members_v3', JSON.stringify(teamMembers));
     localStorage.setItem('ji_task_checklists_v1', JSON.stringify(taskChecklists));
     localStorage.setItem('ji_packages_v1', JSON.stringify(packages));
-  }, [rooms, documents, broadcasts, dutyTasks, wallets, expenses, transactions, sops, attendanceLogs, incidentLogs, groups, jamaahList, itineraries, teamMembers, taskChecklists, packages]);
+    localStorage.setItem('ji_hotel_infos_v1', JSON.stringify(hotelInfos));
+  }, [rooms, documents, broadcasts, dutyTasks, wallets, expenses, transactions, sops, attendanceLogs, incidentLogs, groups, jamaahList, itineraries, teamMembers, taskChecklists, packages, hotelInfos]);
 
   // Dynamically Sync Rooms on JamaahList updates to maintain 100% manifest integration
   useEffect(() => {
@@ -1053,6 +1062,8 @@ export default function App() {
         onUpdateItineraryList={setItineraries}
         packages={packages}
         onUpdatePackages={setPackages}
+        hotelInfos={hotelInfos}
+        onUpdateHotelInfos={setHotelInfos}
         documents={documents}
         onUpdateDocuments={setDocuments}
         teamMembers={teamMembers}
@@ -1600,6 +1611,24 @@ export default function App() {
                                   <span className="font-black text-indigo-900">{pkg.totalJamaah} Pax</span>
                                 </div>
                                 <p className="font-semibold text-slate-800 whitespace-pre-wrap">{pkg.hotelDetails}</p>
+                                
+                                {pkg.connectedHotels && pkg.connectedHotels.length > 0 && (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {pkg.connectedHotels.map(hId => {
+                                      const hotelInfo = hotelInfos.find(h => h.id === hId);
+                                      if (!hotelInfo) return null;
+                                      return (
+                                        <button
+                                          key={hId}
+                                          onClick={() => setSelectedInfographic(hId)}
+                                          className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold rounded flex items-center gap-1 transition-colors border border-emerald-200"
+                                        >
+                                          <MapPin className="w-3 h-3" /> Info Hotel {hotelInfo.hotelName}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -2706,6 +2735,13 @@ export default function App() {
 
           </div>
         </div>
+      )}
+
+      {selectedInfographic && (
+        <HotelInfographicModal 
+          hotelInfo={hotelInfos.find(h => h.id === selectedInfographic)!}
+          onClose={() => setSelectedInfographic(null)}
+        />
       )}
 
     </div>

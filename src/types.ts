@@ -61,7 +61,23 @@ export interface PackageDetail {
   arrivalMeals: string;
   returnMeals: string;
   
+  // Linked Hotel Infographics
+  connectedHotels?: string[];
+  
   status: 'Pre-Arrival' | 'In Makkah' | 'In Madinah' | 'Returning' | 'Completed';
+}
+
+export interface HotelInfographic {
+  id: string;
+  hotelName: string;
+  city: 'Makkah' | 'Madinah' | 'Jeddah' | 'Lainnya' | string;
+  restaurantInfo: string;
+  mealTimes: string;
+  receptionistInfo: string;
+  wifiInfo: string;
+  hotelPhoto: string;
+  restaurantPhoto: string;
+  receptionistPhoto: string;
 }
 
 // Define Document Grouped by Flight Group
@@ -281,6 +297,21 @@ export const INITIAL_PACKAGES: PackageDetail[] = [
     arrivalMeals: 'Lunch: Prasmanan Hotel',
     returnMeals: 'Dinner: Mealbox Bandara',
     status: 'Pre-Arrival'
+  }
+];
+
+export const INITIAL_HOTEL_INFOS: HotelInfographic[] = [
+  {
+    id: 'hotel-1',
+    hotelName: 'Pullman ZamZam',
+    city: 'Makkah',
+    restaurantInfo: 'Al Zahra Restaurant (Lantai 3)',
+    mealTimes: 'Breakfast: 06:00-10:00, Dinner: 18:00-22:00',
+    receptionistInfo: 'Lantai Ground (G), Hubungi Ext 0',
+    wifiInfo: 'Nama WiFi: Pullman_Guest, Password: (sesuai nomor kamar)',
+    hotelPhoto: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=800',
+    restaurantPhoto: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
+    receptionistPhoto: 'https://images.unsplash.com/photo-1582719478250-c89af14eb250?auto=format&fit=crop&q=80&w=800'
   }
 ];
 

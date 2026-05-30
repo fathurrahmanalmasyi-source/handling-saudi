@@ -10,11 +10,12 @@ import ManagerItinerary, { ItineraryItem } from './ManagerItinerary';
 import ManagerSchedule from './ManagerSchedule';
 import RoomListManager from './RoomListManager';
 import ManagerDocumentEditor from './ManagerDocumentEditor';
+import ManagerHotelInfo from './ManagerHotelInfo';
 import ManagerStaffTeam, { TeamMember } from './ManagerStaffTeam';
 import ManagerCashflow from './ManagerCashflow';
 import SaudiClockWidget from './SaudiClockWidget';
 
-import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc, PackageDetail } from '../types';
+import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc, PackageDetail, HotelInfographic } from '../types';
 
 interface ManagerAppPanelProps {
   currentUser: string;
@@ -39,6 +40,8 @@ interface ManagerAppPanelProps {
   onUpdateItineraryList: (newList: ItineraryItem[]) => void;
   packages: PackageDetail[];
   onUpdatePackages: (newPackages: PackageDetail[]) => void;
+  hotelInfos: HotelInfographic[];
+  onUpdateHotelInfos: (newHotelInfos: HotelInfographic[]) => void;
   documents: DocumentGroup[];
   onUpdateDocuments: (newList: DocumentGroup[]) => void;
   teamMembers: TeamMember[];
@@ -80,6 +83,8 @@ export default function ManagerAppPanel({
   onUpdateItineraryList,
   packages,
   onUpdatePackages,
+  hotelInfos,
+  onUpdateHotelInfos,
   documents,
   onUpdateDocuments,
   teamMembers,
@@ -217,6 +222,18 @@ export default function ManagerAppPanel({
             >
               <Hotel className="w-4 h-4 shrink-0" />
               <span>Menu Roomlist</span>
+            </button>
+
+            <button
+              onClick={() => setManagerTab('m-hotel')}
+              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                managerTab === 'm-hotel' 
+                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+              }`}
+            >
+              <Hotel className="w-4 h-4 shrink-0" />
+              <span>Menu Hotel Info</span>
             </button>
 
             <button
@@ -438,6 +455,7 @@ export default function ManagerAppPanel({
               itineraries={itineraries}
               packages={packages}
               onUpdatePackages={onUpdatePackages}
+              hotelInfos={hotelInfos}
             />
           )}
 
@@ -481,6 +499,14 @@ export default function ManagerAppPanel({
                 currentRole="MANAGER"
               />
             </div>
+          )}
+
+          {/* TAB m-hotel VIEW */}
+          {managerTab === 'm-hotel' && (
+            <ManagerHotelInfo 
+              hotelInfos={hotelInfos}
+              onUpdateHotelInfos={onUpdateHotelInfos}
+            />
           )}
 
           {/* TAB m-documents VIEW */}
