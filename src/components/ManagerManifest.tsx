@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { UserPlus, Search, Edit2, Trash2, FileSpreadsheet, X, Check, Filter, MoreVertical, LogIn } from 'lucide-react';
+import { UserPlus, Search, Edit2, Trash2, FileSpreadsheet, X, Check, Filter, MoreVertical, LogIn, CheckCircle2 } from 'lucide-react';
 import { ItineraryItem } from './ManagerItinerary';
+import { PackageDetail } from '../types';
 
 export interface Jamaah {
   id: string;
@@ -25,6 +26,8 @@ interface ManagerManifestProps {
   onAddGroup: (newGroupName: string) => void;
   onRemoveGroup?: (removedGroupName: string) => void;
   itineraries?: ItineraryItem[];
+  packages?: PackageDetail[];
+  onUpdatePackages?: (newList: PackageDetail[]) => void;
 }
 
 export default function ManagerManifest({ 
@@ -33,7 +36,9 @@ export default function ManagerManifest({
   groups, 
   onAddGroup,
   onRemoveGroup,
-  itineraries = []
+  itineraries = [],
+  packages = [],
+  onUpdatePackages
 }: ManagerManifestProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupDirectory, setSelectedGroupDirectory] = useState<string | null>(null);
@@ -60,9 +65,13 @@ export default function ManagerManifest({
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupInput, setNewGroupInput] = useState('');
 
+  const [subTabView, setSubTabView] = useState<'jamaah' | 'paketInfo'>('jamaah');
+
   // Editing state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [isEditingPackage, setIsEditingPackage] = useState(false);
   const [editNomorJamaah, setEditNomorJamaah] = useState('');
   const [editNamaJamaah, setEditNamaJamaah] = useState('');
   const [editNomorRoomlist, setEditNomorRoomlist] = useState('');
@@ -625,15 +634,37 @@ export default function ManagerManifest({
             </div>
             <button 
               type="button" 
-              onClick={() => setSelectedGroupDirectory(null)}
+              onClick={() => {
+                setSelectedGroupDirectory(null);
+                setSubTabView('jamaah');
+              }}
               className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-350 rounded-lg font-semibold text-[10px] uppercase cursor-pointer transition-all tracking-wide shadow-2xs"
             >
               ◀ Kembali ke Direktori Grup
             </button>
           </div>
 
-          {/* SEARCH BAR PADA DETAIL VIEW - TIDAK ADA FILTER ROMBONGAN LAGI SEPERTI REQUEST USER */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          {selectedGroupDirectory !== 'All' && (
+            <div className="flex bg-white rounded-lg p-1 border border-slate-200 w-full sm:w-fit mb-4">
+              <button
+                onClick={() => setSubTabView('jamaah')}
+                className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-bold rounded-md transition-colors ${subTabView === 'jamaah' ? 'bg-slate-900 text-[#D4AF37]' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                Manifest Jemaah
+              </button>
+              <button
+                onClick={() => setSubTabView('paketInfo')}
+                className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-bold rounded-md transition-colors ${subTabView === 'paketInfo' ? 'bg-slate-900 text-[#D4AF37]' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                Data Paket & Info
+              </button>
+            </div>
+          )}
+
+          {subTabView === 'jamaah' ? (
+            <>
+              {/* SEARCH BAR PADA DETAIL VIEW - TIDAK ADA FILTER ROMBONGAN LAGI SEPERTI REQUEST USER */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div>
               <label className="block text-[10px] uppercase font-black text-slate-400 mb-1">Cari Jamaah / No Kamar / ID</label>
               <div className="relative">
@@ -807,6 +838,151 @@ export default function ManagerManifest({
               </table>
             </div>
           </div>
+        </>
+      ) : subTabView === 'paketInfo' && selectedGroupDirectory ? (
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs animate-in fade-in duration-200">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-base font-black text-slate-900 border-l-4 border-[#D4AF37] pl-3 uppercase">
+              Detail Paket Info Grup
+            </h3>
+            <button 
+              onClick={() => {
+                const existing = packages.find(p => p.groupName === selectedGroupDirectory);
+                if (!existing && onUpdatePackages) {
+                  onUpdatePackages([...packages, {
+                    id: `pkg-${Date.now()}`,
+                    groupName: selectedGroupDirectory,
+                    departureDate: '',
+                    departureFlightCode: '',
+                    departureFlightRoute: '',
+                    departureTimeRange: '',
+                    returnDate: '',
+                    returnFlightCode: '',
+                    returnFlightRoute: '',
+                    returnTimeRange: '',
+                    totalJamaah: 0,
+                    jamaahPerPackage: '',
+                    hotelDetails: '',
+                    tourLeader: '',
+                    mutawwifName: '',
+                    arrivalMeals: '',
+                    returnMeals: '',
+                    status: 'Pre-Arrival'
+                  }]);
+                }
+                setIsEditingPackage(true);
+              }}
+              className="px-4 py-2 bg-slate-900 hover:bg-black text-[#D4AF37] text-[10px] font-bold rounded-lg transition-colors border border-[#D4AF37]/30"
+            >
+              Ubah Data Paket Info
+            </button>
+          </div>
+          
+          {(() => {
+            const currentPkg = packages.find(p => p.groupName === selectedGroupDirectory);
+            if (!currentPkg) {
+              return (
+                <div className="py-12 text-center text-slate-500 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
+                  <p className="text-sm font-semibold mb-2">Data Paket Belum Dibuat</p>
+                  <p className="text-xs">Silakan klik "Ubah Data Paket Info" untuk membuat baru.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Keberangkatan */}
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">🛫 KEBERANGKATAN</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <span className="text-slate-500">Tanggal</span>
+                      <span className="font-semibold">{currentPkg.departureDate || '-'}</span>
+                      <span className="text-slate-500">Maskapai</span>
+                      <span className="font-semibold uppercase">{currentPkg.departureFlightCode || '-'}</span>
+                      <span className="text-slate-500">Rute</span>
+                      <span className="font-semibold uppercase">{currentPkg.departureFlightRoute || '-'}</span>
+                      <span className="text-slate-500">Takeoff & Landing</span>
+                      <span className="font-semibold font-mono">{currentPkg.departureTimeRange || '-'}</span>
+                    </div>
+                  </div>
+
+                  {/* Kepulangan */}
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">🛬 KEPULANGAN</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <span className="text-slate-500">Tanggal</span>
+                      <span className="font-semibold">{currentPkg.returnDate || '-'}</span>
+                      <span className="text-slate-500">Maskapai</span>
+                      <span className="font-semibold uppercase">{currentPkg.returnFlightCode || '-'}</span>
+                      <span className="text-slate-500">Rute</span>
+                      <span className="font-semibold uppercase">{currentPkg.returnFlightRoute || '-'}</span>
+                      <span className="text-slate-500">Takeoff & Landing</span>
+                      <span className="font-semibold font-mono">{currentPkg.returnTimeRange || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Jamaah Info */}
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">👥 DATA JAMAAH</h4>
+                    <div className="grid grid-cols-1 gap-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Total Keseluruhan</span>
+                        <span className="font-black text-indigo-900">{currentPkg.totalJamaah} Pax</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-1">Rincian Paket Jamaah:</span>
+                        <p className="font-semibold whitespace-pre-wrap bg-white p-2 rounded border border-slate-200">
+                          {currentPkg.jamaahPerPackage || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meals */}
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">🍽️ INFORMASI KATERING / MEALS</h4>
+                    <div className="grid grid-cols-1 gap-3 text-xs">
+                      <div>
+                        <span className="text-slate-500 block mb-1">Meals Kedatangan</span>
+                        <p className="font-semibold">{currentPkg.arrivalMeals || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-1">Meals Kepulangan</span>
+                        <p className="font-semibold">{currentPkg.returnMeals || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hotel & PIC */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">🏨 NAMA HOTEL MASING-MASING PAKET</h4>
+                    <div className="text-xs">
+                      <p className="font-semibold whitespace-pre-wrap bg-white p-3 rounded border border-slate-200">
+                        {currentPkg.hotelDetails || '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+                    <h4 className="font-bold text-slate-800 text-xs border-b pb-2">👔 PERSONAL IN CHARGE</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <span className="text-slate-500">Tour Leader (TL)</span>
+                      <span className="font-bold text-slate-800">{currentPkg.tourLeader || '-'}</span>
+                      <span className="text-slate-500">Muthawif Pembimbing</span>
+                      <span className="font-bold text-slate-800">{currentPkg.mutawwifName || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      ) : null}
         </>
       )}
 
@@ -1201,6 +1377,141 @@ export default function ManagerManifest({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT PACKAGE INFO MODAL */}
+      {isEditingPackage && selectedGroupDirectory && (
+        <div className="fixed inset-0 z-50 flex justify-center items-start pt-10 pb-10 overflow-y-auto px-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-slate-200 animate-in slide-in-from-bottom-5 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-4 bg-slate-900 text-white flex justify-between items-center rounded-t-xl shrink-0">
+              <span className="font-black text-[#D4AF37] uppercase tracking-wider text-sm flex items-center gap-2">
+                <Edit2 className="w-4 h-4" /> Form Edit Paket Info: {selectedGroupDirectory}
+              </span>
+              <button onClick={() => setIsEditingPackage(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto bg-slate-50 flex-1">
+              {(() => {
+                const pkg = packages.find(p => p.groupName === selectedGroupDirectory);
+                if (!pkg) return null;
+
+                const handleChange = (field: keyof PackageDetail, value: any) => {
+                  if (onUpdatePackages) {
+                    onUpdatePackages(packages.map(p => p.id === pkg.id ? { ...p, [field]: value } : p));
+                  }
+                };
+
+                return (
+                  <div className="space-y-6 text-sm">
+                    {/* KEBERANGKATAN */}
+                    <div className="bg-white border rounded p-4 shadow-sm">
+                      <h4 className="font-bold border-b pb-2 mb-3">🛫 Keberangkatan</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal Keberangkatan</label>
+                          <input type="text" value={pkg.departureDate} onChange={e => handleChange('departureDate', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: 11 Juni 2026" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Maskapai</label>
+                          <input type="text" value={pkg.departureFlightCode} onChange={e => handleChange('departureFlightCode', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: SV819" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Rute Penerbangan</label>
+                          <input type="text" value={pkg.departureFlightRoute} onChange={e => handleChange('departureFlightRoute', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: CGK - JED" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Jam Takeoff & Landing</label>
+                          <input type="text" value={pkg.departureTimeRange} onChange={e => handleChange('departureTimeRange', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: 17:30 - 23:00" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KEPULANGAN */}
+                    <div className="bg-white border rounded p-4 shadow-sm">
+                      <h4 className="font-bold border-b pb-2 mb-3">🛬 Kepulangan</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal Kepulangan</label>
+                          <input type="text" value={pkg.returnDate} onChange={e => handleChange('returnDate', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: 19 Juni 2026" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Maskapai</label>
+                          <input type="text" value={pkg.returnFlightCode} onChange={e => handleChange('returnFlightCode', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: SV818" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Rute Penerbangan</label>
+                          <input type="text" value={pkg.returnFlightRoute} onChange={e => handleChange('returnFlightRoute', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: JED - CGK" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Jam Takeoff & Landing</label>
+                          <input type="text" value={pkg.returnTimeRange} onChange={e => handleChange('returnTimeRange', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: 01:55 - 16:00" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* JAMAAH & PAKET */}
+                    <div className="bg-white border rounded p-4 shadow-sm">
+                      <h4 className="font-bold border-b pb-2 mb-3">👥 Data Jamaah & Hotel</h4>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Jamaah Keseluruhan</label>
+                            <input type="number" value={pkg.totalJamaah} onChange={e => handleChange('totalJamaah', parseInt(e.target.value) || 0)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="0" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Jumlah Per Masing-masing Paket</label>
+                            <input type="text" value={pkg.jamaahPerPackage} onChange={e => handleChange('jamaahPerPackage', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: Sapphire: 20 Jamaah, Ruby: 30" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Hotel Masing-masing Paket</label>
+                          <textarea rows={3} value={pkg.hotelDetails} onChange={e => handleChange('hotelDetails', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: Hotel Sapphire: Al Marwa (Makkah), Maden Rawdah (Madinah)..." />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* MEALS & PIC */}
+                    <div className="bg-white border rounded p-4 shadow-sm">
+                      <h4 className="font-bold border-b pb-2 mb-3">🍽️ Meals & Person In Charge</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Meals Kedatangan</label>
+                          <input type="text" value={pkg.arrivalMeals} onChange={e => handleChange('arrivalMeals', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: Breakfast: Albaik + Nasi, Lunch at Hotel: Mealbox" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Meals Kepulangan</label>
+                          <input type="text" value={pkg.returnMeals} onChange={e => handleChange('returnMeals', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Misal: Dinner: Mealbox, Breakfast: Mealbox" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tour Leader (TL)</label>
+                          <input type="text" value={pkg.tourLeader} onChange={e => handleChange('tourLeader', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Nama Tour Leader" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mutthawif Pembimbing</label>
+                          <input type="text" value={pkg.mutawwifName} onChange={e => handleChange('mutawwifName', e.target.value)} className="w-full p-2 border rounded focus:ring-1 focus:ring-[#D4AF37]" placeholder="Nama Muthawif" />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })()}
+            </div>
+            
+            <div className="p-4 bg-white border-t border-slate-200 flex justify-end shrink-0">
+              <button 
+                onClick={() => setIsEditingPackage(false)}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Simpan & Selesai
+              </button>
+            </div>
           </div>
         </div>
       )}

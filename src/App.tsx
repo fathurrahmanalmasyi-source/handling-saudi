@@ -187,7 +187,10 @@ export default function App() {
     return initRooms;
   });
 
-  const [packages] = useState<PackageDetail[]>(INITIAL_PACKAGES);
+  const [packages, setPackages] = useState<PackageDetail[]>(() => {
+    const saved = localStorage.getItem('ji_packages_v1');
+    return saved ? JSON.parse(saved) : INITIAL_PACKAGES;
+  });
 
   const [documents, setDocuments] = useState<DocumentGroup[]>(() => {
     const saved = localStorage.getItem('ji_documents');
@@ -470,7 +473,8 @@ export default function App() {
     localStorage.setItem('ji_itineraries_v3', JSON.stringify(itineraries));
     localStorage.setItem('ji_team_members_v3', JSON.stringify(teamMembers));
     localStorage.setItem('ji_task_checklists_v1', JSON.stringify(taskChecklists));
-  }, [rooms, documents, broadcasts, dutyTasks, wallets, expenses, transactions, sops, attendanceLogs, incidentLogs, groups, jamaahList, itineraries, teamMembers, taskChecklists]);
+    localStorage.setItem('ji_packages_v1', JSON.stringify(packages));
+  }, [rooms, documents, broadcasts, dutyTasks, wallets, expenses, transactions, sops, attendanceLogs, incidentLogs, groups, jamaahList, itineraries, teamMembers, taskChecklists, packages]);
 
   // Dynamically Sync Rooms on JamaahList updates to maintain 100% manifest integration
   useEffect(() => {
@@ -688,6 +692,11 @@ export default function App() {
       const savedDocs = localStorage.getItem('ji_documents');
       if (savedDocs) {
         try { setDocuments(JSON.parse(savedDocs)); } catch(e) {}
+      }
+      
+      const savedPackages = localStorage.getItem('ji_packages_v1');
+      if (savedPackages) {
+        try { setPackages(JSON.parse(savedPackages)); } catch(e) {}
       }
 
       // 10. Re-read attendance logs
@@ -1042,6 +1051,8 @@ export default function App() {
         onUpdateJamaahList={setJamaahList}
         itineraries={itineraries}
         onUpdateItineraryList={setItineraries}
+        packages={packages}
+        onUpdatePackages={setPackages}
         documents={documents}
         onUpdateDocuments={setDocuments}
         teamMembers={teamMembers}
@@ -1273,11 +1284,11 @@ export default function App() {
                 <select
                   value={selectedGroupFilter}
                   onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                  className="bg-white text-slate-950 border border-slate-200 hover:border-slate-350 px-3 py-2 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer shadow-3xs transition-colors"
+                  className="bg-white text-slate-950 border border-slate-200 hover:border-slate-350 px-3 py-2 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer shadow-3xs transition-colors w-full sm:w-auto"
                 >
-                  <option value="Umroh Syawal Gold 2026">Umroh Syawal Gold 2026 (SV 816)</option>
-                  <option value="Haji Furoda Premium 2026">Haji Furoda Premium 2026 (SV 820)</option>
-                  <option value="Umroh Hemat Berkah Juni">Umroh Hemat Berkah Juni (GA 980)</option>
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -1565,52 +1576,55 @@ export default function App() {
                             </span>
                           </div>
 
-                          <div className="p-5 space-y-4 text-xs font-semibold">
-                            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
-                              <div>
-                                <span className="text-[10px] text-slate-400 block uppercase font-bold">Rute Penerbangan</span>
-                                <span className="text-slate-800 font-bold">{pkg.flightRoute}</span>
+                          <div className="p-5 space-y-4 text-xs">
+                            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
+                              <div className="space-y-1">
+                                <span className="text-[10px] text-slate-400 block uppercase font-bold text-emerald-600">🛫 Keberangkatan</span>
+                                <div className="font-bold text-slate-800">{pkg.departureDate}</div>
+                                <div className="font-bold text-slate-800 uppercase">{pkg.departureFlightCode} • {pkg.departureFlightRoute}</div>
+                                <div className="text-slate-500 font-mono text-[10px]">{pkg.departureTimeRange}</div>
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-400 block uppercase font-bold">Kode Flight</span>
-                                <span className="text-slate-800 font-mono text-xs">{pkg.flightCode}</span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-3 pb-3 border-b border-slate-100">
-                              <div className="flex justify-between">
-                                <span className="text-slate-400 font-bold">🕋 Hotel Makkah:</span>
-                                <span className="font-bold text-slate-800 text-right">{pkg.hotelMakkah}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-slate-400 font-bold">🕌 Hotel Madinah:</span>
-                                <span className="font-bold text-slate-800 text-right">{pkg.hotelMadinah}</span>
+                              <div className="space-y-1">
+                                <span className="text-[10px] text-slate-400 block uppercase font-bold text-orange-600">🛬 Kepulangan</span>
+                                <div className="font-bold text-slate-800">{pkg.returnDate}</div>
+                                <div className="font-bold text-slate-800 uppercase">{pkg.returnFlightCode} • {pkg.returnFlightRoute}</div>
+                                <div className="text-slate-500 font-mono text-[10px]">{pkg.returnTimeRange}</div>
                               </div>
                             </div>
 
-                            <div className="pb-3 border-b border-slate-100 grid grid-cols-2 gap-2">
+                            <div className="space-y-3 pb-4 border-b border-slate-100">
+                              <div>
+                                <span className="text-[10px] text-slate-400 block uppercase font-bold mb-1">🏨 Hotel & Jumlah Jamaah</span>
+                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100 mb-2">
+                                  <span className="font-bold text-slate-700">Total Keseluruhan Jamaah</span>
+                                  <span className="font-black text-indigo-900">{pkg.totalJamaah} Pax</span>
+                                </div>
+                                <p className="font-semibold text-slate-800 whitespace-pre-wrap">{pkg.hotelDetails}</p>
+                              </div>
+                            </div>
+
+                            <div className="pb-4 border-b border-slate-100 grid grid-cols-2 gap-3">
+                              <div>
+                                <span className="text-[10px] text-slate-400 block uppercase font-bold">Tour Leader</span>
+                                <span className="text-slate-800 font-bold">{pkg.tourLeader || '-'}</span>
+                              </div>
                               <div>
                                 <span className="text-[10px] text-slate-400 block uppercase font-bold">Muthawif Pembimbing</span>
                                 <span className="text-indigo-900 font-bold">{pkg.mutawwifName}</span>
                               </div>
-                              <div>
-                                <span className="text-[10px] text-slate-400 block uppercase font-bold">Jumlah Jamaah</span>
-                                <span className="text-indigo-950 font-black font-mono text-sm">{pkg.totalJamaah} Pax</span>
-                              </div>
                             </div>
-
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400">
-                                <span>Modul Bus Transporter :</span>
-                                <span className="text-slate-800 font-mono">{pkg.busCompany}</span>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1">
-                                <strong className="text-slate-500 mr-1.5 font-bold animate-pulse">Team Bertugas:</strong>
-                                {pkg.handlingTeam.map((team, tIdx) => (
-                                  <span key={tIdx} className="px-2 py-0.5 bg-slate-100 rounded text-slate-850 font-black border border-slate-200">
-                                    👨‍✈️ {team}
-                                  </span>
-                                ))}
+                            
+                            <div className="pb-2">
+                              <span className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">🍽️ Meals / Katering</span>
+                              <div className="grid grid-cols-2 gap-2 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
+                                <div>
+                                  <span className="text-[10px] text-amber-700/70 block uppercase font-bold">Kedatangan</span>
+                                  <span className="text-slate-800 font-bold line-clamp-2">{pkg.arrivalMeals || '-'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-amber-700/70 block uppercase font-bold">Kepulangan</span>
+                                  <span className="text-slate-800 font-bold line-clamp-2">{pkg.returnMeals || '-'}</span>
+                                </div>
                               </div>
                             </div>
                           </div>

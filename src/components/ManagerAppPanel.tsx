@@ -14,7 +14,7 @@ import ManagerStaffTeam, { TeamMember } from './ManagerStaffTeam';
 import ManagerCashflow from './ManagerCashflow';
 import SaudiClockWidget from './SaudiClockWidget';
 
-import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc } from '../types';
+import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc, PackageDetail } from '../types';
 
 interface ManagerAppPanelProps {
   currentUser: string;
@@ -37,6 +37,8 @@ interface ManagerAppPanelProps {
   onUpdateJamaahList: (newList: Jamaah[]) => void;
   itineraries: ItineraryItem[];
   onUpdateItineraryList: (newList: ItineraryItem[]) => void;
+  packages: PackageDetail[];
+  onUpdatePackages: (newPackages: PackageDetail[]) => void;
   documents: DocumentGroup[];
   onUpdateDocuments: (newList: DocumentGroup[]) => void;
   teamMembers: TeamMember[];
@@ -76,6 +78,8 @@ export default function ManagerAppPanel({
   onUpdateJamaahList,
   itineraries,
   onUpdateItineraryList,
+  packages,
+  onUpdatePackages,
   documents,
   onUpdateDocuments,
   teamMembers,
@@ -432,6 +436,8 @@ export default function ManagerAppPanel({
               onAddGroup={onAddGroup} 
               onRemoveGroup={onRemoveGroup}
               itineraries={itineraries}
+              packages={packages}
+              onUpdatePackages={onUpdatePackages}
             />
           )}
 

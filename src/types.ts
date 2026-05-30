@@ -33,16 +33,34 @@ export interface RoomManifest {
 export interface PackageDetail {
   id: string;
   groupName: string;
+  
+  // Keberangkatan
   departureDate: string;
-  duration: string; // e.g. "9 Hari"
+  departureFlightCode: string;
+  departureFlightRoute: string;
+  departureTimeRange: string;
+  
+  // Kepulangan
+  returnDate: string;
+  returnFlightCode: string;
+  returnFlightRoute: string;
+  returnTimeRange: string;
+  
+  // Jamaah & Packages
   totalJamaah: number;
-  flightCode: string; // e.g. "SV 816"
-  flightRoute: string; // e.g. "CGK - JED"
-  hotelMakkah: string; // e.g. "Pullman ZamZam Makkah"
-  hotelMadinah: string; // e.g. "Dallah Taibah Madinah"
+  jamaahPerPackage: string;
+  
+  // Hotel Details
+  hotelDetails: string;
+  
+  // PIC
+  tourLeader: string;
   mutawwifName: string;
-  handlingTeam: string[];
-  busCompany: string; // e.g. "Dallah Transport"
+  
+  // Meals
+  arrivalMeals: string;
+  returnMeals: string;
+  
   status: 'Pre-Arrival' | 'In Makkah' | 'In Madinah' | 'Returning' | 'Completed';
 }
 
@@ -226,47 +244,42 @@ export const INITIAL_ROOMLIST: RoomManifest[] = [
 export const INITIAL_PACKAGES: PackageDetail[] = [
   {
     id: 'pkg-1',
-    groupName: 'Umroh Syawal Gold 2026',
-    departureDate: '24 Mei 2026',
-    duration: '9 Hari',
+    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
+    departureDate: '11 Juni 2026',
+    departureFlightCode: 'SV 819',
+    departureFlightRoute: 'CGK - JED',
+    departureTimeRange: '17:30 - 23:00',
+    returnDate: '19 Juni 2026',
+    returnFlightCode: 'SV 818',
+    returnFlightRoute: 'JED - CGK',
+    returnTimeRange: '01:55 - 16:00',
     totalJamaah: 45,
-    flightCode: 'SV 816',
-    flightRoute: 'CGK - JED',
-    hotelMakkah: 'Pullman ZamZam Makkah',
-    hotelMadinah: 'Dallah Taibah Madinah',
+    jamaahPerPackage: 'Reguler: 45 Jamaah',
+    hotelDetails: 'Hotel Makkah: Rayhaan Marwa Rotana, Anjum\nHotel Madinah: Al Anshor Golden Tulip, Maden Rawdah',
+    tourLeader: 'Ust. Fulan',
     mutawwifName: 'Ust. Abdul Malik, Lc',
-    handlingTeam: ['Ahmad', 'Faiz'],
-    busCompany: 'Dallah Transport Bus B1',
+    arrivalMeals: 'Breakfast: Albaik + Nasi, Lunch at Hotel: Mealbox',
+    returnMeals: 'Dinner: Mealbox, Breakfast: Mealbox',
     status: 'In Makkah'
   },
   {
     id: 'pkg-2',
-    groupName: 'Haji Furoda Premium 2026',
-    departureDate: '15 Juni 2026',
-    duration: '21 Hari',
-    totalJamaah: 28,
-    flightCode: 'SV 820',
-    flightRoute: 'CGK - JED',
-    hotelMakkah: 'Fairmont Clock Tower',
-    hotelMadinah: 'Oberoi Madinah',
+    groupName: 'Umroh Sapphire Ruby 14 Juni 2026 (Makkah Awal)',
+    departureDate: '14 Juni 2026',
+    departureFlightCode: 'GA 980',
+    departureFlightRoute: 'CGK - JED',
+    departureTimeRange: '08:00 - 13:30',
+    returnDate: '22 Juni 2026',
+    returnFlightCode: 'GA 981',
+    returnFlightRoute: 'JED - CGK',
+    returnTimeRange: '15:00 - 05:00',
+    totalJamaah: 30,
+    jamaahPerPackage: 'Sapphire: 15 Jamaah, Ruby: 15 Jamaah',
+    hotelDetails: 'Hotel Sapphire: Fairmont Clock Tower (Makkah), Oberoi (Madinah)\nHotel Ruby: Pullman ZamZam (Makkah), Dallah Taibah (Madinah)',
+    tourLeader: 'Ust. Tariq',
     mutawwifName: 'Ust. Dr. Muhammad Al-Baqir',
-    handlingTeam: ['Tariq', 'Faiz'],
-    busCompany: 'Saptco Premium Coach',
-    status: 'Pre-Arrival'
-  },
-  {
-    id: 'pkg-3',
-    groupName: 'Umroh Hemat Berkah Juni',
-    departureDate: '01 Juni 2026',
-    duration: '9 Hari',
-    totalJamaah: 50,
-    flightCode: 'GA 980',
-    flightRoute: 'CGK - MED',
-    hotelMakkah: 'Snood Ajyad Makkah',
-    hotelMadinah: 'Hayah Golden Madinah',
-    mutawwifName: 'Ust. Ahmad Fauzan',
-    handlingTeam: ['Ahmad', 'Tariq'],
-    busCompany: 'Al-Haramain Bus 12',
+    arrivalMeals: 'Lunch: Prasmanan Hotel',
+    returnMeals: 'Dinner: Mealbox Bandara',
     status: 'Pre-Arrival'
   }
 ];
