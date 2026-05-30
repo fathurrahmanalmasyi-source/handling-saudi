@@ -187,7 +187,7 @@ export default function ManagerCashflow({
     const totalNeeded = totalTim * amountPerTim; 
     
     if (managerWallet.balanceSAR < totalNeeded) {
-      alert(`Peringatan: Saldo Kas Pusat Manager (Yusuf) kurang untuk membagi rata ${amountPerTim} SAR ke ${totalTim} tim (Butuh ${totalNeeded} SAR).\n\nSilakan isi saldo pusat terlebih dahulu.`);
+      alert(`Peringatan: Saldo Kas Pusat Manager (Fathur) kurang untuk membagi rata ${amountPerTim} SAR ke ${totalTim} tim (Butuh ${totalNeeded} SAR).\n\nSilakan isi saldo pusat terlebih dahulu.`);
       return;
     }
 
@@ -225,7 +225,7 @@ export default function ManagerCashflow({
             <div className="text-xl font-bold font-mono text-white mt-1">
               {managerWallet.balanceSAR.toLocaleString('id-ID')} <span className="text-xs text-[#D4AF37]">SAR</span>
             </div>
-            <p className="text-[9px] text-slate-400 font-medium mt-0.5">Likuiditas dititipkan ke Manager Yusuf</p>
+            <p className="text-[9px] text-slate-400 font-medium mt-0.5">Likuiditas dititipkan ke Manager Fathur</p>
           </div>
           <div className="pt-2 border-t border-slate-850 flex items-center justify-between mt-3 text-[10px] text-slate-400">
             <span>Rp {(managerWallet.balanceSAR * 4350).toLocaleString('id-ID')}</span>
@@ -426,7 +426,7 @@ export default function ManagerCashflow({
               </span>
               <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm">📥 Dana Droping Kantor Pusat</h4>
               <p className="text-[11px] text-slate-500 leading-normal">
-                Sesuai pengajuan anggaran Cabang Arab Saudi, Kantor Pusat Jejak Imani Jakarta mendrop uang kas sebesar <strong>100.000 SAR</strong> untuk didebetkan ke Brankas Manager Yusuf harian.
+                Sesuai pengajuan anggaran Cabang Arab Saudi, Kantor Pusat Jejak Imani Jakarta mendrop uang kas sebesar <strong>100.000 SAR</strong> untuk didebetkan ke Brankas Manager Fathur harian.
               </p>
             </div>
 
@@ -920,7 +920,7 @@ export default function ManagerCashflow({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-slate-50 p-2.5 rounded border border-slate-150">
                   <span className="text-[8px] text-slate-400 block font-black uppercase">Pihak Penanggung Jawab</span>
-                  <span className="text-[11px] font-bold text-slate-800">Yusuf (Operations Manager)</span>
+                  <span className="text-[11px] font-bold text-slate-800">Fathur (Operations Manager)</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded border border-slate-150">
                   <span className="text-[8px] text-slate-400 block font-black uppercase">Tingkat Penyaluran Sektor</span>
@@ -1048,7 +1048,7 @@ export default function ManagerCashflow({
                   <div className="w-24 h-11 bg-slate-50 border border-[#D4AF37]/30 flex items-center justify-center font-bold text-[8.5px] text-[#A67C1E] uppercase rounded p-1 text-center">
                     MANAGER OK
                   </div>
-                  <p className="font-bold text-slate-800 text-[10px]">{currentUser || 'Yusuf (Manager)'}</p>
+                  <p className="font-bold text-slate-800 text-[10px]">{currentUser || 'Fathur (Manager)'}</p>
                 </div>
               </div>
 

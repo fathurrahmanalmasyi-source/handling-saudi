@@ -196,7 +196,19 @@ export default function App() {
 
   const [broadcasts, setBroadcasts] = useState<BroadcastMessage[]>(() => {
     const saved = localStorage.getItem('ji_broadcasts');
-    return saved ? JSON.parse(saved) : INITIAL_BROADCASTS;
+    const parsed: BroadcastMessage[] = saved ? JSON.parse(saved) : INITIAL_BROADCASTS;
+    const now = Date.now();
+    return parsed.filter(msg => {
+      let t = msg.timestamp;
+      if (!t) {
+        if (msg.id === 'msg-1') t = now - 2 * 60 * 60 * 1000;
+        else if (msg.id === 'msg-2') t = now - 25 * 60 * 60 * 1000;
+        else if (msg.id === 'msg-3') t = now - 48 * 60 * 60 * 1000;
+        else t = now;
+        msg.timestamp = t;
+      }
+      return (now - t) < 24 * 60 * 60 * 1000;
+    });
   });
 
   const [dutyTasks, setDutyTasks] = useState<DutyTask[]>(() => {
@@ -738,7 +750,7 @@ export default function App() {
       amountSAR: amountSAR,
       walletId: fromWalletId,
       date: new Date().toISOString().split('T')[0],
-      byUser: currentUser || 'Manager Yusuf',
+      byUser: currentUser || 'Manager Fathur',
       status: 'Approved'
     };
 
@@ -791,7 +803,7 @@ export default function App() {
       amountSAR: report.amountSAR,
       walletId: actualWalletId,
       date: new Date().toISOString().split('T')[0],
-      byUser: `Verifikator: ${currentUser || 'Manager Yusuf'}`,
+      byUser: `Verifikator: ${currentUser || 'Manager Fathur'}`,
       status: 'Approved'
     };
     setTransactions(prev => [addedTx, ...prev]);
@@ -812,12 +824,13 @@ export default function App() {
 
     const newMessage: BroadcastMessage = {
       id: `msg-${Date.now()}`,
-      sender: `Manager (Pak Yusuf)`,
+      sender: `Manager (Pak Fathur)`,
       title: msgTitle.trim(),
       text: msgText.trim(),
       time: 'Baru Saja (AST)',
       priority: msgPriority,
-      isRead: false
+      isRead: false,
+      timestamp: Date.now()
     };
 
     setBroadcasts(prev => [newMessage, ...prev]);
@@ -920,7 +933,7 @@ export default function App() {
                   ? 'bg-amber-500/10 border-amber-400 text-amber-900' 
                   : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
               }`}
-              title="Pesan & Instruksi"
+              title="Notifikasi"
             >
               <Bell className="w-4 h-4 shrink-0" />
               {unreadMessagesCount > 0 && (
@@ -1030,14 +1043,14 @@ export default function App() {
                 Lapangan (Tim 1)
               </button>
               <button
-                onClick={() => { setCurrentRole('MANAGER'); handleLoginSuccess('Pak Yusuf', 'MANAGER'); }}
+                onClick={() => { setCurrentRole('MANAGER'); handleLoginSuccess('Pak Fathur', 'MANAGER'); }}
                 className={`px-3 py-1 text-[11px] font-extrabold rounded-full border transition-all cursor-pointer ${
                   currentRole === 'MANAGER'
                     ? 'bg-[#D4AF37] text-slate-950 border-[#D4AF37] shadow-xs'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
-                Manager (Yusuf Central)
+                Manager (Fathur Central)
               </button>
             </div>
           </div>
@@ -1239,7 +1252,7 @@ export default function App() {
                   <div className="border-b border-slate-800 pb-2.5 mb-3.5 flex justify-between items-center">
                     <span className="text-white font-bold text-xs sm:text-sm flex items-center gap-1.5">
                       <Bell className="w-4.5 h-4.5 text-[#D4AF37]" />
-                      <span>Berita & Instruksi Pusat</span>
+                      <span>Notifikasi</span>
                     </span>
                     <span className="w-2.5 h-2.5 bg-rose-555 rounded-full animate-ping"></span>
                   </div>
@@ -2224,14 +2237,14 @@ export default function App() {
 
       {/* MESSAGES & NOTIFICATIONS POPUP MODAL (Fit, compact modal) */}
       {isMessagesPopupOpen && (
-        <div className="absolute inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl border border-slate-200 flex flex-col max-h-[75%] overflow-hidden animate-in slide-in-from-bottom duration-150" id="messages-popup-dialog">
+        <div className="absolute inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl border border-slate-200 flex flex-col max-h-[75%] overflow-hidden animate-in zoom-in-95 duration-150" id="messages-popup-dialog">
             
             {/* Header */}
             <div className="p-3 bg-slate-900 text-white border-b border-[#D4AF37]/20 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm">✉️</span>
-                <span className="text-xs font-black tracking-wide uppercase text-[#D4AF37]">Pesan & Instruksi Pusat</span>
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-[#D4AF37] stroke-[2.5px]" />
+                <span className="text-xs font-black tracking-wide uppercase text-white">Notifikasi</span>
               </div>
               <button 
                 onClick={() => setIsMessagesPopupOpen(false)}
@@ -2245,7 +2258,7 @@ export default function App() {
             <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-50">
               {broadcasts.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-xs font-bold">
-                  Belum ada pesan atau instruksi dari pusat untuk Anda.
+                  Belum ada notifikasi baru untuk Anda.
                 </div>
               ) : (
                 broadcasts.map((msg) => (

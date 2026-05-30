@@ -85,6 +85,7 @@ export interface BroadcastMessage {
   time: string;
   priority: 'High' | 'Medium' | 'Low';
   isRead: boolean;
+  timestamp?: number;
 }
 
 // Define Duty Schedule
@@ -325,21 +326,23 @@ export const TEAMS: Team[] = [
 export const INITIAL_BROADCASTS: BroadcastMessage[] = [
   {
     id: 'msg-1',
-    sender: 'Sistem Pusat (H. Rahmad)',
+    sender: 'Sistem Pusat (H. Fathur)',
     title: 'Pemberitahuan Delay Penerbangan SV-816',
     text: 'Mohon info kepada jamaah Umroh Syawal Gold 2026 bahwa pesawat Saudi Airline SV-816 rute JED-CGK mengalami keterlambatan 2 jam. Jadwal take off baru pukul 21:30 AST. Tim lapangan harap membagikan kupon makan malam di airport.',
     time: 'Hari ini, 08:30 AST',
     priority: 'High',
-    isRead: false
+    isRead: false,
+    timestamp: Date.now() - 2 * 60 * 60 * 1000 // 2 hours ago
   },
   {
     id: 'msg-2',
-    sender: 'Manager Operasional (Pak Yusuf)',
+    sender: 'Manager Operasional (Pak Fathur)',
     title: 'Laporan Koper Tertukar JT-Makkah',
     text: `Satu koper tertukar di bagasi bus B1 dengan bus B2. Tim lapangan ${TEAMS[0].name}, tolong koordinasikan pencarian fisik di lobby hotel.`,
     time: 'Kemarin, 14:20 AST',
     priority: 'Medium',
-    isRead: true
+    isRead: true,
+    timestamp: Date.now() - 25 * 60 * 60 * 1000 // 25 hours ago -> will be automatically cleared (older than 24h)
   },
   {
     id: 'msg-3',
@@ -348,7 +351,8 @@ export const INITIAL_BROADCASTS: BroadcastMessage[] = [
     text: `Dana operasional sebesar 15.000 SAR telah ditransfer ke SNB Bank Wallet atas nama ${TEAMS[0].name}. Harap update pengeluaran secara real-time di aplikasi ini.`,
     time: '20 Mei 2026, 11:00 AST',
     priority: 'Medium',
-    isRead: true
+    isRead: true,
+    timestamp: Date.now() - 48 * 60 * 60 * 1000 // 48 hours ago -> will be automatically cleared (older than 24h)
   }
 ];
 
@@ -398,11 +402,11 @@ export const INITIAL_DUTY_TASKS: DutyTask[] = [
 export const INITIAL_WALLETS: WalletAccount[] = [
   {
     id: 'wallet-manager',
-    name: 'Kas Pusat (Manager - Yusuf)',
+    name: 'Kas Pusat (Manager - Fathur)',
     balanceSAR: 0,
     balanceIDR: 0,
     type: 'Cash Riyal Lapangan',
-    holder: 'Yusuf (Manager)'
+    holder: 'Fathur (Manager)'
   },
   ...TEAMS.map(team => ({
     id: `wallet-${team.id.replace('-', '_')}`,
