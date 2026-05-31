@@ -1021,7 +1021,7 @@ export default function App() {
     setBroadcasts(prev => [newMessage, ...prev]);
     setMsgTitle('');
     setMsgText('');
-    triggerBrowserNotification(`Broadcast: ${newMessage.title}`, newMessage.text);
+    triggerBrowserNotification(newMessage.title, newMessage.text);
     alert('Pesan instruksi disiarkan secara instant ke seluruh perangkat Handling!');
   };
 
@@ -1055,7 +1055,7 @@ export default function App() {
 
   const handleAddBroadcast = (newB: BroadcastMessage) => {
     setBroadcasts(prev => [newB, ...prev]);
-    triggerBrowserNotification(`M-Broadcast: ${newB.title}`, newB.text);
+    triggerBrowserNotification(newB.title, newB.text);
   };
 
   const handleMarkMessageRead = (id: string) => {
