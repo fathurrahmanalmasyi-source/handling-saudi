@@ -1,4 +1,5 @@
-rules_version = '2';
+import fs from 'fs';
+const content = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Global lock
@@ -43,3 +44,6 @@ service cloud.firestore {
     match /incidentLogs/{logId} { allow read, write: if true; }
   }
 }
+`;
+fs.writeFileSync('firestore.rules', content);
+console.log('updated firestore.rules');

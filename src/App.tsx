@@ -277,46 +277,7 @@ export default function App() {
   >(() => {
     const saved = localStorage.getItem("ji_task_checklists_v1_reset2");
     if (saved) return JSON.parse(saved);
-    return {
-      "Check In Hotel": [
-        "Konfirmasi pembagian kunci kamar (rooming list) dengan resepsionis",
-        "Bantu distribusi kunci ke muthawif / pimpinan rombongan",
-        "Pastikan semua koper besar (bagasi) sudah tiba di lobby hotel",
-        "Koordinasi dengan bellboy untuk pengantaran koper ke kamar jamaah",
-        "Pastikan menu makan malam/siang hotel sudah siap untuk jamaah",
-      ],
-      "Check Out Perpindahan Kota": [
-        "Minta jamaah mengeluarkan koper ke depan kamar 3 jam sebelum berangkat",
-        "Lakukan pemeriksaan sweeping kamar untuk barang tertinggal",
-        "Selesaikan administrasi hotel & pengembalian kunci kamar",
-        "Hitung jumlah koper bagasi dan pastikan masuk ke bagasi bus",
-        "Pastikan bus bersandar dan snack perjalanan sudah dibagikan",
-      ],
-      "Check Out to Bandara": [
-        "Sweeping lobby hotel dari sisa barang bawaan jemaah",
-        "Konfirmasi kesiapan bus bandara & truk bagasi",
-        "Kandangkan paspor jemaah dan bagikan sebelum bus berangkat",
-        "Serahkan lembar manifes jemaah ke sopir bus",
-      ],
-      "City Tour": [
-        "Siapkan muthawif pembimbing & pemeras suara (toa/audio guide)",
-        "Briefing jemaah tentang rute ziarah dan waktu kumpul di bus",
-        "Pastikan air zam-zam dan snack box siap di dalam bus",
-        "Hitung jumlah jemaah saat berangkat dan balik ziarah",
-      ],
-      "Bandara Kedatangan": [
-        "Sambut jemaah di gerbang keluar imigrasi bandara",
-        "Mengarahkan jemaah ke bus transit sesuai nomor grup",
-        "Koordinasi penanganan bagasi dengan porter bandara",
-        "Bagikan simcard lokal KSA bagi jemaah yang memesan",
-      ],
-      "Bandara Kepulangan": [
-        "Bimbing jemaah antri masuk pintu keberangkatan & timbang bagasi",
-        "Dampingi proses check-in tiket pesawat & drop bagasi kolektif",
-        "Pastikan air zam-zam jatah jemaah terdistribusi di counter bandara",
-        "Dampingi jemaah masuk jalur imigrasi sampai boarding gate",
-      ],
-    };
+    return {};
   });
 
   const [transactions, setTransactions] = useState<CashflowTransaction[]>(
@@ -574,25 +535,25 @@ export default function App() {
   }
 
   // Bind individual collections to our sync hook
-  useBiSync("sops", sops, setSops, sops);
-  useBiSync("rooms", rooms, setRooms, rooms);
-  useBiSync("packages", packages, setPackages, packages);
-  useBiSync("hotelInfos", hotelInfos, setHotelInfos, hotelInfos);
-  useBiSync("documents", documents, setDocuments, documents);
-  useBiSync("dutyTasks", dutyTasks, setDutyTasks, dutyTasks);
-  useBiSync("wallets", wallets, setWallets, wallets);
-  useBiSync("expenses", expenses, setExpenses, expenses);
-  useBiSync("transactions", transactions, setTransactions, transactions);
-  useBiSync("itineraries", itineraries, setItineraries, itineraries);
-  useBiSync("jamaahList", jamaahList, setJamaahList, jamaahList);
-  useBiSync("teamMembers", teamMembers, setTeamMembers, teamMembers);
+  useBiSync("sops_v2", sops, setSops, sops);
+  useBiSync("rooms_v2", rooms, setRooms, rooms);
+  useBiSync("packages_v2", packages, setPackages, packages);
+  useBiSync("hotelInfos_v2", hotelInfos, setHotelInfos, hotelInfos);
+  useBiSync("documents_v2", documents, setDocuments, documents);
+  useBiSync("dutyTasks_v2", dutyTasks, setDutyTasks, dutyTasks);
+  useBiSync("wallets_v2", wallets, setWallets, wallets);
+  useBiSync("expenses_v2", expenses, setExpenses, expenses);
+  useBiSync("transactions_v2", transactions, setTransactions, transactions);
+  useBiSync("itineraries_v2", itineraries, setItineraries, itineraries);
+  useBiSync("jamaahList_v2", jamaahList, setJamaahList, jamaahList);
+  useBiSync("teamMembers_v2", teamMembers, setTeamMembers, teamMembers);
   useBiSync(
     "attendanceLogs",
     attendanceLogs,
     setAttendanceLogs,
     attendanceLogs,
   );
-  useBiSync("incidentLogs", incidentLogs, setIncidentLogs, incidentLogs);
+  useBiSync("incidentLogs_v2", incidentLogs, setIncidentLogs, incidentLogs);
 
   // Sync broadcasts and trigger native/PWA alerts upon receipt of newly disptached guidelines
   useBiSync(
@@ -613,12 +574,12 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "groups"),
+      collection(db, "groups_v2"),
       (snapshot) => {
         if (snapshot.empty) {
           groups.forEach(async (g) => {
             try {
-              await setDoc(doc(db, "groups", g), { name: g });
+              await setDoc(doc(db, "groups_v2", g), { name: g });
             } catch (e) {
               handleFirestoreError(e, OperationType.WRITE, `groups/${g}`);
             }
@@ -656,7 +617,7 @@ export default function App() {
     groups.forEach(async (g) => {
       if (!lastSet.has(g)) {
         try {
-          await setDoc(doc(db, "groups", g), { name: g });
+          await setDoc(doc(db, "groups_v2", g), { name: g });
         } catch (e) {
           handleFirestoreError(e, OperationType.WRITE, `groups/${g}`);
         }
@@ -666,7 +627,7 @@ export default function App() {
     lastGroupsRef.current.forEach(async (g) => {
       if (!currentSet.has(g)) {
         try {
-          await deleteDoc(doc(db, "groups", g));
+          await deleteDoc(doc(db, "groups_v2", g));
         } catch (e) {
           handleFirestoreError(e, OperationType.DELETE, `groups/${g}`);
         }
@@ -682,12 +643,12 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "taskChecklists"),
+      collection(db, "taskChecklists_v2"),
       (snapshot) => {
         if (snapshot.empty) {
           Object.keys(taskChecklists).forEach(async (key) => {
             try {
-              await setDoc(doc(db, "taskChecklists", key), {
+              await setDoc(doc(db, "taskChecklists_v2", key), {
                 items: taskChecklists[key],
               });
             } catch (e) {
@@ -736,7 +697,7 @@ export default function App() {
         JSON.stringify(lastCheck) !== JSON.stringify(currentCheck)
       ) {
         try {
-          await setDoc(doc(db, "taskChecklists", key), { items: currentCheck });
+          await setDoc(doc(db, "taskChecklists_v2", key), { items: currentCheck });
         } catch (e) {
           handleFirestoreError(e, OperationType.WRITE, `taskChecklists/${key}`);
         }
@@ -746,7 +707,7 @@ export default function App() {
     Object.keys(lastChecklistsRef.current).forEach(async (key) => {
       if (!(key in taskChecklists)) {
         try {
-          await deleteDoc(doc(db, "taskChecklists", key));
+          await deleteDoc(doc(db, "taskChecklists_v2", key));
         } catch (e) {
           handleFirestoreError(
             e,
