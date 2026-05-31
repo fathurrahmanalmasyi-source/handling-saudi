@@ -116,6 +116,7 @@ import ManagerItinerary, { ItineraryItem } from "./components/ManagerItinerary";
 import ManagerDocumentEditor from "./components/ManagerDocumentEditor";
 import ManagerStaffTeam, { TeamMember } from "./components/ManagerStaffTeam";
 import ManagerAppPanel from "./components/ManagerAppPanel";
+import WalkieTalkieWidget from "./components/WalkieTalkieWidget";
 import { INITIAL_6_GROUPS_ITINERARIES } from "./data/initialItineraries";
 import HotelInfographicModal from "./components/HotelInfographicModal";
 
@@ -656,7 +657,9 @@ export default function App() {
         JSON.stringify(lastCheck) !== JSON.stringify(currentCheck)
       ) {
         try {
-          await setDoc(doc(db, "taskChecklists_v2", key), { items: currentCheck });
+          await setDoc(doc(db, "taskChecklists_v2", key), {
+            items: currentCheck,
+          });
         } catch (e) {
           handleFirestoreError(e, OperationType.WRITE, `taskChecklists/${key}`);
         }
@@ -1831,106 +1834,111 @@ export default function App() {
                 <div className="space-y-4">
                   {/* TODAY PENUGASAN (ROLE DEPENDENT SUMMARY) */}
                   {currentRole === "HANDLING" ? (
-                    <div
-                      className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs"
-                      id="handling-dashboard-summary"
-                    >
-                      <div className="border-b border-slate-100 pb-2 mb-3 flex justify-between items-center">
-                        <h3 className="font-extrabold text-[#111] text-xs uppercase flex items-center gap-1.5">
-                          <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                          <span>Jadwal Tugas</span>
-                        </h3>
-                        <span className="text-[10px] text-slate-500 font-bold">
-                          {
-                            dutyTasks.filter(
+                    <div className="flex flex-col gap-4">
+                      {/* WALKIE TALKIE WIDGET */}
+                      <WalkieTalkieWidget currentUser={currentUser || "Tim Lapangan"} />
+
+                      <div
+                        className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs"
+                        id="handling-dashboard-summary"
+                      >
+                        <div className="border-b border-slate-100 pb-2 mb-3 flex justify-between items-center">
+                          <h3 className="font-extrabold text-[#111] text-xs uppercase flex items-center gap-1.5">
+                            <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                            <span>Jadwal Tugas</span>
+                          </h3>
+                          <span className="text-[10px] text-slate-500 font-bold">
+                            {
+                              dutyTasks.filter(
+                                (t) =>
+                                  t.handlingName.toLowerCase() ===
+                                  (currentUser || "").toLowerCase(),
+                              ).length
+                            }{" "}
+                            Aktif
+                          </span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {dutyTasks
+                            .filter(
                               (t) =>
                                 t.handlingName.toLowerCase() ===
                                 (currentUser || "").toLowerCase(),
-                            ).length
-                          }{" "}
-                          Aktif
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        {dutyTasks
-                          .filter(
-                            (t) =>
-                              t.handlingName.toLowerCase() ===
-                              (currentUser || "").toLowerCase(),
-                          )
-                          .slice(0, 2)
-                          .map((task) => (
-                            <div
-                              key={task.id}
-                              className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col gap-1 transition-all text-xs"
-                            >
-                              <div className="flex justify-between items-center">
-                                <span className="px-1.5 py-0.5 bg-[#1a1a1a] text-[#D4AF37] text-[8px] font-black rounded tracking-wide uppercase">
-                                  {task.roleTag}
-                                </span>
-                                <span className="text-[9px] text-slate-400 font-bold font-mono">
-                                  📅 {task.date}
-                                </span>
-                              </div>
-                              <h4 className="font-bold text-slate-900 leading-tight">
-                                {task.groupName}
-                              </h4>
-                              <span className="text-[11px] text-slate-500 font-semibold mt-0.5">
-                                📍 {task.location} ({task.timeRange})
-                              </span>
-                              <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-100 gap-2">
-                                <span
-                                  className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                                    task.status === "Selesai"
-                                      ? "bg-emerald-50 text-emerald-800 border-emerald-250 border"
-                                      : task.status === "Sedang Berjalan"
-                                        ? "bg-blue-50 text-blue-800 border border-blue-250"
-                                        : "bg-amber-50 text-amber-800 border border-amber-250"
-                                  }`}
-                                >
-                                  {task.status === "Sedang Berjalan"
-                                    ? "Sedang Berjalan"
-                                    : task.status}
-                                </span>
-
-                                {task.status === "Selesai" ? (
-                                  <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5 animate-pulse">
-                                    <span>✓</span> Selesai
+                            )
+                            .slice(0, 2)
+                            .map((task) => (
+                              <div
+                                key={task.id}
+                                className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col gap-1 transition-all text-xs"
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="px-1.5 py-0.5 bg-[#1a1a1a] text-[#D4AF37] text-[8px] font-black rounded tracking-wide uppercase">
+                                    {task.roleTag}
                                   </span>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      setActiveTab("reports");
-                                      setHandlingReportSubTab("attendance");
-                                      setPresensiDutyId(task.id);
-                                      setPresensiStatus(
-                                        task.status === "Belum Selesai"
-                                          ? "Masuk Tugas"
-                                          : "Selesai Tugas",
-                                      );
-                                    }}
-                                    className="px-2 py-0.5 bg-slate-900 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-slate-950 font-extrabold text-[9px] rounded border border-slate-800 transition-all cursor-pointer shadow-2xs flex items-center gap-1 uppercase"
+                                  <span className="text-[9px] text-slate-400 font-bold font-mono">
+                                    📅 {task.date}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-slate-900 leading-tight">
+                                  {task.groupName}
+                                </h4>
+                                <span className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                                  📍 {task.location} ({task.timeRange})
+                                </span>
+                                <div className="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-100 gap-2">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                      task.status === "Selesai"
+                                        ? "bg-emerald-50 text-emerald-800 border-emerald-250 border"
+                                        : task.status === "Sedang Berjalan"
+                                          ? "bg-blue-50 text-blue-800 border border-blue-250"
+                                          : "bg-amber-50 text-amber-800 border border-amber-250"
+                                    }`}
                                   >
-                                    {task.status === "Belum Selesai" ? (
-                                      <>
-                                        <Clock className="w-2.5 h-2.5 shrink-0" />
-                                        <span>Presensi Masuk</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <LogOut className="w-2.5 h-2.5 shrink-0" />
-                                        <span>Presensi Selesai</span>
-                                      </>
-                                    )}
-                                  </button>
-                                )}
+                                    {task.status === "Sedang Berjalan"
+                                      ? "Sedang Berjalan"
+                                      : task.status}
+                                  </span>
+
+                                  {task.status === "Selesai" ? (
+                                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5 animate-pulse">
+                                      <span>✓</span> Selesai
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setActiveTab("reports");
+                                        setHandlingReportSubTab("attendance");
+                                        setPresensiDutyId(task.id);
+                                        setPresensiStatus(
+                                          task.status === "Belum Selesai"
+                                            ? "Masuk Tugas"
+                                            : "Selesai Tugas",
+                                        );
+                                      }}
+                                      className="px-2 py-0.5 bg-slate-900 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-slate-950 font-extrabold text-[9px] rounded border border-slate-800 transition-all cursor-pointer shadow-2xs flex items-center gap-1 uppercase"
+                                    >
+                                      {task.status === "Belum Selesai" ? (
+                                        <>
+                                          <Clock className="w-2.5 h-2.5 shrink-0" />
+                                          <span>Presensi Masuk</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <LogOut className="w-2.5 h-2.5 shrink-0" />
+                                          <span>Presensi Selesai</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                        </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : currentRole === "MANAGER" ? (
                     // MANAGER MAIN DASHBOARD SUMMARY CARDS
                     <div
                       className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs"
@@ -2028,7 +2036,7 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Right Side: Quick Notifications & Latest SOP Preview */}

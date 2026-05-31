@@ -23,6 +23,7 @@ service cloud.firestore {
     match /itineraries_v2/{itineraryId} { allow read, write: if true; }
     match /attendanceLogs_v2/{logId} { allow read, write: if true; }
     match /incidentLogs_v2/{logId} { allow read, write: if true; }
+    match /walkie_rooms/{roomId} { allow read, write: if true; }
     
     // Legacy support just in case
     match /rooms/{roomId} { allow read, write: if true; }
