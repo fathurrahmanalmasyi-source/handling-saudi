@@ -27,7 +27,8 @@ export default function ManagerSchedule({
   onUpdateTaskChecklists
 }: ManagerScheduleProps) {
   const [handlingName, setHandlingName] = useState('Ahmad');
-  const [roleTag, setRoleTag] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
+  const [showPetugasSuggestions, setShowPetugasSuggestions] = useState(false);
+  const [roleTag, setRoleTag] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out to Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
   const [groupName, setGroupName] = useState(groups[0] || 'Umroh Reguler 11 Juni 2026 (Madinah Awal)');
   const [date, setDate] = useState('2026-05-24');
   const [timeRange, setTimeRange] = useState('08:00 - 13:00 AST');
@@ -37,7 +38,8 @@ export default function ManagerSchedule({
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editHandlingName, setEditHandlingName] = useState('Ahmad');
-  const [editRoleTag, setEditRoleTag] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
+  const [editShowPetugasSuggestions, setEditShowPetugasSuggestions] = useState(false);
+  const [editRoleTag, setEditRoleTag] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out to Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
   const [editGroupName, setEditGroupName] = useState('');
   const [editDate, setEditDate] = useState('2026-05-24');
   const [editTimeRange, setEditTimeRange] = useState('');
@@ -45,7 +47,7 @@ export default function ManagerSchedule({
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   // Checklist management states
-  const [selectedCategoryForChecklist, setSelectedCategoryForChecklist] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
+  const [selectedCategoryForChecklist, setSelectedCategoryForChecklist] = useState<'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out to Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan'>('Check In Hotel');
   const [newChecklistItem, setNewChecklistItem] = useState('');
 
   const handleAddChecklistItem = () => {
@@ -143,7 +145,7 @@ export default function ManagerSchedule({
     switch (tag) {
       case 'Check In Hotel': return 'bg-blue-100 text-blue-900 border border-blue-250 font-bold';
       case 'Check Out Perpindahan Kota': return 'bg-amber-100 text-amber-900 border border-amber-250 font-bold';
-      case 'Check Out Bandara': return 'bg-rose-105 text-rose-900 border border-rose-250 font-bold';
+      case 'Check Out to Bandara': return 'bg-rose-105 text-rose-900 border border-rose-250 font-bold';
       case 'City Tour': return 'bg-emerald-100 text-emerald-900 border border-emerald-250 font-bold';
       case 'Bandara Kedatangan': return 'bg-cyan-100 text-cyan-950 border border-cyan-250 font-bold';
       case 'Bandara Kepulangan': return 'bg-indigo-100 text-indigo-900 border border-indigo-250 font-bold';
@@ -153,20 +155,6 @@ export default function ManagerSchedule({
 
   return (
     <div className="space-y-4" id="manager-schedule-section">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white rounded-lg border border-slate-200">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-            <Calendar className="w-4.5 h-4.5 text-slate-850" />
-            <span>Jadwal Tugas Lapangan</span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">Atur agenda tugas harian petugas di tanah suci.</p>
-        </div>
-        <div className="flex items-center gap-1 bg-[#D4AF37]/5 border border-[#D4AF37]/20 text-slate-750 px-2.5 py-1 rounded text-xs font-semibold">
-          <BadgeCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>Sinkronisasi Aktif</span>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4" id="sch-layout">
         
         {/* Left column: Assign task Form */}
@@ -176,7 +164,6 @@ export default function ManagerSchedule({
               <UserPlus className="w-4.5 h-4.5 text-[#D4AF37]" />
               <span>Tambah Tugas Baru</span>
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Kirim tugas baru ke petugas harian</p>
           </div>
 
           {feedback && (
@@ -188,25 +175,49 @@ export default function ManagerSchedule({
           <form onSubmit={handleCreateTask} className="space-y-3">
             <div>
               <label className="block text-[10px] font-bold text-slate-500 mb-1">PETUGAS</label>
-              <select
-                value={handlingName}
-                onChange={(e) => setHandlingName(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded text-slate-800 font-bold focus:outline-none"
-              >
-                {teamMembers && teamMembers.length > 0 ? (
-                  teamMembers.map((member) => (
-                    <option key={member.id} value={member.name}>
-                      👨‍✈️ {member.name} ({member.role || 'Staff'})
-                    </option>
-                  ))
-                ) : (
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Ketik & cari nama petugas..."
+                  value={handlingName}
+                  onChange={(e) => {
+                    setHandlingName(e.target.value);
+                    setShowPetugasSuggestions(true);
+                  }}
+                  onFocus={() => setShowPetugasSuggestions(true)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded font-bold text-slate-800 focus:outline-none"
+                />
+                {showPetugasSuggestions && (
                   <>
-                    <option value="Ahmad">Ahmad (Makkah Lead)</option>
-                    <option value="Faiz">Faiz (Madinah Lead)</option>
-                    <option value="Tariq">Tariq (Jeddah Airport Handling)</option>
+                    <div 
+                      className="fixed inset-0 z-20 bg-transparent" 
+                      onClick={() => setShowPetugasSuggestions(false)} 
+                    />
+                    <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto py-1 divide-y divide-slate-50 animate-in fade-in duration-100">
+                      {(teamMembers && teamMembers.length > 0 ? teamMembers : [
+                        { id: '1', name: 'Ahmad', role: 'Makkah Lead' },
+                        { id: '2', name: 'Faiz', role: 'Madinah Lead' },
+                        { id: '3', name: 'Tariq', role: 'Jeddah Airport Handling' }
+                      ])
+                        .filter(member => !handlingName || member.name.toLowerCase().includes(handlingName.toLowerCase()))
+                        .map(member => (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => {
+                              setHandlingName(member.name);
+                              setShowPetugasSuggestions(false);
+                            }}
+                            className="w-full text-left p-2 hover:bg-slate-50 text-xs font-bold text-slate-800 flex justify-between cursor-pointer"
+                          >
+                            <span>👨‍✈️ {member.name}</span>
+                            <span className="text-[9px] text-slate-400 capitalize">{member.role || 'Staff'}</span>
+                          </button>
+                        ))}
+                    </div>
                   </>
                 )}
-              </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3.5">
@@ -219,7 +230,7 @@ export default function ManagerSchedule({
                 >
                   <option value="Check In Hotel">Check In Hotel</option>
                   <option value="Check Out Perpindahan Kota">Check Out Perpindahan Kota</option>
-                  <option value="Check Out Bandara">Check Out Bandara</option>
+                  <option value="Check Out to Bandara">Check Out to Bandara</option>
                   <option value="City Tour">City Tour</option>
                   <option value="Bandara Kedatangan">Bandara Kedatangan</option>
                   <option value="Bandara Kepulangan">Bandara Kepulangan</option>
@@ -239,7 +250,7 @@ export default function ManagerSchedule({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 mb-1">ROMBONGAN / GRUP</label>
+              <label className="block text-[10px] font-bold text-slate-500 mb-1">PILIH NAMA GRUP</label>
               <select
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
@@ -264,14 +275,14 @@ export default function ManagerSchedule({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 mb-1">LOKASI</label>
-              <input
-                type="text"
+              <label className="block text-[10px] font-bold text-slate-500 mb-1">KETERANGAN</label>
+              <textarea
+                rows={4}
                 required
-                placeholder="Misal: Lobby Pullman Makkah"
+                placeholder="Masukkan rincian keterangan lengkap tugas..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded text-slate-850 focus:outline-none"
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded text-slate-850 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>
 
@@ -345,7 +356,7 @@ export default function ManagerSchedule({
                         >
                           <option value="Check In Hotel">Check In Hotel</option>
                           <option value="Check Out Perpindahan Kota">Check Out Perpindahan Kota</option>
-                          <option value="Check Out Bandara">Check Out Bandara</option>
+                          <option value="Check Out to Bandara">Check Out to Bandara</option>
                           <option value="City Tour">City Tour</option>
                           <option value="Bandara Kedatangan">Bandara Kedatangan</option>
                           <option value="Bandara Kepulangan">Bandara Kepulangan</option>
@@ -562,7 +573,7 @@ export default function ManagerSchedule({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* List of categories */}
           <div className="md:col-span-1 border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100 bg-slate-50/50">
-            {['Check In Hotel', 'Check Out Perpindahan Kota', 'Check Out Bandara', 'City Tour', 'Bandara Kedatangan', 'Bandara Kepulangan'].map((cat) => (
+            {['Check In Hotel', 'Check Out Perpindahan Kota', 'Check Out to Bandara', 'City Tour', 'Bandara Kedatangan', 'Bandara Kepulangan'].map((cat) => (
               <button
                 key={cat}
                 type="button"

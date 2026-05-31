@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Compass, FileSpreadsheet, Calendar, Clock, Hotel, Files, Users, DollarSign, LogOut, Send,
-  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList, Bed, Trash2
+  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList, Bed, Trash2, UserCheck, FileText
 } from 'lucide-react';
 
 // Subcomponents import
@@ -109,6 +109,9 @@ export default function ManagerAppPanel({
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [reportsSubTab, setReportsSubTab] = useState<'attendance' | 'incidents'>('attendance');
   const [reportSearchText, setReportSearchText] = useState('');
+  
+  const [manifestInitialSelectedGroup, setManifestInitialSelectedGroup] = useState<string | null>(null);
+  const [manifestInitialSubTab, setManifestInitialSubTab] = useState<'jamaah' | 'paketInfo'>('jamaah');
 
   // Input states for quick broadcast
   const [recipientSearchTerm, setRecipientSearchTerm] = useState('');
@@ -248,7 +251,11 @@ export default function ManagerAppPanel({
               <p className="px-3 pb-2 text-[10px] uppercase font-black text-slate-400">Menu yang Sudah Ada</p>
               <div className="space-y-1">
                 <button
-                  onClick={() => setManagerTab('m-manifest')}
+                  onClick={() => {
+                    setManifestInitialSelectedGroup(null);
+                    setManifestInitialSubTab('jamaah');
+                    setManagerTab('m-manifest');
+                  }}
                   className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                     managerTab === 'm-manifest' 
                       ? 'bg-slate-900 text-white font-bold shadow-xs' 
@@ -334,35 +341,35 @@ export default function ManagerAppPanel({
           {managerTab === 'm-dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               {/* Operation stats card headers */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
-                  <span className="text-slate-400 block uppercase font-black text-[9px]">Grup Bulan Ini</span>
-                  <p className="text-2xl font-black text-slate-900 mt-0.5 font-serif">{groups.length} Grup</p>
-                  <span className="text-[10px] text-emerald-600 block mt-1.5 leading-none">Terjadwal Berangkat</span>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
+                  <span className="text-slate-400 block uppercase font-black text-[9px] truncate">Grup Bulan Ini</span>
+                  <p className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5 font-serif">{groups.length} Grup</p>
+                  <span className="text-[10px] text-emerald-600 block mt-1 leading-none truncate">Terjadwal Berangkat</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
-                  <span className="text-slate-400 block uppercase font-black text-[9px]">Grup Aktif</span>
-                  <p className="text-2xl font-black text-indigo-950 mt-0.5 font-serif">{groups.length} Grup</p>
-                  <span className="text-[10px] text-indigo-600 block mt-1.5 leading-none">Sedang di KSA</span>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
+                  <span className="text-slate-400 block uppercase font-black text-[9px] truncate">Grup Aktif</span>
+                  <p className="text-lg sm:text-2xl font-black text-indigo-950 mt-0.5 font-serif">{groups.length} Grup</p>
+                  <span className="text-[10px] text-indigo-600 block mt-1 leading-none truncate">Sedang di KSA</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
-                  <span className="text-slate-400 block uppercase font-black text-[9px]">Total Jamaah Aktif</span>
-                  <p className="text-2xl font-black text-slate-900 mt-0.5 font-mono">{jamaahList.length} Pax</p>
-                  <span className="text-[10px] text-slate-450 block mt-1.5 leading-none">Total Jamaah Rombongan</span>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
+                  <span className="text-slate-400 block uppercase font-black text-[9px] truncate">Total Jamaah Aktif</span>
+                  <p className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5 font-mono">{jamaahList.length} Pax</p>
+                  <span className="text-[10px] text-slate-450 block mt-1 leading-none truncate font-semibold">Total Rombongan</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
-                  <span className="text-slate-400 block uppercase font-black text-[9px]">Jadwal Penugasan Tim</span>
-                  <p className="text-2xl font-black text-amber-900 mt-0.5 font-mono">{dutyTasks.length} Agenda</p>
-                  <span className="text-[10px] text-indigo-700 block mt-1.5 leading-none cursor-pointer hover:underline" onClick={() => setManagerTab('m-schedule')}>Atur Schedulers →</span>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
+                  <span className="text-slate-400 block uppercase font-black text-[9px] truncate">Penugasan Tim</span>
+                  <p className="text-lg sm:text-2xl font-black text-amber-900 mt-0.5 font-mono">{dutyTasks.length} Agenda</p>
+                  <span className="text-[10px] text-indigo-700 block mt-1 leading-none cursor-pointer hover:underline truncate font-semibold" onClick={() => setManagerTab('m-schedule')}>Atur Jadwal →</span>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs">
-                  <span className="text-slate-400 block uppercase font-black text-[9px]">Pending Audit Deposit</span>
-                  <p className="text-2xl font-black text-rose-800 mt-0.5 font-mono">{expenses.filter(e => e.status === 'Pending').length} Laporan</p>
-                  <span className="text-[10px] text-slate-450 block mt-1.5 leading-none cursor-pointer hover:underline" onClick={() => setManagerTab('m-cashflow')}>Audit Kas Transaksi →</span>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 text-xs font-bold shadow-3xs col-span-2 lg:col-span-1">
+                  <span className="text-slate-400 block uppercase font-black text-[9px] truncate">Pending Audit</span>
+                  <p className="text-lg sm:text-2xl font-black text-rose-800 mt-0.5 font-mono">{expenses.filter(e => e.status === 'Pending').length} Laporan</p>
+                  <span className="text-[10px] text-slate-450 block mt-1 leading-none cursor-pointer hover:underline truncate font-semibold" onClick={() => setManagerTab('m-cashflow')}>Audit Kas Transaksi →</span>
                 </div>
               </div>
 
@@ -371,17 +378,24 @@ export default function ManagerAppPanel({
                 {/* Left column info lists */}
                 <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-6">
                   <div className="border-b border-slate-100 pb-4">
-                    <h3 className="font-extrabold text-slate-900 text-sm uppercase">📂 Grup Aktif</h3>
-                    <p className="text-[10px] text-slate-500 mt-1">Grup yang sedang aktif schedule-nya di KSA.</p>
+                    <h3 className="font-extrabold text-slate-900 text-sm uppercase flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-[#D4AF37]" strokeWidth={1.5} />
+                      <span>Grup Aktif</span>
+                    </h3>
+                    <p className="text-[10px] text-slate-500 mt-1">Grup yang sedang aktif schedule-nya di KSA. Klik nama grup untuk melihat Info Paket.</p>
                   </div>
 
                   <div className="space-y-3">
                     {groups.slice(0, 3).map((grp, idx) => {
-                      const count = jamaahList.filter(j => j.groupName === grp).length;
-                      return (
+                       const count = jamaahList.filter(j => j.groupName === grp).length;
+                       return (
                         <div key={idx} 
-                          onClick={() => { setManagerTab('m-manifest'); /* Need a way to set group filter here if possible, but for now just tab switch */ }}
-                          className="p-3.5 bg-slate-50 hover:bg-slate-100/50 border border-slate-150 rounded-lg flex items-center justify-between text-xs font-semibold gap-3 transition-all cursor-pointer">
+                          onClick={() => { 
+                            setManifestInitialSelectedGroup(grp);
+                            setManifestInitialSubTab('paketInfo');
+                            setManagerTab('m-manifest');
+                          }}
+                          className="p-3 bg-slate-50 hover:bg-slate-100/50 border border-slate-150 rounded-lg flex items-center justify-between text-xs font-semibold gap-3 transition-all cursor-pointer">
                           <div>
                             <h4 className="font-black text-slate-900">{grp}</h4>
                             <p className="text-[10px] text-slate-500 mt-1">👥 {count} Jamaah • Aktif: 24 Mei - 05 Juni</p>
@@ -393,8 +407,11 @@ export default function ManagerAppPanel({
                   </div>
 
                   <div className="border-b border-slate-100 pb-4">
-                    <h3 className="font-extrabold text-slate-900 text-sm uppercase">📅 Grup Yang Akan Datang</h3>
-                    <p className="text-[10px] text-slate-500 mt-1">Grup yang dijadwalkan akan berangkat.</p>
+                    <h3 className="font-extrabold text-slate-900 text-sm uppercase flex items-center gap-1.55">
+                      <Calendar className="w-4 h-4 text-[#D4AF37]" strokeWidth={1.5} />
+                      <span>Grup Yang Akan Datang</span>
+                    </h3>
+                    <p className="text-[10px] text-slate-500 mt-1">Grup yang dijadwalkan akan berangkat. Klik nama grup untuk melihat Info Paket.</p>
                   </div>
 
                   <div className="space-y-3">
@@ -402,8 +419,12 @@ export default function ManagerAppPanel({
                       const count = jamaahList.filter(j => j.groupName === grp).length;
                       return (
                         <div key={idx} 
-                          onClick={() => { setManagerTab('m-manifest'); /* ... */ }}
-                          className="p-3.5 bg-sky-50 hover:bg-sky-100/50 border border-sky-150 rounded-lg flex items-center justify-between text-xs font-semibold gap-3 transition-all cursor-pointer">
+                          onClick={() => { 
+                            setManifestInitialSelectedGroup(grp);
+                            setManifestInitialSubTab('paketInfo');
+                            setManagerTab('m-manifest');
+                          }}
+                          className="p-3 bg-sky-50 hover:bg-sky-100/50 border border-sky-150 rounded-lg flex items-center justify-between text-xs font-semibold gap-3 transition-all cursor-pointer">
                           <div>
                             <h4 className="font-black text-sky-900">{grp}</h4>
                             <p className="text-[10px] text-sky-600 mt-1">👥 {count} Jamaah • Berangkat: 15 Juni</p>
@@ -419,7 +440,7 @@ export default function ManagerAppPanel({
                 <div className="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-6">
                   <div className="border-b border-slate-105 pb-3">
                     <h3 className="font-bold text-slate-900 text-xs sm:text-sm uppercase flex items-center gap-1.5">
-                      <Send className="w-4.5 h-4.5 text-[#D4AF37]" />
+                      <Send className="w-4.5 h-4.5 text-[#D4AF37]" strokeWidth={1.5} />
                       <span>Buat Pengumuman / Broadcast</span>
                     </h3>
                   </div>
@@ -526,18 +547,28 @@ export default function ManagerAppPanel({
 
                   <div className="border-t border-slate-100 pt-4 space-y-3">
                     <h4 className="font-bold text-xs uppercase text-slate-400">Riwayat Terkirim:</h4>
-                    {broadcasts.map(msg => (
-                      <div key={msg.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-start justify-between gap-2">
-                        <div className="text-xs">
-                          <p className="font-bold text-slate-900">{msg.title}</p>
-                          <p className="text-[10px] text-slate-500">{msg.text}</p>
-                          <p className="text-[9px] text-slate-400 mt-1">{msg.time}</p>
+                    {broadcasts.map(msg => {
+                      const isAll = !msg.recipients || msg.recipients.length === 0 || msg.recipients.some(r => r.toLowerCase().trim() === 'semua');
+                      return (
+                        <div key={msg.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-start justify-between gap-2 text-left">
+                          <div className="text-xs space-y-1">
+                            <p className="font-bold text-slate-900">{msg.title}</p>
+                            <p className="text-[10px] text-slate-500 leading-normal">{msg.text}</p>
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                              <span className={`text-[9px] font-black border px-1.5 py-0.5 rounded uppercase ${
+                                isAll ? 'text-teal-800 bg-teal-50 border-teal-200' : 'text-indigo-800 bg-indigo-50 border-indigo-200'
+                              }`}>
+                                {isAll ? '📢 Terkirim ke Semua Akun' : `👥 Terkirim ke Beberapa Akun: ${msg.recipients?.join(', ')}`}
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-medium font-mono">{msg.time}</span>
+                            </div>
+                          </div>
+                          <button onClick={() => onDeleteBroadcast(msg.id)} className="text-rose-500 hover:text-rose-705 cursor-pointer p-0.5 shrink-0" title="Hapus Pengumuman">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button onClick={() => onDeleteBroadcast(msg.id)} className="text-rose-500 hover:text-rose-700">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -556,6 +587,8 @@ export default function ManagerAppPanel({
               packages={packages}
               onUpdatePackages={onUpdatePackages}
               hotelInfos={hotelInfos}
+              initialSelectedGroup={manifestInitialSelectedGroup}
+              initialSubTab={manifestInitialSubTab}
             />
           )}
 
@@ -584,10 +617,6 @@ export default function ManagerAppPanel({
           {/* TAB m-roomlist VIEW */}
           {managerTab === 'm-roomlist' && (
             <div className="space-y-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
-                <h3 className="text-xs font-black uppercase text-[#D4AF37] tracking-wider mb-1">🔑 Menu Roomlist KSA</h3>
-                <p className="text-xs text-slate-500">Edit kamar jamaah, plot porter logistik, catat kasur tambahan untuk muassasah</p>
-              </div>
               <RoomListManager 
                 rooms={rooms} 
                 onAddRoom={handleAddRoomSimulated} 
@@ -649,25 +678,8 @@ export default function ManagerAppPanel({
           {managerTab === 'm-reports' && (
             <div className="space-y-4 animate-in fade-in duration-200 text-slate-800" id="manager-reports-page">
               
-              {/* Header block with statistics count */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-xl border border-slate-200 gap-3 shadow-3xs">
-                <div>
-                  <h2 className="text-sm font-black text-slate-900 uppercase flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-indigo-700" />
-                    <span>Pusat Laporan Lapangan & Absensi (KSA Portal)</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">Monitor clock-in/out harian personel handling dan penyelesaian insiden operasional lapangan.</p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] uppercase font-black bg-slate-100 text-slate-700 p-2 rounded-lg border border-slate-200">
-                    ⏱️ GPS Tracker Active
-                  </span>
-                </div>
-              </div>
-
               {/* Sub-tabs for Reports selection */}
-              <div className="flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-3xs">
+              <div className="flex border-b border-slate-200 bg-white rounded-xl overflow-hidden shadow-3xs">
                 <button
                   onClick={() => { setReportsSubTab('attendance'); setReportSearchText(''); }}
                   className={`flex-1 sm:flex-initial px-6 py-3.5 text-xs font-black tracking-wider uppercase border-b-2 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
@@ -676,7 +688,8 @@ export default function ManagerAppPanel({
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <span>👤 Absensi Penugasan ({attendanceLogs ? attendanceLogs.length : 0})</span>
+                  <UserCheck className="w-4.5 h-4.5 text-[#D4AF37]" strokeWidth={1.5} />
+                  <span>Absensi Penugasan ({attendanceLogs ? attendanceLogs.length : 0})</span>
                 </button>
                 <button
                   onClick={() => { setReportsSubTab('incidents'); setReportSearchText(''); }}
@@ -686,7 +699,8 @@ export default function ManagerAppPanel({
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <span>⚠️ Laporan Insiden & Log Lapangan ({incidentLogs ? incidentLogs.length : 0})</span>
+                  <FileText className="w-4.5 h-4.5 text-[#D4AF37]" strokeWidth={1.5} />
+                  <span>Laporan Lapangan ({incidentLogs ? incidentLogs.length : 0})</span>
                 </button>
               </div>
 

@@ -152,12 +152,9 @@ export default function ManagerItinerary({ itineraries, onUpdateItineraryList, g
     <div className="space-y-4" id="manager-itinerary-com">
       {/* Header card with Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 gap-3">
-        <div>
-          <h2 className="text-sm font-black text-slate-900 uppercase flex items-center gap-2">
-            <Calendar className="w-4.5 h-4.5 text-[#D4AF37]" />
-            <span>Itinerary Keseluruhan Rombongan Grup</span>
-          </h2>
-          <p className="text-xs text-slate-500">Kelola schedule kordinasi harian, mutawif pembimbing, ibadah umroh, ziarah & waktu asar/subuh</p>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-[#D4AF37]" />
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Modul Itinerary</span>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -171,111 +168,23 @@ export default function ManagerItinerary({ itineraries, onUpdateItineraryList, g
         </div>
       </div>
 
-      {/* Dynamic and ultra-compact Suggestion Searchbar for Group Itinerary */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <div className="w-full md:w-auto flex-1">
-            <label className="block text-[10px] uppercase font-black text-slate-400 mb-1.5 flex items-center gap-1">
-              <span>🔍</span> Filter / Saring Rombongan Grup:
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Cari atau pilih rombongan (e.g. Sapphire, Reguler, VIP)..."
-                value={selectedGroup === 'All' ? '' : selectedGroup}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  // If cleared, default to All
-                  if (!val.trim()) {
-                    setSelectedGroup('All');
-                  } else {
-                    setSelectedGroup(val);
-                  }
-                }}
-                className="w-full text-xs bg-slate-50 border border-slate-200 pl-4 pr-10 py-2 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-              />
-              {selectedGroup !== 'All' && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedGroup('All')}
-                  className="absolute right-2.5 top-2 py-0.5 text-slate-400 hover:text-red-500 font-extrabold text-[10px] uppercase"
-                  title="Reset Filter"
-                >
-                  Clear ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="w-full md:w-auto">
-            <label className="block text-[10px] uppercase font-black text-slate-400 mb-1.5">Akses Cepat (Saran Rombongan):</label>
-            <div className="flex flex-wrap gap-1">
-              <button
-                type="button"
-                onClick={() => setSelectedGroup('All')}
-                className={`px-2.5 py-1 text-[11px] rounded-md font-black border transition-all ${
-                  selectedGroup === 'All'
-                    ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-650 hover:bg-slate-200 border-slate-200'
-                }`}
-              >
-                Semua Grup
-              </button>
-              {groups.map((grp, idx) => {
-                const isSelected = selectedGroup === grp;
-                // Get short name
-                let displayName = grp;
-                if (grp.toLowerCase().includes('sapphire')) displayName = '💎 Sapphire';
-                else if (grp.toLowerCase().includes('reguler')) displayName = '🚌 Reguler';
-                else if (grp.toLowerCase().includes('yaqin')) displayName = '🟢 Yaqin';
-                else if (grp.toLowerCase().includes('turkiye')) displayName = '🇹🇷 Turkiye';
-                else if (grp.toLowerCase().includes('lapis')) displayName = '🎂 Lapis-Lapis';
-                else if (grp.toLowerCase().includes('vip')) displayName = '🔑 VIP Premium';
-                else displayName = grp.slice(0, 14) + '...';
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedGroup(grp)}
-                    className={`px-2.5 py-1 text-[11px] rounded-md font-black border transition-all ${
-                      isSelected
-                        ? 'bg-[#1A1A1A] border-[#D4AF37]/50 text-[#D4AF37] shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                    title={grp}
-                  >
-                    {displayName}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Group dropdown selective filter */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="max-w-md text-left">
+          <label className="block text-[10px] uppercase font-black text-slate-400 mb-1.5 flex items-center gap-1">
+            <span>🔍</span> Filter Berdasarkan Nama Grup:
+          </label>
+          <select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            className="w-full text-xs bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] cursor-pointer"
+          >
+            <option value="All">Semua Rombongan / Grup</option>
+            {groups.map((g, idx) => (
+              <option key={idx} value={g}>{g}</option>
+            ))}
+          </select>
         </div>
-
-        {/* Live typing auto-suggestions */}
-        {selectedGroup !== 'All' && !groups.includes(selectedGroup) && selectedGroup.trim() !== '' && (() => {
-          const suggestions = groups.filter(g => g.toLowerCase().includes(selectedGroup.toLowerCase()));
-          if (suggestions.length === 0) return null;
-          return (
-            <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-1">
-              <div className="text-[10px] text-slate-400 font-black uppercase tracking-wider px-1">Rekomendasi Rombongan:</div>
-              <div className="flex flex-col divide-y divide-slate-100">
-                {suggestions.map((sug, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedGroup(sug)}
-                    className="w-full text-left text-xs text-slate-700 font-bold hover:text-[#D4AF37] hover:bg-slate-100 px-2 py-1.5 rounded transition-all flex items-center gap-1.5"
-                  >
-                    <span>📂</span>
-                    <span>{sug}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
       </div>
 
       {/* ITINERARY TIMELINE CARDS or TABLE VIEW */}

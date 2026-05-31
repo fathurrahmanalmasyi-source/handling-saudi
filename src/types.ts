@@ -120,13 +120,14 @@ export interface BroadcastMessage {
   priority: 'High' | 'Medium' | 'Low';
   isRead: boolean;
   timestamp?: number;
+  recipients?: string[];
 }
 
 // Define Duty Schedule
 export interface DutyTask {
   id: string;
   handlingName: string;
-  roleTag: 'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan';
+  roleTag: 'Check In Hotel' | 'Check Out Perpindahan Kota' | 'Check Out to Bandara' | 'City Tour' | 'Bandara Kedatangan' | 'Bandara Kepulangan';
   groupName: string;
   date: string;
   timeRange: string; // e.g. "08:00 - 13:00 AST"
@@ -192,48 +193,7 @@ export const INITIAL_SOPS: SOPDoc[] = [
 
 export const INITIAL_ROOMLIST: RoomManifest[] = [];
 
-export const INITIAL_PACKAGES: PackageDetail[] = [
-  {
-    id: 'pkg-1',
-    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
-    departureDate: '11 Juni 2026',
-    departureFlightCode: 'SV 819',
-    departureFlightRoute: 'CGK - JED',
-    departureTimeRange: '17:30 - 23:00',
-    returnDate: '19 Juni 2026',
-    returnFlightCode: 'SV 818',
-    returnFlightRoute: 'JED - CGK',
-    returnTimeRange: '01:55 - 16:00',
-    totalJamaah: 45,
-    jamaahPerPackage: 'Reguler: 45 Jamaah',
-    hotelDetails: 'Hotel Makkah: Rayhaan Marwa Rotana, Anjum\nHotel Madinah: Al Anshor Golden Tulip, Maden Rawdah',
-    tourLeader: 'Ust. Fulan',
-    mutawwifName: 'Ust. Abdul Malik, Lc',
-    arrivalMeals: 'Breakfast: Albaik + Nasi, Lunch at Hotel: Mealbox',
-    returnMeals: 'Dinner: Mealbox, Breakfast: Mealbox',
-    status: 'In Makkah'
-  },
-  {
-    id: 'pkg-2',
-    groupName: 'Umroh Sapphire Ruby 14 Juni 2026 (Makkah Awal)',
-    departureDate: '14 Juni 2026',
-    departureFlightCode: 'GA 980',
-    departureFlightRoute: 'CGK - JED',
-    departureTimeRange: '08:00 - 13:30',
-    returnDate: '22 Juni 2026',
-    returnFlightCode: 'GA 981',
-    returnFlightRoute: 'JED - CGK',
-    returnTimeRange: '15:00 - 05:00',
-    totalJamaah: 30,
-    jamaahPerPackage: 'Sapphire: 15 Jamaah, Ruby: 15 Jamaah',
-    hotelDetails: 'Hotel Sapphire: Fairmont Clock Tower (Makkah), Oberoi (Madinah)\nHotel Ruby: Pullman ZamZam (Makkah), Dallah Taibah (Madinah)',
-    tourLeader: 'Ust. Tariq',
-    mutawwifName: 'Ust. Dr. Muhammad Al-Baqir',
-    arrivalMeals: 'Lunch: Prasmanan Hotel',
-    returnMeals: 'Dinner: Mealbox Bandara',
-    status: 'Pre-Arrival'
-  }
-];
+export const INITIAL_PACKAGES: PackageDetail[] = [];
 
 export const INITIAL_HOTEL_INFOS: HotelInfographic[] = [
   {
@@ -262,17 +222,7 @@ export const INITIAL_HOTEL_INFOS: HotelInfographic[] = [
   }
 ];
 
-export const INITIAL_DOCUMENTS: DocumentGroup[] = [
-  {
-    id: 'doc-grp-1',
-    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
-    items: [
-      { id: 'doc-1-1', name: 'Visa_Umroh_Reguler_11Juni.xlsx', type: 'visa', size: '1.2 MB', uploadDate: '25 Mei 2026' },
-      { id: 'doc-1-2', name: 'E_Ticket_SaudiAirlines_SV819.xlsx', type: 'ticket', size: '3.4 MB', uploadDate: '26 Mei 2026' },
-      { id: 'doc-1-3', name: 'Manifest_Paspor_Keberangkatan.xlsx', type: 'passport', size: '2.1 MB', uploadDate: '27 Mei 2026' }
-    ]
-  }
-];
+export const INITIAL_DOCUMENTS: DocumentGroup[] = [];
 
 // --- Tambahan Data Tim ---
 export type Sector = 'Handling Jeddah' | 'Handling Madinah' | 'Handling Makkah';
@@ -289,75 +239,23 @@ export const TEAMS: Team[] = [
   { id: 'team-malik', name: 'Malik At-Tijari', sector: 'Handling Makkah' }
 ];
 
-export const INITIAL_BROADCASTS: BroadcastMessage[] = [
-  {
-    id: 'msg-1',
-    sender: 'Sistem Pusat (H. Fathur)',
-    title: 'Pemberitahuan Delay Penerbangan SV-816',
-    text: 'Mohon info kepada jamaah Umroh Syawal Gold 2026 bahwa pesawat Saudi Airline SV-816 rute JED-CGK mengalami keterlambatan 2 jam. Jadwal take off baru pukul 21:30 AST. Tim lapangan harap membagikan kupon makan malam di airport.',
-    time: 'Hari ini, 08:30 AST',
-    priority: 'High',
-    isRead: false,
-    timestamp: Date.now() - 2 * 60 * 60 * 1000 // 2 hours ago
-  },
-  {
-    id: 'msg-2',
-    sender: 'Manager Operasional (Pak Fathur)',
-    title: 'Laporan Koper Tertukar JT-Makkah',
-    text: 'Satu koper tertukar di bagasi bus B1 dengan bus B2. Tim lapangan Ahmad Syarif, tolong koordinasikan pencarian fisik di lobby hotel.',
-    time: 'Kemarin, 14:20 AST',
-    priority: 'Medium',
-    isRead: true,
-    timestamp: Date.now() - 25 * 60 * 60 * 1000 // 25 hours ago -> will be automatically cleared (older than 24h)
-  },
-  {
-    id: 'msg-3',
-    sender: 'Sistem Keuangan',
-    title: 'Droping Dana Operasional Cabang Saudi Berhasil',
-    text: 'Dana operasional sebesar 15.000 SAR telah ditransfer ke SNB Bank Wallet atas nama Ahmad Syarif. Harap update pengeluaran secara real-time di aplikasi ini.',
-    time: '20 Mei 2026, 11:00 AST',
-    priority: 'Medium',
-    isRead: true,
-    timestamp: Date.now() - 48 * 60 * 60 * 1000 // 48 hours ago -> will be automatically cleared (older than 24h)
-  }
-];
+export const INITIAL_BROADCASTS: BroadcastMessage[] = [];
 
-export const INITIAL_DUTY_TASKS: DutyTask[] = [
-  {
-    id: 'duty-1',
-    handlingName: 'Ahmad Syarif',
-    roleTag: 'Check In Hotel',
-    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
-    date: '2026-06-11',
-    timeRange: '18:00 - 21:00 AST',
-    location: 'Hotel Anjum Makkah',
-    status: 'Belum Selesai'
-  },
-  {
-    id: 'duty-2',
-    handlingName: 'Muhammad Faiz',
-    roleTag: 'Bandara Kedatangan',
-    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
-    date: '2026-06-11',
-    timeRange: '12:00 - 15:00 AST',
-    location: 'Bandara Madinah',
-    status: 'Sedang Berjalan'
-  }
-];
+export const INITIAL_DUTY_TASKS: DutyTask[] = [];
 
 export const INITIAL_WALLETS: WalletAccount[] = [
   {
     id: 'wallet-manager',
     name: 'Kas Pusat (Manager - Fathur)',
-    balanceSAR: 45000,
-    balanceIDR: 180000000,
+    balanceSAR: 0,
+    balanceIDR: 0,
     type: 'Cash Riyal Lapangan',
     holder: 'Fathur (Manager)'
   },
   ...TEAMS.map(team => ({
     id: `wallet-${team.id.replace('-', '_')}`,
     name: `Dompet ${team.name}`,
-    balanceSAR: 5000,
+    balanceSAR: 0,
     balanceIDR: 0,
     type: 'Cash Riyal Lapangan' as const,
     holder: team.name

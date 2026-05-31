@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, User, Lock, ArrowRight, BookOpen, KeyRound, Eye, EyeOff, X, Download, Smartphone, Share2 } from 'lucide-react';
-import { UserRole, Team } from '../types';
+import { UserRole } from '../types';
+import { TeamMember } from './ManagerStaffTeam';
 
 interface LoginProps {
   onLoginSuccess: (username: string, role: UserRole) => void;
-  teamList?: Team[];
+  teamMembers?: TeamMember[];
 }
 
-export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
+export default function Login({ onLoginSuccess, teamMembers = [] }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +75,9 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+    const uTrim = username.trim();
+    const pTrim = password.trim();
+    if (!uTrim || !pTrim) {
       setError('Harap masukkan Username dan Password.');
       return;
     }
@@ -82,31 +85,32 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
     setIsLoading(true);
     setError('');
 
-    // Safe simulation of login
     setTimeout(() => {
-      let finalUser = username.trim();
-      
-      // Attempt to look up the username in the team map if they selected from dropdown or typed exact ID
-      if (loginRole === 'HANDLING') {
-        const matchedTeam = teamList.find(t => t.id.replace('-', '_') === finalUser || t.name === finalUser);
-        if (matchedTeam) {
-            finalUser = matchedTeam.name; // Keep full name for display
+      if (loginRole === 'MANAGER') {
+        if (uTrim.toLowerCase() === 'manager saudi' && pTrim === '50rbjamaah') {
+          onLoginSuccess('manager saudi', 'MANAGER');
         } else {
-             // Let it just be whatever they typed if not manager, but ideally they select from the dropdown
-             finalUser = finalUser.charAt(0).toUpperCase() + finalUser.slice(1);
+          setError('Username atau Password Manager salah. (Gunakan username: manager saudi & password: 50rbjamaah)');
         }
+        setIsLoading(false);
       } else {
-        finalUser = finalUser.charAt(0).toUpperCase() + finalUser.slice(1);
+        // Find member with matching username and password
+        const matchedMember = teamMembers.find(
+          t => t.username.toLowerCase() === uTrim.toLowerCase() && (t.password || 'pass') === pTrim
+        );
+        if (matchedMember) {
+          onLoginSuccess(matchedMember.name, 'HANDLING');
+        } else {
+          setError('Username atau Password Tim Lapangan salah. Pastikan akun terdaftar di menu tim portal manager.');
+        }
+        setIsLoading(false);
       }
-      
-      onLoginSuccess(finalUser, loginRole);
-      setIsLoading(false);
     }, 600);
   };
 
-  const selectQuickLogin = (user: string, role: UserRole) => {
+  const selectQuickLogin = (user: string, pass: string, role: UserRole) => {
     setUsername(user);
-    setPassword('secret123');
+    setPassword(pass);
     setLoginRole(role);
     setError('');
   };
@@ -146,7 +150,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                 type="button"
                 onClick={() => {
                   setLoginRole('HANDLING');
-                  if (username === 'fathur') { setUsername(teamList[0]?.name || ''); }
+                  if (username === 'manager saudi' || username === 'fathur') { setUsername(teamMembers[0]?.username || ''); }
                 }}
                 className={`py-1.5 text-xs font-extrabold rounded-md transition-all cursor-pointer ${
                   loginRole === 'HANDLING'
@@ -160,7 +164,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                 type="button"
                 onClick={() => {
                   setLoginRole('MANAGER');
-                  if (username !== 'fathur') { setUsername('fathur'); }
+                  if (username !== 'manager saudi') { setUsername('manager saudi'); }
                 }}
                 className={`py-1.5 text-xs font-extrabold rounded-md transition-all cursor-pointer ${
                   loginRole === 'MANAGER'
@@ -216,19 +220,20 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                       className="fixed inset-0 z-20 cursor-default bg-transparent"
                       onClick={() => setShowSuggestions(false)}
                     />
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto py-1 divide-y divide-slate-50 animate-in fade-in slide-in-from-top-1 duration-100">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto py-1 divide-y divide-slate-50 animate-in fade-in slide-in-from-top-1 duration-100 animate-out fade-out duration-100">
                       {(() => {
                         const query = username.toLowerCase().trim();
                         let filtered = [];
                         if (loginRole === 'HANDLING') {
-                          filtered = teamList.filter(t => 
+                          filtered = teamMembers.filter(t => 
                             !query || 
                             t.name.toLowerCase().includes(query) ||
-                            t.sector.toLowerCase().includes(query)
-                          );
+                            t.username.toLowerCase().includes(query) ||
+                            t.role.toLowerCase().includes(query)
+                          ).map(t => ({ name: t.name, username: t.username, password: t.password || 'pass', sector: t.role }));
                         } else {
-                          const mgrs = ['fathur'];
-                          filtered = mgrs.filter(m => !query || m.includes(query)).map(m => ({ name: m, sector: 'Manager' }));
+                          const mgrs = ['manager saudi'];
+                          filtered = mgrs.filter(m => !query || m.includes(query)).map(m => ({ name: m, username: m, password: '50rbjamaah', sector: 'Manager' }));
                         }
 
                         if (filtered.length === 0) {
@@ -240,29 +245,31 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                         }
 
                         return filtered.map((item, idx) => {
-                          const isTeam = 'sector' in item;
-                          const nameValue = isTeam ? item.name : (item as any).name;
-                          const sectorTag = isTeam ? item.sector : 'Manager';
                           return (
                             <button
                               key={idx}
                               type="button"
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                setUsername(nameValue);
+                                setUsername(item.username);
+                                setPassword(item.password);
                                 setShowSuggestions(false);
                                 setError('');
                               }}
                               onClick={() => {
-                                setUsername(nameValue);
+                                setUsername(item.username);
+                                setPassword(item.password);
                                 setShowSuggestions(false);
                                 setError('');
                               }}
                               className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex justify-between items-center cursor-pointer font-sans"
                             >
-                              <span className="font-semibold text-slate-800">{nameValue}</span>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-slate-800">{item.name}</span>
+                                <span className="text-[9px] text-slate-400">Username: {item.username}</span>
+                              </div>
                               <span className="text-[9px] uppercase font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded select-none shrink-0 font-mono">
-                                {sectorTag}
+                                {item.sector}
                               </span>
                             </button>
                           );
@@ -340,7 +347,14 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => selectQuickLogin(teamList[0]?.name || 'ahmad', 'HANDLING')}
+                onClick={() => {
+                  const firstTm = teamMembers?.[0];
+                  if (firstTm) {
+                    selectQuickLogin(firstTm.username, firstTm.password || 'pass', 'HANDLING');
+                  } else {
+                    selectQuickLogin('ahmad_syarif', 'pass', 'HANDLING');
+                  }
+                }}
                 className="p-2 border border-dashed border-slate-200 rounded-lg hover:bg-[#D4AF37]/5 text-left transition-all cursor-pointer"
               >
                 <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
@@ -352,7 +366,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
               
               <button
                 type="button"
-                onClick={() => selectQuickLogin('fathur', 'MANAGER')}
+                onClick={() => selectQuickLogin('manager saudi', '50rbjamaah', 'MANAGER')}
                 className="p-2 border border-dashed border-slate-200 rounded-lg hover:bg-[#D4AF37]/5 text-left transition-all cursor-pointer"
               >
                 <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1">

@@ -8,6 +8,10 @@ export interface Jamaah {
   nomorJamaah: string;
   namaJamaah: string;
   nomorRoomlist: string;
+  roomlistMadinah?: string;
+  roomlistMakkah?: string;
+  hotelMadinah?: string;
+  hotelMakkah?: string;
   groupName: string;
   passportNo?: string;
   phone?: string;
@@ -29,6 +33,8 @@ interface ManagerManifestProps {
   packages?: PackageDetail[];
   onUpdatePackages?: (newList: PackageDetail[]) => void;
   hotelInfos?: HotelInfographic[];
+  initialSelectedGroup?: string | null;
+  initialSubTab?: 'jamaah' | 'paketInfo';
 }
 
 export default function ManagerManifest({ 
@@ -40,10 +46,12 @@ export default function ManagerManifest({
   itineraries = [],
   packages = [],
   onUpdatePackages,
-  hotelInfos = []
+  hotelInfos = [],
+  initialSelectedGroup = null,
+  initialSubTab = 'jamaah'
 }: ManagerManifestProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroupDirectory, setSelectedGroupDirectory] = useState<string | null>(null);
+  const [selectedGroupDirectory, setSelectedGroupDirectory] = useState<string | null>(initialSelectedGroup);
   const [viewMode, setViewMode] = useState<'group' | 'jamaah'>('group'); // Add this
 
   // Setup Directory search bars
@@ -55,6 +63,10 @@ export default function ManagerManifest({
   const [nomorJamaah, setNomorJamaah] = useState('');
   const [namaJamaah, setNamaJamaah] = useState('');
   const [nomorRoomlist, setNomorRoomlist] = useState('');
+  const [roomlistMadinah, setRoomlistMadinah] = useState('');
+  const [roomlistMakkah, setRoomlistMakkah] = useState('');
+  const [hotelMadinah, setHotelMadinah] = useState('');
+  const [hotelMakkah, setHotelMakkah] = useState('');
   const [groupName, setGroupName] = useState(groups[0] || 'Umroh Reguler 11 Juni 2026 (Madinah Awal)');
   const [passportNo, setPassportNo] = useState('');
   const [phone, setPhone] = useState('');
@@ -68,7 +80,15 @@ export default function ManagerManifest({
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupInput, setNewGroupInput] = useState('');
 
-  const [subTabView, setSubTabView] = useState<'jamaah' | 'paketInfo'>('jamaah');
+  const [subTabView, setSubTabView] = useState<'jamaah' | 'paketInfo'>(initialSubTab);
+
+  React.useEffect(() => {
+    setSelectedGroupDirectory(initialSelectedGroup);
+  }, [initialSelectedGroup]);
+
+  React.useEffect(() => {
+    setSubTabView(initialSubTab);
+  }, [initialSubTab]);
 
   // Editing state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -78,6 +98,10 @@ export default function ManagerManifest({
   const [editNomorJamaah, setEditNomorJamaah] = useState('');
   const [editNamaJamaah, setEditNamaJamaah] = useState('');
   const [editNomorRoomlist, setEditNomorRoomlist] = useState('');
+  const [editRoomlistMadinah, setEditRoomlistMadinah] = useState('');
+  const [editRoomlistMakkah, setEditRoomlistMakkah] = useState('');
+  const [editHotelMadinah, setEditHotelMadinah] = useState('');
+  const [editHotelMakkah, setEditHotelMakkah] = useState('');
   const [editGroupName, setEditGroupName] = useState('');
   const [editPassportNo, setEditPassportNo] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -122,6 +146,10 @@ export default function ManagerManifest({
       nomorJamaah: nomorJamaah.trim(),
       namaJamaah: namaJamaah.trim(),
       nomorRoomlist: nomorRoomlist.trim() || '-',
+      roomlistMadinah: roomlistMadinah.trim() || '-',
+      roomlistMakkah: roomlistMakkah.trim() || '-',
+      hotelMadinah: hotelMadinah.trim() || '-',
+      hotelMakkah: hotelMakkah.trim() || '-',
       groupName,
       passportNo: passportNo.trim() || undefined,
       phone: phone.trim() || undefined,
@@ -139,6 +167,10 @@ export default function ManagerManifest({
     setNomorJamaah('');
     setNamaJamaah('');
     setNomorRoomlist('');
+    setRoomlistMadinah('');
+    setRoomlistMakkah('');
+    setHotelMadinah('');
+    setHotelMakkah('');
     setPassportNo('');
     setPhone('');
     setVisaStatus('Tersedia');
@@ -153,6 +185,10 @@ export default function ManagerManifest({
     setEditNomorJamaah(item.nomorJamaah);
     setEditNamaJamaah(item.namaJamaah);
     setEditNomorRoomlist(item.nomorRoomlist);
+    setEditRoomlistMadinah(item.roomlistMadinah || '');
+    setEditRoomlistMakkah(item.roomlistMakkah || '');
+    setEditHotelMadinah(item.hotelMadinah || '');
+    setEditHotelMakkah(item.hotelMakkah || '');
     setEditGroupName(item.groupName);
     setEditPassportNo(item.passportNo || '');
     setEditPhone(item.phone || '');
@@ -177,6 +213,10 @@ export default function ManagerManifest({
           nomorJamaah: editNomorJamaah.trim(),
           namaJamaah: editNamaJamaah.trim(),
           nomorRoomlist: editNomorRoomlist.trim() || '-',
+          roomlistMadinah: editRoomlistMadinah.trim() || '-',
+          roomlistMakkah: editRoomlistMakkah.trim() || '-',
+          hotelMadinah: editHotelMadinah.trim() || '-',
+          hotelMakkah: editHotelMakkah.trim() || '-',
           groupName: editGroupName,
           passportNo: editPassportNo.trim() || undefined,
           phone: editPhone.trim() || undefined,
@@ -344,7 +384,8 @@ export default function ManagerManifest({
                               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase text-[9.5px]">
                                 <th className="py-2.5 px-3">No. Jemaah</th>
                                 <th className="py-2.5 px-3">Nama Jamaah & Paket</th>
-                                <th className="py-2.5 px-3">No Roomlist</th>
+                                <th className="py-2.5 px-3">Madinah: Hotel & Kamar</th>
+                                <th className="py-2.5 px-3">Makkah: Hotel & Kamar</th>
                                 <th className="py-2.5 px-3">Grup Rombongan</th>
                                 <th className="py-2.5 px-3">Paspor / Kontak</th>
                                 <th className="py-2.5 px-3 text-center">Visa</th>
@@ -367,31 +408,36 @@ export default function ManagerManifest({
                                           pTag === 'Onyx' ? 'bg-purple-50 text-purple-800 border-purple-200' :
                                           'bg-emerald-50 text-emerald-800 border-emerald-250'
                                         }`}>
-                                          {pTag === 'Private' ? '🔑' : pTag === 'Sapphire' ? '💎' : pTag === 'Ruby' ? '❤️' : pTag === 'Onyx' ? '🟣' : '🟢'} {pTag}
+                                          {pTag}
                                         </span>
                                         {item.age !== undefined && (
                                           <span className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-slate-200 font-mono">
-                                            🎂 {item.age} Thn
+                                            {item.age} Thn
                                           </span>
                                         )}
                                         {item.gender && (
                                           <span className={`px-1 py-0.5 rounded text-[8.5px] font-extrabold border uppercase ${
                                             item.gender === 'Laki-laki' ? 'bg-sky-50 text-sky-800 border-sky-150' : 'bg-pink-50 text-pink-800 border-pink-150'
                                           }`}>
-                                            {item.gender === 'Laki-laki' ? '♂ Laki' : '♀ Perempuan'}
+                                            {item.gender === 'Laki-laki' ? 'Laki-laki' : 'Perempuan'}
                                           </span>
                                         )}
                                         {item.companionInfo && (
                                           <span className="bg-violet-50 text-violet-800 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-violet-150 max-w-[150px] truncate" title={item.companionInfo}>
-                                            👥 {item.companionInfo}
+                                            {item.companionInfo}
                                           </span>
                                         )}
                                       </div>
                                     </td>
-                                    <td className="py-2 px-3 font-mono">
-                                      <span className="font-semibold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px]">
-                                        🚪 {item.nomorRoomlist}
-                                      </span>
+                                    {/* Madinah */}
+                                    <td className="py-2 px-3">
+                                      <div className="font-semibold text-slate-800">{item.hotelMadinah || '-'}</div>
+                                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">Kamar: {item.roomlistMadinah || '-'}</div>
+                                    </td>
+                                    {/* Makkah */}
+                                    <td className="py-2 px-3">
+                                      <div className="font-semibold text-slate-800">{item.hotelMakkah || '-'}</div>
+                                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">Kamar: {item.roomlistMakkah || '-'}</div>
                                     </td>
                                     <td className="py-2 px-3 font-bold text-slate-600">{item.groupName}</td>
                                     <td className="py-2 px-3 text-[10.5px]">
@@ -815,7 +861,8 @@ export default function ManagerManifest({
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase text-[10px]">
                     <th className="py-2.5 px-3">No. Jemaah</th>
                     <th className="py-2.5 px-3">Nama Jamaah</th>
-                    <th className="py-2.5 px-3">No Roomlist</th>
+                    <th className="py-2.5 px-3">Madinah: Hotel & Kamar</th>
+                    <th className="py-2.5 px-3">Makkah: Hotel & Kamar</th>
                     <th className="py-2.5 px-3">Grup Rombongan</th>
                     <th className="py-2.5 px-3">Paspor / Kontak</th>
                     <th className="py-2.5 px-3 text-center">Visa</th>
@@ -845,34 +892,39 @@ export default function ManagerManifest({
                                   pTag === 'Onyx' ? 'bg-purple-50 text-purple-800 border-purple-200' :
                                   'bg-emerald-50 text-emerald-800 border-emerald-250'
                                 }`}>
-                                  {pTag === 'Private' ? '🔑' : pTag === 'Sapphire' ? '💎' : pTag === 'Ruby' ? '❤️' : pTag === 'Onyx' ? '🟣' : '🟢'} {pTag}
+                                  {pTag}
                                 </span>
                                 {item.age !== undefined && (
                                   <span className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-slate-200 font-mono">
-                                    🎂 {item.age} Thn
+                                    {item.age} Thn
                                   </span>
                                 )}
                                 {item.gender && (
                                   <span className={`px-1 py-0.5 rounded text-[8.5px] font-extrabold border uppercase ${
                                     item.gender === 'Laki-laki' ? 'bg-sky-50 text-sky-800 border-sky-150' : 'bg-pink-50 text-pink-800 border-pink-150'
                                   }`}>
-                                    {item.gender === 'Laki-laki' ? '♂ Laki' : '♀ Perempuan'}
+                                    {item.gender === 'Laki-laki' ? 'Laki-laki' : 'Perempuan'}
                                   </span>
                                 )}
                                 {item.companionInfo && (
                                   <span className="bg-violet-50 text-violet-800 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-violet-150 max-w-[180px] truncate" title={item.companionInfo}>
-                                    👥 {item.companionInfo}
+                                    {item.companionInfo}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </td>
 
-                          {/* Nomor Roomlist */}
-                          <td className="py-2.5 px-3 font-mono">
-                            <span className="font-semibold text-indigo-900 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px]">
-                              🚪 {item.nomorRoomlist}
-                            </span>
+                          {/* Madinah: Hotel & Kamar */}
+                          <td className="py-2.5 px-3">
+                            <div className="font-semibold text-slate-800">{item.hotelMadinah || '-'}</div>
+                            <div className="text-[10px] text-slate-500 font-mono mt-0.5">Kamar: {item.roomlistMadinah || '-'}</div>
+                          </td>
+
+                          {/* Makkah: Hotel & Kamar */}
+                          <td className="py-2.5 px-3">
+                            <div className="font-semibold text-slate-800">{item.hotelMakkah || '-'}</div>
+                            <div className="text-[10px] text-slate-500 font-mono mt-0.5">Kamar: {item.roomlistMakkah || '-'}</div>
                           </td>
 
                           {/* Grup */}
@@ -1167,26 +1219,62 @@ export default function ManagerManifest({
             </div>
 
             <form onSubmit={handleAddJamaah} className="p-4 space-y-3 text-xs font-semibold">
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Jemaah (ID)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Bisa 5-digit, e.g. 10051"
+                  value={nomorJamaah}
+                  onChange={(e) => setNomorJamaah(e.target.value)}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 p-2 bg-amber-500/5 rounded-lg border border-amber-200/40">
+                <div className="col-span-2 text-slate-800 font-bold uppercase text-[9px] tracking-wider text-left">Madinah</div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Jemaah (ID)</label>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">Hotel Madinah</label>
                   <input
                     type="text"
-                    required
-                    placeholder="Bisa 5-digit, e.g. 10051"
-                    value={nomorJamaah}
-                    onChange={(e) => setNomorJamaah(e.target.value)}
+                    placeholder="E.g. Al Anshor"
+                    value={hotelMadinah}
+                    onChange={(e) => setHotelMadinah(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Roomlist / Kamar</label>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">No Roomlist Madinah</label>
                   <input
                     type="text"
-                    placeholder="E.g. 1405"
-                    value={nomorRoomlist}
-                    onChange={(e) => setNomorRoomlist(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs text-center font-mono font-bold"
+                    placeholder="E.g. Room 402"
+                    value={roomlistMadinah}
+                    onChange={(e) => setRoomlistMadinah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 p-2 bg-emerald-500/5 rounded-lg border border-emerald-250/30">
+                <div className="col-span-2 text-slate-800 font-bold uppercase text-[9px] tracking-wider text-left">Makkah</div>
+                <div>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">Hotel Makkah</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. Anjum"
+                    value={hotelMakkah}
+                    onChange={(e) => setHotelMakkah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">No Roomlist Makkah</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. Room 1205"
+                    value={roomlistMakkah}
+                    onChange={(e) => setRoomlistMakkah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
                   />
                 </div>
               </div>
@@ -1349,26 +1437,62 @@ export default function ManagerManifest({
               }} 
               className="p-4 space-y-3 text-xs font-semibold"
             >
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Jemaah (ID)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.g. 1"
+                  value={editNomorJamaah}
+                  onChange={(e) => setEditNomorJamaah(e.target.value)}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 p-2 bg-amber-500/5 rounded-lg border border-amber-200/40">
+                <div className="col-span-2 text-slate-800 font-bold uppercase text-[9px] tracking-wider text-left">Madinah</div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Jemaah (ID)</label>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">Hotel Madinah</label>
                   <input
                     type="text"
-                    required
-                    placeholder="E.g. 1"
-                    value={editNomorJamaah}
-                    onChange={(e) => setEditNomorJamaah(e.target.value)}
+                    placeholder="E.g. Al Anshor"
+                    value={editHotelMadinah}
+                    onChange={(e) => setEditHotelMadinah(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">No. Roomlist / Kamar</label>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">No Roomlist Madinah</label>
                   <input
                     type="text"
-                    placeholder="E.g. 1405"
-                    value={editNomorRoomlist}
-                    onChange={(e) => setEditNomorRoomlist(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs text-center font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    placeholder="E.g. Room 402"
+                    value={editRoomlistMadinah}
+                    onChange={(e) => setEditRoomlistMadinah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 p-2 bg-emerald-500/5 rounded-lg border border-emerald-250/30">
+                <div className="col-span-2 text-slate-800 font-bold uppercase text-[9px] tracking-wider text-left">Makkah</div>
+                <div>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">Hotel Makkah</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. Anjum"
+                    value={editHotelMakkah}
+                    onChange={(e) => setEditHotelMakkah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-slate-400 mb-1 uppercase text-left">No Roomlist Makkah</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. Room 1205"
+                    value={editRoomlistMakkah}
+                    onChange={(e) => setEditRoomlistMakkah(e.target.value)}
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                   />
                 </div>
               </div>

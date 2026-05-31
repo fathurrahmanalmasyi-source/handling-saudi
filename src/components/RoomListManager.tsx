@@ -626,38 +626,6 @@ export default function RoomListManager({
   return (
     <div className="space-y-3" id="roomlist-section">
       
-      {/* HEADER SIMPEL: MANIFES & DOWNLOAD & TABS ROLE */}
-      {currentRole === 'MANAGER' && (
-        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-white p-3.5 rounded-xl border border-slate-200 shadow-3xs">
-          <div>
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
-              <Hotel className="w-4 h-4 text-[#D4AF37]" />
-              <span>Manifes Roomlist HQ (Manager Portal)</span>
-            </h2>
-            <p className="text-[10px] text-slate-500">
-              Atur pembagian roomlist pasutri, lift access, & status muasassah
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 w-full sm:w-auto self-stretch sm:self-auto justify-end">
-            <button
-              onClick={() => setIsPreviewOpen(true)}
-              className="p-2 bg-[#1A1A1A] hover:bg-black text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg cursor-pointer transition-all shadow-sm flex items-center justify-center shrink-0"
-              title="Unduh PDF"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-            
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="p-1.5 bg-slate-900 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-slate-700 cursor-pointer flex items-center gap-1"
-            >
-              <span>+ Kamar Baru</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* TABS SELECTOR (View list vs Plotting/Tentukan Roomlist) - Only for MANAGER */}
       {currentRole === 'MANAGER' && (
         <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm">
