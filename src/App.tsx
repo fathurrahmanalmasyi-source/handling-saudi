@@ -404,7 +404,16 @@ export default function App() {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
     const saved = localStorage.getItem('ji_team_members_v3');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        // fallthrough
+      }
+    }
     return TEAMS.map(team => ({
       id: team.id,
       name: team.name,
@@ -776,6 +785,10 @@ export default function App() {
       id: `task-${Date.now()}`
     };
     setDutyTasks(prev => [added, ...prev]);
+    triggerBrowserNotification(
+      `Tugas Baru: [${added.roleTag}]`,
+      `Petugas: ${added.handlingName} - Grup: ${added.groupName} di ${added.location}`
+    );
   };
 
   // Toggle Task Status (Manager or User)
@@ -1008,7 +1021,41 @@ export default function App() {
     setBroadcasts(prev => [newMessage, ...prev]);
     setMsgTitle('');
     setMsgText('');
+    triggerBrowserNotification(`Broadcast: ${newMessage.title}`, newMessage.text);
     alert('Pesan instruksi disiarkan secara instant ke seluruh perangkat Handling!');
+  };
+
+  const triggerBrowserNotification = (title: string, body: string) => {
+    // 1. Try Service Worker first (highly reliable for standalone PWA homescreen apps)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(reg => {
+        if ('showNotification' in reg && Notification.permission === 'granted') {
+          reg.showNotification(title, {
+            body,
+            icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+            badge: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+          });
+          return;
+        }
+      });
+    }
+
+    // 2. Fallback to standard window Notification API
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body,
+          icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+        });
+      } catch (e) {
+        console.warn('HTML5 Notification failed:', e);
+      }
+    }
+  };
+
+  const handleAddBroadcast = (newB: BroadcastMessage) => {
+    setBroadcasts(prev => [newB, ...prev]);
+    triggerBrowserNotification(`M-Broadcast: ${newB.title}`, newB.text);
   };
 
   const handleMarkMessageRead = (id: string) => {
@@ -1073,7 +1120,7 @@ export default function App() {
         teamMembers={teamMembers}
         onUpdateTeamMembers={setTeamMembers}
         broadcasts={broadcasts}
-        onAddBroadcast={(b) => setBroadcasts(prev => [b, ...prev])}
+        onAddBroadcast={handleAddBroadcast}
         onDeleteBroadcast={handleDeleteBroadcast}
         sops={sops}
         onUpdateSops={setSops}
@@ -2693,6 +2740,35 @@ export default function App() {
 
             {/* Body */}
             <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-50">
+              {/* Native Notification Activator Banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex flex-col gap-1.5 shrink-0 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-900 text-[10.5px] uppercase tracking-wide">🔔 Aktifkan Notifikasi HP</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!('Notification' in window)) {
+                        alert('Perangkat / browser Anda belum mendukung notifikasi sistem.');
+                        return;
+                      }
+                      const status = await Notification.requestPermission();
+                      if (status === 'granted') {
+                        alert('Notifikasi berhasil diaktifkan! Anda akan menerima update live tugas & siaran.');
+                        triggerBrowserNotification('Notifikasi Berhasil Diaktifkan!', 'Sinkronisasi notifikasi real-time aktif.');
+                      } else {
+                        alert('Izin ditolak. Harap aktifkan izin Notifikasi untuk browser Anda melalui pengaturan sistem HP.');
+                      }
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[9px] px-2 py-0.5 rounded shadow-3xs cursor-pointer uppercase transition-all"
+                  >
+                    Izinkan
+                  </button>
+                </div>
+                <p className="text-[9.5px] text-amber-700 leading-normal font-medium">
+                  Pastikan Anda mengizinkan notifikasi agar instruksi penting dari Jakarta langsung masuk sebagai banner pop-up di layar HP Anda.
+                </p>
+              </div>
+
               {broadcasts.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-xs font-bold">
                   Belum ada notifikasi baru untuk Anda.

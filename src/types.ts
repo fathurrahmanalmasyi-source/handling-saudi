@@ -159,7 +159,36 @@ export interface CashflowTransaction {
 }
 
 // Real-Time and default mock data setup
-export const INITIAL_SOPS: SOPDoc[] = [];
+export const INITIAL_SOPS: SOPDoc[] = [
+  {
+    id: 'sop-airport-1',
+    title: 'SOP Penjemputan di Bandara Jeddah & Madinah',
+    category: 'Airport',
+    lastUpdated: '15 Mei 2026',
+    important: true,
+    content: [
+      'Gunakan seragam identitas Jejak Imani rapi & ID Card aktif.',
+      'Sambut jamaah di pintu terminal internasional dengan membawa banner rombongan besar.',
+      'Pastikan seluruh bagasi (koper) ditata rapi oleh porter bandara dan dihitung ulang sesuai manifes.',
+      'Bimbing jamaah dengan tertib menuju area parkir bus transit.',
+      'Lakukan absensi jamaah fisik sebelum bus meninggalkan bandara.'
+    ]
+  },
+  {
+    id: 'sop-hotel-1',
+    title: 'SOP Proses Check-In Kamar Hotel (Makkah/Madinah)',
+    category: 'Hotel',
+    lastUpdated: '20 Mei 2026',
+    important: true,
+    content: [
+      'Tim hotel standby di lobby 1 jam sebelum rombongan bus tiba.',
+      'Siapkan kunci kamar (keycard) sesuai dengan plot rooming list.',
+      'Sambut tour leader & bagikan kunci kamar secara kolektif di lobby untuk menghindari penumpukan.',
+      'Koordinasikan penanganan koper oleh bellboy langsung menuju depan kamar masing-masing.',
+      'Pastikan AC, kasur tambahan, dan air panas kamar berfungsi dengan baik.'
+    ]
+  }
+];
 
 export const INITIAL_ROOMLIST: RoomManifest[] = [];
 
@@ -206,9 +235,44 @@ export const INITIAL_PACKAGES: PackageDetail[] = [
   }
 ];
 
-export const INITIAL_HOTEL_INFOS: HotelInfographic[] = [];
+export const INITIAL_HOTEL_INFOS: HotelInfographic[] = [
+  {
+    id: 'h-1',
+    hotelName: 'Rayhaan Marwa Rotana',
+    city: 'Makkah',
+    restaurantInfo: 'Lantai 11, masakan buffet Internasional & Selera Asia khas Indonesia',
+    mealTimes: 'Breakfast: 06:00 - 09:30, Lunch: 12:30 - 14:30, Dinner: 19:30 - 22:00',
+    receptionistInfo: 'Pintu Lobby utama (Tower Marwa), buka 24 jam dengan staf multibahasa',
+    wifiInfo: 'Name: "Marwa_Rotana_Guest", Password: "no-password-needed" (Auto Redirect)',
+    hotelPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+    restaurantPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+    receptionistPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+  },
+  {
+    id: 'h-2',
+    hotelName: 'Anjum Hotel',
+    city: 'Makkah',
+    restaurantInfo: 'Restoran utama Lantai M, kapasitas 2500 pax, menu masakan nusantara',
+    mealTimes: 'Breakfast: 05:30 - 09:00, Lunch: 13:00 - 15:00, Dinner: 19:00 - 21:30',
+    receptionistInfo: 'Lobby utama yang luas di Lantai G, support bahasa Indonesia',
+    wifiInfo: 'Name: "Anjum_WiFi", Password: "anjum-makkah-guest"',
+    hotelPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+    restaurantPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+    receptionistPhoto: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+  }
+];
 
-export const INITIAL_DOCUMENTS: DocumentGroup[] = [];
+export const INITIAL_DOCUMENTS: DocumentGroup[] = [
+  {
+    id: 'doc-grp-1',
+    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
+    items: [
+      { id: 'doc-1-1', name: 'Visa_Umroh_Reguler_11Juni.xlsx', type: 'visa', size: '1.2 MB', uploadDate: '25 Mei 2026' },
+      { id: 'doc-1-2', name: 'E_Ticket_SaudiAirlines_SV819.xlsx', type: 'ticket', size: '3.4 MB', uploadDate: '26 Mei 2026' },
+      { id: 'doc-1-3', name: 'Manifest_Paspor_Keberangkatan.xlsx', type: 'passport', size: '2.1 MB', uploadDate: '27 Mei 2026' }
+    ]
+  }
+];
 
 // --- Tambahan Data Tim ---
 export type Sector = 'Handling Jeddah' | 'Handling Madinah' | 'Handling Makkah';
@@ -218,7 +282,12 @@ export interface Team {
   sector: Sector;
 }
 
-export const TEAMS: Team[] = [];
+export const TEAMS: Team[] = [
+  { id: 'team-ahmad', name: 'Ahmad Syarif', sector: 'Handling Makkah' },
+  { id: 'team-faiz', name: 'Muhammad Faiz', sector: 'Handling Madinah' },
+  { id: 'team-tariq', name: 'Tariq Al-Fatih', sector: 'Handling Jeddah' },
+  { id: 'team-malik', name: 'Malik At-Tijari', sector: 'Handling Makkah' }
+];
 
 export const INITIAL_BROADCASTS: BroadcastMessage[] = [
   {
@@ -235,7 +304,7 @@ export const INITIAL_BROADCASTS: BroadcastMessage[] = [
     id: 'msg-2',
     sender: 'Manager Operasional (Pak Fathur)',
     title: 'Laporan Koper Tertukar JT-Makkah',
-    text: `Satu koper tertukar di bagasi bus B1 dengan bus B2. Tim lapangan ${TEAMS.length > 0 ? TEAMS[0].name : 'Tim'}, tolong koordinasikan pencarian fisik di lobby hotel.`,
+    text: 'Satu koper tertukar di bagasi bus B1 dengan bus B2. Tim lapangan Ahmad Syarif, tolong koordinasikan pencarian fisik di lobby hotel.',
     time: 'Kemarin, 14:20 AST',
     priority: 'Medium',
     isRead: true,
@@ -245,7 +314,7 @@ export const INITIAL_BROADCASTS: BroadcastMessage[] = [
     id: 'msg-3',
     sender: 'Sistem Keuangan',
     title: 'Droping Dana Operasional Cabang Saudi Berhasil',
-    text: `Dana operasional sebesar 15.000 SAR telah ditransfer ke SNB Bank Wallet atas nama ${TEAMS.length > 0 ? TEAMS[0].name : 'Staff'}. Harap update pengeluaran secara real-time di aplikasi ini.`,
+    text: 'Dana operasional sebesar 15.000 SAR telah ditransfer ke SNB Bank Wallet atas nama Ahmad Syarif. Harap update pengeluaran secara real-time di aplikasi ini.',
     time: '20 Mei 2026, 11:00 AST',
     priority: 'Medium',
     isRead: true,
@@ -253,21 +322,42 @@ export const INITIAL_BROADCASTS: BroadcastMessage[] = [
   }
 ];
 
-export const INITIAL_DUTY_TASKS: DutyTask[] = [];
+export const INITIAL_DUTY_TASKS: DutyTask[] = [
+  {
+    id: 'duty-1',
+    handlingName: 'Ahmad Syarif',
+    roleTag: 'Check In Hotel',
+    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
+    date: '2026-06-11',
+    timeRange: '18:00 - 21:00 AST',
+    location: 'Hotel Anjum Makkah',
+    status: 'Belum Selesai'
+  },
+  {
+    id: 'duty-2',
+    handlingName: 'Muhammad Faiz',
+    roleTag: 'Bandara Kedatangan',
+    groupName: 'Umroh Reguler 11 Juni 2026 (Madinah Awal)',
+    date: '2026-06-11',
+    timeRange: '12:00 - 15:00 AST',
+    location: 'Bandara Madinah',
+    status: 'Sedang Berjalan'
+  }
+];
 
 export const INITIAL_WALLETS: WalletAccount[] = [
   {
     id: 'wallet-manager',
     name: 'Kas Pusat (Manager - Fathur)',
-    balanceSAR: 0,
-    balanceIDR: 0,
+    balanceSAR: 45000,
+    balanceIDR: 180000000,
     type: 'Cash Riyal Lapangan',
     holder: 'Fathur (Manager)'
   },
   ...TEAMS.map(team => ({
     id: `wallet-${team.id.replace('-', '_')}`,
     name: `Dompet ${team.name}`,
-    balanceSAR: 0,
+    balanceSAR: 5000,
     balanceIDR: 0,
     type: 'Cash Riyal Lapangan' as const,
     holder: team.name

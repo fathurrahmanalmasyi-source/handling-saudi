@@ -58,3 +58,29 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Full integration for background native PWA local/remote pushes
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : { title: 'Notifikasi Baru', body: 'Ada instruksi lapangan baru.' };
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+      badge: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+    })
+  );
+});
+
+// Direct message listener to reliable show notification from the active client web app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, body } = event.data;
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
+        badge: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
+      })
+    );
+  }
+});
