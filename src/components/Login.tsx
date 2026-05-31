@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldCheck, User, Lock, ArrowRight, BookOpen, KeyRound, Eye, EyeOff, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShieldCheck, User, Lock, ArrowRight, BookOpen, KeyRound, Eye, EyeOff, X, Download, Smartphone, Share2 } from 'lucide-react';
 import { UserRole, Team } from '../types';
 
 interface LoginProps {
@@ -15,6 +15,62 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // PWA installation state management
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState<boolean>(false);
+  const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Check if running in standalone display mode (installed PWA)
+    const checkStandalone = () => {
+      const isStandaloneMedia = window.matchMedia('(display-mode: standalone)').matches;
+      const isIOSStandalone = (window.navigator as any).standalone === true;
+      const isDocReferrer = document.referrer.includes('android-app://');
+      return isStandaloneMedia || isIOSStandalone || isDocReferrer;
+    };
+
+    setIsStandalone(checkStandalone());
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      console.log('App successfully installed to home screen!');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      // Show the install prompt automatically
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Prompt not deferred (either iOS Safari or another browser), show descriptive modal
+      setShowInstallGuide(true);
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +311,17 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                 </>
               )}
             </button>
+
+            {!isStandalone && !isInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer mt-2.5 shadow-xs border border-emerald-500/20 active:scale-[0.98]"
+              >
+                <Download className="h-4 w-4 text-white" />
+                <span>Install Aplikasi (PWA)</span>
+              </button>
+            )}
           </form>
 
           {/* Tester Helper for easy platform evaluation */}
@@ -297,6 +364,64 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
       <footer className="py-3 text-center text-slate-400 text-[10px] border-t border-slate-200/40 bg-white" id="login-footer">
         <p>© 2026 PT. JEJAK IMANI BERKAH BERSAMA</p>
       </footer>
+
+      {/* PWA INSTALLATION GUIDE MODAL CARD */}
+      {showInstallGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 p-5 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-extrabold text-[#0f172a] text-sm uppercase flex items-center gap-1.5 border-l-4 border-[#D4AF37] pl-2">
+                <Smartphone className="w-4 h-4 text-[#D4AF37]" /> Install Aplikasi
+              </h3>
+              <button 
+                onClick={() => setShowInstallGuide(false)}
+                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-[11px] text-slate-600 leading-relaxed font-sans">
+              <p className="font-bold text-slate-800">
+                Aplikasi "Handling Jejak Imani" dapat di-install secara langsung ke Home Screen smartphone Anda sebagai Web App berkecepatan tinggi!
+              </p>
+
+              {/* iOS Safari Guide */}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1.5">
+                <span className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs text-amber-700">
+                  <Share2 className="w-3.5 h-3.5" /> JIKA ANDA MENGGUNAKAN iOS (Safari)
+                </span>
+                <ol className="list-decimal list-inside pl-1 space-y-1.5 font-semibold text-slate-700">
+                  <li>Klik tombol <span className="font-black text-slate-900 bg-white border px-1 py-0.5 rounded shadow-3xs inline-flex items-center gap-0.5"><Share2 className="w-2.5 h-2.5" /> Bagikan / Share</span> di bar bawah Safari.</li>
+                  <li>Gulir ke bawah pada menu opsi yang muncul.</li>
+                  <li>Pilih opsi <span className="font-black text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">Add to Home Screen</span> (Tambahkan ke Layar Utama).</li>
+                </ol>
+              </div>
+
+              {/* Android/Others Guide */}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1.5">
+                <span className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs text-emerald-700">
+                  <Download className="w-3.5 h-3.5" /> JIKA ANDA MENGGUNAKAN ANDROID (Chrome)
+                </span>
+                <ol className="list-decimal list-inside pl-1 space-y-1.5 font-semibold text-slate-700">
+                  <li>Ketuk tombol menu titik tiga (<span className="font-black text-slate-900">⋮</span>) di pojok kanan atas browser.</li>
+                  <li>Pilih opsi <span className="font-black text-[#0f172a] bg-slate-100 px-1 py-0.5 rounded border border-slate-200">Tambahkan ke Layar Utama</span> atau <span className="font-black text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">Instal Aplikasi</span>.</li>
+                  <li>Sistem akan memasang aplikasi ke layar depan secara otomatis.</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="text-right pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setShowInstallGuide(false)}
+                className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-[#D4AF37] font-black rounded-lg text-[10px] uppercase cursor-pointer"
+              >
+                Saya Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
