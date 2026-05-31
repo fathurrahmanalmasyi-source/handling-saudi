@@ -247,6 +247,12 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
                             <button
                               key={idx}
                               type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setUsername(nameValue);
+                                setShowSuggestions(false);
+                                setError('');
+                              }}
                               onClick={() => {
                                 setUsername(nameValue);
                                 setShowSuggestions(false);

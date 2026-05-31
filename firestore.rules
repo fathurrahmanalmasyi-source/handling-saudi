@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global lock
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Rooms Rule Definition
+    match /rooms/{roomId} {
+      allow read, write: if true;
+    }
+
+    // Documents Rule Definition
+    match /documents/{docId} {
+      allow read, write: if true;
+    }
+
+    // Broadcasts Rule Definition
+    match /broadcasts/{broadcastId} {
+      allow read, write: if true;
+    }
+
+    // Duty Tasks Rule Definition
+    match /dutyTasks/{taskId} {
+      allow read, write: if true;
+    }
+
+    // Wallets Rule Definition
+    match /wallets/{walletId} {
+      allow read, write: if true;
+    }
+
+    // Expenses Rule Definition
+    match /expenses/{expenseId} {
+      allow read, write: if true;
+    }
+
+    // Transactions Rule Definition
+    match /transactions/{transactionId} {
+      allow read, write: if true;
+    }
+
+    // SOPs Rule Definition
+    match /sops/{sopId} {
+      allow read, write: if true;
+    }
+
+    // Team Members Rule Definition
+    match /teamMembers/{memberId} {
+      allow read, write: if true;
+    }
+
+    // Packages Rule Definition
+    match /packages/{pkgId} {
+      allow read, write: if true;
+    }
+
+    // Hotel Infographics Rule Definition
+    match /hotelInfos/{hotelId} {
+      allow read, write: if true;
+    }
+
+    // Groups Rule Definition
+    match /groups/{groupId} {
+      allow read, write: if true;
+    }
+
+    // Task Checklists Rule Definition
+    match /taskChecklists/{checklistId} {
+      allow read, write: if true;
+    }
+
+    // Jamaah List Rule Definition
+    match /jamaahList/{jamaahId} {
+      allow read, write: if true;
+    }
+
+    // Itineraries Rule Definition
+    match /itineraries/{itineraryId} {
+      allow read, write: if true;
+    }
+
+    // Attendance Logs Rule Definition
+    match /attendanceLogs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Incident Logs Rule Definition
+    match /incidentLogs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}

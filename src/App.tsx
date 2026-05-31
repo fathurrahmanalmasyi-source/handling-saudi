@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { db, auth } from './firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { 
   User, Hotel, LogOut, Bell, Folder, Briefcase, Calendar, BookOpen, 
   Settings, CheckCircle, Smartphone, MapPin, Send, AlertTriangle, 
@@ -197,7 +199,29 @@ export default function App() {
 
   const [hotelInfos, setHotelInfos] = useState<HotelInfographic[]>(() => {
     const saved = localStorage.getItem('ji_hotel_infos_v1');
-    return saved ? JSON.parse(saved) : INITIAL_HOTEL_INFOS;
+    const rawList: HotelInfographic[] = saved ? JSON.parse(saved) : INITIAL_HOTEL_INFOS;
+    return rawList.map(item => {
+      let hotelPhoto = item.hotelPhoto || '';
+      let restaurantPhoto = item.restaurantPhoto || '';
+      let receptionistPhoto = item.receptionistPhoto || '';
+
+      if (hotelPhoto.startsWith('data:image/') && hotelPhoto.length > 250000) {
+        hotelPhoto = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800';
+      }
+      if (restaurantPhoto.startsWith('data:image/') && restaurantPhoto.length > 250000) {
+        restaurantPhoto = 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&q=80&w=800';
+      }
+      if (receptionistPhoto.startsWith('data:image/') && receptionistPhoto.length > 250000) {
+        receptionistPhoto = 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=800';
+      }
+
+      return {
+        ...item,
+        hotelPhoto,
+        restaurantPhoto,
+        receptionistPhoto
+      };
+    });
   });
 
   const [documents, setDocuments] = useState<DocumentGroup[]>(() => {
@@ -467,6 +491,298 @@ export default function App() {
       { id: 'inc-2', name: teamMembers[1]?.name || 'Tim Lapangan', title: 'Selesai Distribusi Paspor Madinah', text: 'Seluruh paspor rombongan Haji Furoda SV 820 telah dikoordinasikan aman dengan Muassasah setempat.', severity: 'ℹ️ Info', date: '2026-05-27', time: '19:15', isResolved: true }
     ];
   });
+
+  // --- FIRESTORE DIAGNOSTIC ERROR HANDLERS & ENUMS ---
+  enum OperationType {
+    CREATE = 'create',
+    UPDATE = 'update',
+    DELETE = 'delete',
+    LIST = 'list',
+    GET = 'get',
+    WRITE = 'write',
+  }
+
+  interface FirestoreErrorInfo {
+    error: string;
+    operationType: OperationType;
+    path: string | null;
+    authInfo: {
+      userId?: string | null;
+      email?: string | null;
+      emailVerified?: boolean | null;
+      isAnonymous?: boolean | null;
+      tenantId?: string | null;
+      providerInfo?: {
+        providerId?: string | null;
+        email?: string | null;
+      }[];
+    }
+  }
+
+  function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+    const errInfo: FirestoreErrorInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth?.currentUser?.uid || null,
+        email: auth?.currentUser?.email || null,
+        emailVerified: auth?.currentUser?.emailVerified || null,
+        isAnonymous: auth?.currentUser?.isAnonymous || null,
+        tenantId: auth?.currentUser?.tenantId || null,
+        providerInfo: auth?.currentUser?.providerData?.map(provider => ({
+          providerId: provider.providerId,
+          email: provider.email,
+        })) || []
+      },
+      operationType,
+      path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    throw new Error(JSON.stringify(errInfo));
+  }
+
+  // --- REAL-TIME FIRESTORE BI-DIRECTIONAL SYNC ENGINE ---
+  function useBiSync<T extends { id: string }>(
+    colName: string,
+    localState: T[],
+    setLocalState: React.Dispatch<React.SetStateAction<T[]>>,
+    initialData: T[],
+    onDocAdded?: (doc: T) => void
+  ) {
+    const isIncomingRef = useRef(false);
+    const lastStateRef = useRef<T[]>([]);
+
+    useEffect(() => {
+      const unsubscribe = onSnapshot(collection(db, colName), (snapshot) => {
+        if (snapshot.empty) {
+          // Empty DB -> Seed with local initial data
+          initialData.forEach(async (item) => {
+            try {
+              await setDoc(doc(db, colName, item.id), item);
+            } catch (e) {
+              handleFirestoreError(e, OperationType.WRITE, `${colName}/${item.id}`);
+            }
+          });
+        } else {
+          const incoming: T[] = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as T));
+          
+          if (onDocAdded && lastStateRef.current.length > 0) {
+            const lastIds = new Set(lastStateRef.current.map(x => x.id));
+            incoming.forEach(item => {
+              if (!lastIds.has(item.id)) {
+                onDocAdded(item);
+              }
+            });
+          }
+
+          const localStr = JSON.stringify(localState);
+          const incomingStr = JSON.stringify(incoming);
+          
+          if (localStr !== incomingStr) {
+            isIncomingRef.current = true;
+            setLocalState(incoming);
+            lastStateRef.current = incoming;
+          }
+        }
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, colName);
+      });
+      return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+      if (isIncomingRef.current) {
+        isIncomingRef.current = false;
+        return;
+      }
+
+      const lastStateStr = JSON.stringify(lastStateRef.current);
+      const localStateStr = JSON.stringify(localState);
+      if (lastStateStr === localStateStr) return;
+
+      const lastMap = new Map(lastStateRef.current.map(x => [x.id, x]));
+      const currentMap = new Map(localState.map(x => [x.id, x]));
+
+      // 1. Sync additions & edits
+      localState.forEach(async (item) => {
+        const lastItem = lastMap.get(item.id);
+        if (!lastItem || JSON.stringify(lastItem) !== JSON.stringify(item)) {
+          try {
+            await setDoc(doc(db, colName, item.id), item);
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `${colName}/${item.id}`);
+          }
+        }
+      });
+
+      // 2. Sync deletions
+      lastStateRef.current.forEach(async (item) => {
+        if (!currentMap.has(item.id)) {
+          try {
+            await deleteDoc(doc(db, colName, item.id));
+          } catch (e) {
+            handleFirestoreError(e, OperationType.DELETE, `${colName}/${item.id}`);
+          }
+        }
+      });
+
+      lastStateRef.current = localState;
+    }, [localState]);
+  }
+
+  // Bind individual collections to our sync hook
+  useBiSync('sops', sops, setSops, sops);
+  useBiSync('rooms', rooms, setRooms, rooms);
+  useBiSync('packages', packages, setPackages, packages);
+  useBiSync('hotelInfos', hotelInfos, setHotelInfos, hotelInfos);
+  useBiSync('documents', documents, setDocuments, documents);
+  useBiSync('dutyTasks', dutyTasks, setDutyTasks, dutyTasks);
+  useBiSync('wallets', wallets, setWallets, wallets);
+  useBiSync('expenses', expenses, setExpenses, expenses);
+  useBiSync('transactions', transactions, setTransactions, transactions);
+  useBiSync('itineraries', itineraries, setItineraries, itineraries);
+  useBiSync('jamaahList', jamaahList, setJamaahList, jamaahList);
+  useBiSync('teamMembers', teamMembers, setTeamMembers, teamMembers);
+  useBiSync('attendanceLogs', attendanceLogs, setAttendanceLogs, attendanceLogs);
+  useBiSync('incidentLogs', incidentLogs, setIncidentLogs, incidentLogs);
+
+  // Sync broadcasts and trigger native/PWA alerts upon receipt of newly disptached guidelines
+  useBiSync('broadcasts', broadcasts, setBroadcasts, broadcasts, (newB: any) => {
+    if (newB.timestamp && Date.now() - newB.timestamp < 60000) {
+      triggerBrowserNotification(newB.title, newB.text);
+    }
+  });
+
+  // Special-case synchronizer for string-based 'groups' list
+  const isIncomingGroupsRef = useRef(false);
+  const lastGroupsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "groups"), (snapshot) => {
+      if (snapshot.empty) {
+        groups.forEach(async (g) => {
+          try {
+            await setDoc(doc(db, "groups", g), { name: g });
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `groups/${g}`);
+          }
+        });
+      } else {
+        const list = snapshot.docs.map(doc => doc.id);
+        const localStr = JSON.stringify(groups);
+        const incomingStr = JSON.stringify(list);
+        if (localStr !== incomingStr) {
+          isIncomingGroupsRef.current = true;
+          setGroups(list);
+          lastGroupsRef.current = list;
+        }
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, "groups");
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isIncomingGroupsRef.current) {
+      isIncomingGroupsRef.current = false;
+      return;
+    }
+    const lastStr = JSON.stringify(lastGroupsRef.current);
+    const localStr = JSON.stringify(groups);
+    if (lastStr === localStr) return;
+
+    const lastSet = new Set(lastGroupsRef.current);
+    const currentSet = new Set(groups);
+
+    groups.forEach(async (g) => {
+      if (!lastSet.has(g)) {
+        try {
+          await setDoc(doc(db, "groups", g), { name: g });
+        } catch (e) {
+          handleFirestoreError(e, OperationType.WRITE, `groups/${g}`);
+        }
+      }
+    });
+
+    lastGroupsRef.current.forEach(async (g) => {
+      if (!currentSet.has(g)) {
+        try {
+          await deleteDoc(doc(db, "groups", g));
+        } catch (e) {
+          handleFirestoreError(e, OperationType.DELETE, `groups/${g}`);
+        }
+      }
+    });
+
+    lastGroupsRef.current = groups;
+  }, [groups]);
+
+  // Special-case synchronizer for dictionaries like 'taskChecklists'
+  const isIncomingChecklistsRef = useRef(false);
+  const lastChecklistsRef = useRef<Record<string, string[]>>({});
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "taskChecklists"), (snapshot) => {
+      if (snapshot.empty) {
+        Object.keys(taskChecklists).forEach(async (key) => {
+          try {
+            await setDoc(doc(db, "taskChecklists", key), { items: taskChecklists[key] });
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `taskChecklists/${key}`);
+          }
+        });
+      } else {
+        const incoming: Record<string, string[]> = {};
+        snapshot.docs.forEach(doc => {
+          incoming[doc.id] = doc.data().items || [];
+        });
+        const localStr = JSON.stringify(taskChecklists);
+        const incomingStr = JSON.stringify(incoming);
+        if (localStr !== incomingStr) {
+          isIncomingChecklistsRef.current = true;
+          setTaskChecklists(incoming);
+          lastChecklistsRef.current = incoming;
+        }
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, "taskChecklists");
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isIncomingChecklistsRef.current) {
+      isIncomingChecklistsRef.current = false;
+      return;
+    }
+    const lastStr = JSON.stringify(lastChecklistsRef.current);
+    const localStr = JSON.stringify(taskChecklists);
+    if (lastStr === localStr) return;
+
+    Object.keys(taskChecklists).forEach(async (key) => {
+      const lastCheck = lastChecklistsRef.current[key];
+      const currentCheck = taskChecklists[key];
+      if (!lastCheck || JSON.stringify(lastCheck) !== JSON.stringify(currentCheck)) {
+        try {
+          await setDoc(doc(db, "taskChecklists", key), { items: currentCheck });
+        } catch (e) {
+          handleFirestoreError(e, OperationType.WRITE, `taskChecklists/${key}`);
+        }
+      }
+    });
+
+    Object.keys(lastChecklistsRef.current).forEach(async (key) => {
+      if (!(key in taskChecklists)) {
+        try {
+          await deleteDoc(doc(db, "taskChecklists", key));
+        } catch (e) {
+          handleFirestoreError(e, OperationType.DELETE, `taskChecklists/${key}`);
+        }
+      }
+    });
+
+    lastChecklistsRef.current = taskChecklists;
+  }, [taskChecklists]);
 
   // Broadcaster message input (Manager View)
   const [msgTitle, setMsgTitle] = useState('');
@@ -1026,12 +1342,19 @@ export default function App() {
   };
 
   const triggerBrowserNotification = (title: string, body: string) => {
+    // Format to match user's requested display format:
+    // from Handling jejak imani
+    // [Judul Pengumuman]
+    // [Pesan Pengumuman]
+    const finalTitle = "from Handling jejak imani";
+    const finalBody = `${title}\n${body}`;
+
     // 1. Try Service Worker first (highly reliable for standalone PWA homescreen apps)
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(reg => {
         if ('showNotification' in reg && Notification.permission === 'granted') {
-          reg.showNotification(title, {
-            body,
+          reg.showNotification(finalTitle, {
+            body: finalBody,
             icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400',
             badge: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
           });
@@ -1043,8 +1366,8 @@ export default function App() {
     // 2. Fallback to standard window Notification API
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification(title, {
-          body,
+        new Notification(finalTitle, {
+          body: finalBody,
           icon: 'https://lh3.googleusercontent.com/d/1ADaHuVjVHr8tP1WuWy1q6f8bLGdFYU9a=w400'
         });
       } catch (e) {

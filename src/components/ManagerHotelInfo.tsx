@@ -61,7 +61,33 @@ export default function ManagerHotelInfo({ hotelInfos, onUpdateHotelInfos }: Man
   const handleImageUpload = (field: keyof HotelInfographic, file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, [field]: reader.result as string }));
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 600; // downscale to max 600px
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.6); // 0.6 quality for small footprint
+          setFormData(prev => ({ ...prev, [field]: compressed }));
+        } else {
+          setFormData(prev => ({ ...prev, [field]: reader.result as string }));
+        }
+      };
+      img.src = reader.result as string;
     };
     if (file) reader.readAsDataURL(file);
   };
