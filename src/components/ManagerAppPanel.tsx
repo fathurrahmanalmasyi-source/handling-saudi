@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Compass, FileSpreadsheet, Calendar, Clock, Hotel, Files, Users, DollarSign, LogOut, Send,
-  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList
+  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList, Bed
 } from 'lucide-react';
 
 // Subcomponents import
@@ -163,126 +163,130 @@ export default function ManagerAppPanel({
           </div>
 
           {/* Sidebar Menu items */}
-          <nav className="p-2.5 space-y-1 font-semibold text-xs text-slate-600 flex-1">
-            <button
-              onClick={() => setManagerTab('m-dashboard')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-dashboard' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Compass className="w-4 h-4 shrink-0" />
-              <span>Dashboard Rangkuman</span>
-            </button>
+          <nav className="p-2.5 space-y-4 font-semibold text-xs text-slate-600 flex-1">
+            {/* New Group */}
+            <div>
+              <p className="px-3 pb-2 text-[10px] uppercase font-black text-slate-400">Menu Baru</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setManagerTab('m-dashboard')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-dashboard' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Compass className="w-4 h-4 shrink-0" />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-itinerary')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-itinerary' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4 shrink-0" />
+                  <span>Itinerary</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-schedule')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-schedule' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span>Penjadwalan Tim</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-team')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-team' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>Tim Handling</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-cashflow')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-cashflow' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <DollarSign className="w-4 h-4 shrink-0" />
+                  <span>Deposit Keuangan</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-reports')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-reports' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4 shrink-0" />
+                  <span>Laporan</span>
+                </button>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setManagerTab('m-manifest')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-manifest' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <FileSpreadsheet className="w-4 h-4 shrink-0" />
-              <span>Menu Manifest</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-itinerary')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-itinerary' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Calendar className="w-4 h-4 shrink-0" />
-              <span>Itinerary Keseluruhan Grup</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-schedule')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-schedule' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Clock className="w-4 h-4 shrink-0" />
-              <span>Penjadwalan Tim</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-roomlist')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-roomlist' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Hotel className="w-4 h-4 shrink-0" />
-              <span>Menu Roomlist</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-hotel')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-hotel' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Hotel className="w-4 h-4 shrink-0" />
-              <span>Menu Hotel Info</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-documents')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-documents' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Files className="w-4 h-4 shrink-0" />
-              <span>Menu Dokumen</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-team')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-team' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <Users className="w-4 h-4 shrink-0" />
-              <span>Menu Tim</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-cashflow')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-cashflow' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <DollarSign className="w-4 h-4 shrink-0" />
-              <span>Kas & Cashflow Lapangan</span>
-            </button>
-
-            <button
-              onClick={() => setManagerTab('m-reports')}
-              className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                managerTab === 'm-reports' 
-                  ? 'bg-slate-900 text-white font-bold shadow-xs' 
-                  : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
-              }`}
-            >
-              <ClipboardList className="w-4 h-4 shrink-0" />
-              <span>Menu Laporan (Reports)</span>
-            </button>
+            {/* Existing Group */}
+            <div>
+              <p className="px-3 pb-2 text-[10px] uppercase font-black text-slate-400">Menu yang Sudah Ada</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setManagerTab('m-manifest')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-manifest' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                  <span>Data Manifest</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-roomlist')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-roomlist' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Bed className="w-4 h-4 shrink-0" />
+                  <span>Roomlist</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-hotel')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-hotel' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Hotel className="w-4 h-4 shrink-0" />
+                  <span>Infografis Hotel</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-documents')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-documents' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Files className="w-4 h-4 shrink-0" />
+                  <span>Dokumen</span>
+                </button>
+              </div>
+            </div>
           </nav>
         </div>
 

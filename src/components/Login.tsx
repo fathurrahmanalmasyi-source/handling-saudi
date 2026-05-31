@@ -383,7 +383,7 @@ export default function Login({ onLoginSuccess, teamList = [] }: LoginProps) {
 
             <div className="space-y-4 text-[11px] text-slate-600 leading-relaxed font-sans">
               <p className="font-bold text-slate-800">
-                Aplikasi "Handling Jejak Imani" dapat di-install secara langsung ke Home Screen smartphone Anda sebagai Web App berkecepatan tinggi!
+                Aplikasi "Handling jejak imani" dapat di-install secara langsung ke Home Screen smartphone Anda sebagai Web App berkecepatan tinggi!
               </p>
 
               {/* iOS Safari Guide */}
