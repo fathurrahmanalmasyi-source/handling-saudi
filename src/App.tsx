@@ -1015,6 +1015,10 @@ export default function App() {
     setBroadcasts(prev => prev.map(msg => msg.id === id ? { ...msg, isRead: true } : msg));
   };
 
+  const handleDeleteBroadcast = (id: string) => {
+    setBroadcasts(prev => prev.filter(b => b.id !== id));
+  };
+
   // Quick Stats calculations for Active Handling Team Dashboard
   const activeDutiesCount = dutyTasks.filter(t => t.handlingName.toLowerCase() === (currentUser || '').toLowerCase() && t.status !== 'Selesai').length;
   const unreadMessagesCount = broadcasts.filter(b => !b.isRead).length;
@@ -1070,6 +1074,7 @@ export default function App() {
         onUpdateTeamMembers={setTeamMembers}
         broadcasts={broadcasts}
         onAddBroadcast={(b) => setBroadcasts(prev => [b, ...prev])}
+        onDeleteBroadcast={handleDeleteBroadcast}
         sops={sops}
         onUpdateSops={setSops}
         attendanceLogs={attendanceLogs}
