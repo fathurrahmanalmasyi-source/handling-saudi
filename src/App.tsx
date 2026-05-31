@@ -134,12 +134,12 @@ export default function App() {
 
   // Database / Interactive State in LocalStorage to persist changes
   const [sops, setSops] = useState<SOPDoc[]>(() => {
-    const saved = localStorage.getItem("ji_sops");
+    const saved = localStorage.getItem("ji_sops_reset2");
     return saved ? JSON.parse(saved) : INITIAL_SOPS;
   });
 
   const [rooms, setRooms] = useState<RoomManifest[]>(() => {
-    const saved = localStorage.getItem("ji_rooms_v10");
+    const saved = localStorage.getItem("ji_rooms_v10_reset2");
     let loadedRooms: RoomManifest[] | null = null;
     if (saved) {
       try {
@@ -179,7 +179,10 @@ export default function App() {
         return room;
       });
       if (migrated) {
-        localStorage.setItem("ji_rooms_v10", JSON.stringify(loadedRooms));
+        localStorage.setItem(
+          "ji_rooms_v10_reset2",
+          JSON.stringify(loadedRooms),
+        );
       }
       return loadedRooms;
     }
@@ -188,12 +191,12 @@ export default function App() {
   });
 
   const [packages, setPackages] = useState<PackageDetail[]>(() => {
-    const saved = localStorage.getItem("ji_packages_v1");
+    const saved = localStorage.getItem("ji_packages_v1_reset2");
     return saved ? JSON.parse(saved) : INITIAL_PACKAGES;
   });
 
   const [hotelInfos, setHotelInfos] = useState<HotelInfographic[]>(() => {
-    const saved = localStorage.getItem("ji_hotel_infos_v1");
+    const saved = localStorage.getItem("ji_hotel_infos_v1_reset2");
     const rawList: HotelInfographic[] = saved
       ? JSON.parse(saved)
       : INITIAL_HOTEL_INFOS;
@@ -231,12 +234,12 @@ export default function App() {
   });
 
   const [documents, setDocuments] = useState<DocumentGroup[]>(() => {
-    const saved = localStorage.getItem("ji_documents_v10");
+    const saved = localStorage.getItem("ji_documents_v10_reset2");
     return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
   });
 
   const [broadcasts, setBroadcasts] = useState<BroadcastMessage[]>(() => {
-    const saved = localStorage.getItem("ji_broadcasts");
+    const saved = localStorage.getItem("ji_broadcasts_reset2");
     const parsed: BroadcastMessage[] = saved
       ? JSON.parse(saved)
       : INITIAL_BROADCASTS;
@@ -255,24 +258,24 @@ export default function App() {
   });
 
   const [dutyTasks, setDutyTasks] = useState<DutyTask[]>(() => {
-    const saved = localStorage.getItem("ji_duty_tasks_v10");
+    const saved = localStorage.getItem("ji_duty_tasks_v10_reset2");
     return saved ? JSON.parse(saved) : INITIAL_DUTY_TASKS;
   });
 
   const [wallets, setWallets] = useState<WalletAccount[]>(() => {
-    const saved = localStorage.getItem("ji_wallets_v10");
+    const saved = localStorage.getItem("ji_wallets_v10_reset2");
     return saved ? JSON.parse(saved) : INITIAL_WALLETS;
   });
 
   const [expenses, setExpenses] = useState<FieldExpenseReport[]>(() => {
-    const saved = localStorage.getItem("ji_expenses_v10");
+    const saved = localStorage.getItem("ji_expenses_v10_reset2");
     return saved ? JSON.parse(saved) : INITIAL_EXPENSE_REPORTS;
   });
 
   const [taskChecklists, setTaskChecklists] = useState<
     Record<string, string[]>
   >(() => {
-    const saved = localStorage.getItem("ji_task_checklists_v1");
+    const saved = localStorage.getItem("ji_task_checklists_v1_reset2");
     if (saved) return JSON.parse(saved);
     return {
       "Check In Hotel": [
@@ -318,7 +321,7 @@ export default function App() {
 
   const [transactions, setTransactions] = useState<CashflowTransaction[]>(
     () => {
-      const saved = localStorage.getItem("ji_transactions_v10");
+      const saved = localStorage.getItem("ji_transactions_v10_reset2");
       return saved ? JSON.parse(saved) : INITIAL_CASHFLOW;
     },
   );
@@ -332,28 +335,19 @@ export default function App() {
 
   // Dynamic lists states for Manager portal requested features
   const [groups, setGroups] = useState<string[]>(() => {
-    const saved = localStorage.getItem("ji_groups_v10");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          "Umroh Reguler 11 Juni 2026 (Madinah Awal)",
-          "Umroh Sapphire Ruby 14 Juni 2026 (Makkah Awal)",
-          "Umroh Yaqin Banget 15 Juni 2026 (Madinah Awal)",
-          "Umroh Plus Turkiye 15 Juni 2026 (Madinah Awal)",
-          "Umroh Lapis-Lapis Keberkahan 20 Juni 2026 (Madinah Awal)",
-          "Umroh VIP Premium 25 Juni 2026 (Makkah Awal)",
-        ];
+    const saved = localStorage.getItem("ji_groups_v10_reset2");
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [jamaahList, setJamaahList] = useState<Jamaah[]>(() => {
-    const saved = localStorage.getItem("ji_jamaah_list_v10");
+    const saved = localStorage.getItem("ji_jamaah_list_v10_reset2");
     if (saved) return JSON.parse(saved);
 
     return [];
   });
 
   const [itineraries, setItineraries] = useState<ItineraryItem[]>(() => {
-    const saved = localStorage.getItem("ji_itineraries_v10");
+    const saved = localStorage.getItem("ji_itineraries_v10_reset2");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -368,26 +362,8 @@ export default function App() {
   });
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
-    const saved = localStorage.getItem("ji_team_members_v3");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch (e) {
-        // fallthrough
-      }
-    }
-    return TEAMS.map((team) => ({
-      id: team.id,
-      name: team.name,
-      role: team.sector,
-      phone: "+966 50 000 0000",
-      username: team.id.replace("-", "_"),
-      password: "pass",
-      status: "Aktif",
-    }));
+    const saved = localStorage.getItem("ji_team_members_v3_reset2");
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Navigation states
@@ -426,13 +402,13 @@ export default function App() {
   >("cashflow");
 
   const [attendanceLogs, setAttendanceLogs] = useState(() => {
-    const saved = localStorage.getItem("ji_attendance_v10");
+    const saved = localStorage.getItem("ji_attendance_v10_reset2");
     if (saved) return JSON.parse(saved);
     return [];
   });
 
   const [incidentLogs, setIncidentLogs] = useState(() => {
-    const saved = localStorage.getItem("ji_incident_v10");
+    const saved = localStorage.getItem("ji_incident_v10_reset2");
     if (saved) return JSON.parse(saved);
     return [];
   });
@@ -793,26 +769,47 @@ export default function App() {
 
   // Sync to localstorage
   useEffect(() => {
-    localStorage.setItem("ji_rooms_v10", JSON.stringify(rooms));
-    localStorage.setItem("ji_documents_v10", JSON.stringify(documents));
-    localStorage.setItem("ji_broadcasts", JSON.stringify(broadcasts));
-    localStorage.setItem("ji_duty_tasks_v10", JSON.stringify(dutyTasks));
-    localStorage.setItem("ji_wallets_v10", JSON.stringify(wallets));
-    localStorage.setItem("ji_expenses_v10", JSON.stringify(expenses));
-    localStorage.setItem("ji_transactions_v10", JSON.stringify(transactions));
-    localStorage.setItem("ji_sops", JSON.stringify(sops));
-    localStorage.setItem("ji_attendance_v10", JSON.stringify(attendanceLogs));
-    localStorage.setItem("ji_incident_v10", JSON.stringify(incidentLogs));
-    localStorage.setItem("ji_groups_v10", JSON.stringify(groups));
-    localStorage.setItem("ji_jamaah_list_v10", JSON.stringify(jamaahList));
-    localStorage.setItem("ji_itineraries_v10", JSON.stringify(itineraries));
-    localStorage.setItem("ji_team_members_v3", JSON.stringify(teamMembers));
+    localStorage.setItem("ji_rooms_v10_reset2", JSON.stringify(rooms));
+    localStorage.setItem("ji_documents_v10_reset2", JSON.stringify(documents));
+    localStorage.setItem("ji_broadcasts_reset2", JSON.stringify(broadcasts));
+    localStorage.setItem("ji_duty_tasks_v10_reset2", JSON.stringify(dutyTasks));
+    localStorage.setItem("ji_wallets_v10_reset2", JSON.stringify(wallets));
+    localStorage.setItem("ji_expenses_v10_reset2", JSON.stringify(expenses));
     localStorage.setItem(
-      "ji_task_checklists_v1",
+      "ji_transactions_v10_reset2",
+      JSON.stringify(transactions),
+    );
+    localStorage.setItem("ji_sops_reset2", JSON.stringify(sops));
+    localStorage.setItem(
+      "ji_attendance_v10_reset2",
+      JSON.stringify(attendanceLogs),
+    );
+    localStorage.setItem(
+      "ji_incident_v10_reset2",
+      JSON.stringify(incidentLogs),
+    );
+    localStorage.setItem("ji_groups_v10_reset2", JSON.stringify(groups));
+    localStorage.setItem(
+      "ji_jamaah_list_v10_reset2",
+      JSON.stringify(jamaahList),
+    );
+    localStorage.setItem(
+      "ji_itineraries_v10_reset2",
+      JSON.stringify(itineraries),
+    );
+    localStorage.setItem(
+      "ji_team_members_v3_reset2",
+      JSON.stringify(teamMembers),
+    );
+    localStorage.setItem(
+      "ji_task_checklists_v1_reset2",
       JSON.stringify(taskChecklists),
     );
-    localStorage.setItem("ji_packages_v1", JSON.stringify(packages));
-    localStorage.setItem("ji_hotel_infos_v1", JSON.stringify(hotelInfos));
+    localStorage.setItem("ji_packages_v1_reset2", JSON.stringify(packages));
+    localStorage.setItem(
+      "ji_hotel_infos_v1_reset2",
+      JSON.stringify(hotelInfos),
+    );
   }, [
     rooms,
     documents,
@@ -932,7 +929,7 @@ export default function App() {
 
     if (hasChanged) {
       setRooms(filteredRooms);
-      localStorage.setItem("ji_rooms_v3", JSON.stringify(filteredRooms));
+      localStorage.setItem("ji_rooms_v3_reset2", JSON.stringify(filteredRooms));
     }
   }, [jamaahList]);
 
@@ -981,7 +978,10 @@ export default function App() {
           : {}),
       };
       setTeamMembers(updatedList);
-      localStorage.setItem("ji_team_members_v3", JSON.stringify(updatedList));
+      localStorage.setItem(
+        "ji_team_members_v3_reset2",
+        JSON.stringify(updatedList),
+      );
 
       // Update logged in user state so their session is updated
       setCurrentUser(updatedFields.name);
@@ -1027,7 +1027,7 @@ export default function App() {
 
     setTimeout(() => {
       // 1. Re-read rooms
-      const savedRooms = localStorage.getItem("ji_rooms_v10");
+      const savedRooms = localStorage.getItem("ji_rooms_v10_reset2");
       if (savedRooms) {
         try {
           setRooms(JSON.parse(savedRooms));
@@ -1035,7 +1035,7 @@ export default function App() {
       }
 
       // 2. Re-read team members
-      const savedTeam = localStorage.getItem("ji_team_members_v3");
+      const savedTeam = localStorage.getItem("ji_team_members_v3_reset2");
       if (savedTeam) {
         try {
           setTeamMembers(JSON.parse(savedTeam));
@@ -1043,7 +1043,7 @@ export default function App() {
       }
 
       // 3. Re-read duty tasks
-      const savedTasks = localStorage.getItem("ji_duty_tasks_v10");
+      const savedTasks = localStorage.getItem("ji_duty_tasks_v10_reset2");
       if (savedTasks) {
         try {
           setDutyTasks(JSON.parse(savedTasks));
@@ -1051,7 +1051,7 @@ export default function App() {
       }
 
       // 4. Re-read broadcasts
-      const savedBroadcasts = localStorage.getItem("ji_broadcasts");
+      const savedBroadcasts = localStorage.getItem("ji_broadcasts_reset2");
       if (savedBroadcasts) {
         try {
           setBroadcasts(JSON.parse(savedBroadcasts));
@@ -1059,7 +1059,7 @@ export default function App() {
       }
 
       // 5. Re-read SOPs
-      const savedSops = localStorage.getItem("ji_sops");
+      const savedSops = localStorage.getItem("ji_sops_reset2");
       if (savedSops) {
         try {
           setSops(JSON.parse(savedSops));
@@ -1067,13 +1067,13 @@ export default function App() {
       }
 
       // 6. Re-read wallets / expenses
-      const savedWallets = localStorage.getItem("ji_wallets_v10");
+      const savedWallets = localStorage.getItem("ji_wallets_v10_reset2");
       if (savedWallets) {
         try {
           setWallets(JSON.parse(savedWallets));
         } catch (e) {}
       }
-      const savedExpenses = localStorage.getItem("ji_expenses_v10");
+      const savedExpenses = localStorage.getItem("ji_expenses_v10_reset2");
       if (savedExpenses) {
         try {
           setExpenses(JSON.parse(savedExpenses));
@@ -1081,7 +1081,7 @@ export default function App() {
       }
 
       // 7. Re-read itineraries
-      const savedItin = localStorage.getItem("ji_itineraries_v10");
+      const savedItin = localStorage.getItem("ji_itineraries_v10_reset2");
       if (savedItin) {
         try {
           setItineraries(JSON.parse(savedItin));
@@ -1089,7 +1089,9 @@ export default function App() {
       }
 
       // 8. Re-read checklists
-      const savedChecklists = localStorage.getItem("ji_task_checklists_v1");
+      const savedChecklists = localStorage.getItem(
+        "ji_task_checklists_v1_reset2",
+      );
       if (savedChecklists) {
         try {
           setTaskChecklists(JSON.parse(savedChecklists));
@@ -1097,14 +1099,14 @@ export default function App() {
       }
 
       // 9. Re-read documents
-      const savedDocs = localStorage.getItem("ji_documents_v10");
+      const savedDocs = localStorage.getItem("ji_documents_v10_reset2");
       if (savedDocs) {
         try {
           setDocuments(JSON.parse(savedDocs));
         } catch (e) {}
       }
 
-      const savedPackages = localStorage.getItem("ji_packages_v1");
+      const savedPackages = localStorage.getItem("ji_packages_v1_reset2");
       if (savedPackages) {
         try {
           setPackages(JSON.parse(savedPackages));
@@ -1112,7 +1114,7 @@ export default function App() {
       }
 
       // 10. Re-read attendance logs
-      const savedAttendance = localStorage.getItem("ji_attendance_v10");
+      const savedAttendance = localStorage.getItem("ji_attendance_v10_reset2");
       if (savedAttendance) {
         try {
           setAttendanceLogs(JSON.parse(savedAttendance));
@@ -1120,7 +1122,7 @@ export default function App() {
       }
 
       // 11. Re-read incident logs
-      const savedIncidents = localStorage.getItem("ji_incident_v10");
+      const savedIncidents = localStorage.getItem("ji_incident_v10_reset2");
       if (savedIncidents) {
         try {
           setIncidentLogs(JSON.parse(savedIncidents));
