@@ -442,41 +442,26 @@ export default function App() {
       const unsubscribe = onSnapshot(
         collection(db, colName),
         (snapshot) => {
-          if (snapshot.empty) {
-            // Empty DB -> Seed with local initial data
-            initialData.forEach(async (item) => {
-              try {
-                await setDoc(doc(db, colName, item.id), item);
-              } catch (e) {
-                handleFirestoreError(
-                  e,
-                  OperationType.WRITE,
-                  `${colName}/${item.id}`,
-                );
+          const incoming: T[] = snapshot.docs.map(
+            (d) => ({ id: d.id, ...d.data() }) as T,
+          );
+
+          if (onDocAdded && lastStateRef.current.length > 0) {
+            const lastIds = new Set(lastStateRef.current.map((x) => x.id));
+            incoming.forEach((item) => {
+              if (!lastIds.has(item.id)) {
+                onDocAdded(item);
               }
             });
-          } else {
-            const incoming: T[] = snapshot.docs.map(
-              (d) => ({ id: d.id, ...d.data() }) as T,
-            );
+          }
 
-            if (onDocAdded && lastStateRef.current.length > 0) {
-              const lastIds = new Set(lastStateRef.current.map((x) => x.id));
-              incoming.forEach((item) => {
-                if (!lastIds.has(item.id)) {
-                  onDocAdded(item);
-                }
-              });
-            }
+          const localStr = JSON.stringify(localState);
+          const incomingStr = JSON.stringify(incoming);
 
-            const localStr = JSON.stringify(localState);
-            const incomingStr = JSON.stringify(incoming);
-
-            if (localStr !== incomingStr) {
-              isIncomingRef.current = true;
-              setLocalState(incoming);
-              lastStateRef.current = incoming;
-            }
+          if (localStr !== incomingStr) {
+            isIncomingRef.current = true;
+            setLocalState(incoming);
+            lastStateRef.current = incoming;
           }
         },
         (error) => {
@@ -576,23 +561,13 @@ export default function App() {
     const unsubscribe = onSnapshot(
       collection(db, "groups_v2"),
       (snapshot) => {
-        if (snapshot.empty) {
-          groups.forEach(async (g) => {
-            try {
-              await setDoc(doc(db, "groups_v2", g), { name: g });
-            } catch (e) {
-              handleFirestoreError(e, OperationType.WRITE, `groups/${g}`);
-            }
-          });
-        } else {
-          const list = snapshot.docs.map((doc) => doc.id);
-          const localStr = JSON.stringify(groups);
-          const incomingStr = JSON.stringify(list);
-          if (localStr !== incomingStr) {
-            isIncomingGroupsRef.current = true;
-            setGroups(list);
-            lastGroupsRef.current = list;
-          }
+        const list = snapshot.docs.map((doc) => doc.id);
+        const localStr = JSON.stringify(groups);
+        const incomingStr = JSON.stringify(list);
+        if (localStr !== incomingStr) {
+          isIncomingGroupsRef.current = true;
+          setGroups(list);
+          lastGroupsRef.current = list;
         }
       },
       (error) => {
@@ -645,32 +620,16 @@ export default function App() {
     const unsubscribe = onSnapshot(
       collection(db, "taskChecklists_v2"),
       (snapshot) => {
-        if (snapshot.empty) {
-          Object.keys(taskChecklists).forEach(async (key) => {
-            try {
-              await setDoc(doc(db, "taskChecklists_v2", key), {
-                items: taskChecklists[key],
-              });
-            } catch (e) {
-              handleFirestoreError(
-                e,
-                OperationType.WRITE,
-                `taskChecklists/${key}`,
-              );
-            }
-          });
-        } else {
-          const incoming: Record<string, string[]> = {};
-          snapshot.docs.forEach((doc) => {
-            incoming[doc.id] = doc.data().items || [];
-          });
-          const localStr = JSON.stringify(taskChecklists);
-          const incomingStr = JSON.stringify(incoming);
-          if (localStr !== incomingStr) {
-            isIncomingChecklistsRef.current = true;
-            setTaskChecklists(incoming);
-            lastChecklistsRef.current = incoming;
-          }
+        const incoming: Record<string, string[]> = {};
+        snapshot.docs.forEach((doc) => {
+          incoming[doc.id] = doc.data().items || [];
+        });
+        const localStr = JSON.stringify(taskChecklists);
+        const incomingStr = JSON.stringify(incoming);
+        if (localStr !== incomingStr) {
+          isIncomingChecklistsRef.current = true;
+          setTaskChecklists(incoming);
+          lastChecklistsRef.current = incoming;
         }
       },
       (error) => {
