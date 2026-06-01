@@ -119,6 +119,7 @@ import ManagerAppPanel from "./components/ManagerAppPanel";
 import WalkieTalkieWidget from "./components/WalkieTalkieWidget";
 import { INITIAL_6_GROUPS_ITINERARIES } from "./data/initialItineraries";
 import HotelInfographicModal from "./components/HotelInfographicModal";
+import { requestNotificationPermission, showNotification } from "./notifications";
 
 export default function App() {
   // Authentication states
@@ -128,6 +129,13 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(() => {
     return (localStorage.getItem("ji_role") as UserRole) || null;
   });
+
+  // Request notification permission for staff
+  useEffect(() => {
+    if (currentUser && currentRole === 'HANDLING') {
+      requestNotificationPermission();
+    }
+  }, [currentUser, currentRole]);
 
   const [selectedInfographic, setSelectedInfographic] = useState<string | null>(
     null,
@@ -303,19 +311,34 @@ export default function App() {
 
   const [jamaahList, setJamaahList] = useState<Jamaah[]>([]);
   
-  // Real-time synchronization with Firestore
+  // Real-time synchronization for Jamaah and DutyTasks
   useEffect(() => {
-    const docRef = doc(db, "jamaahContainer", "data");
-
-    const unsub = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setJamaahList(docSnap.data().list || []);
-      } else {
-        setJamaahList([]);
-      }
+    const jamaahRef = doc(db, "jamaahContainer", "data");
+    const unsubJamaah = onSnapshot(jamaahRef, (docSnap) => {
+      setJamaahList(docSnap.exists() ? docSnap.data().list || [] : []);
     });
-    return () => unsub();
-  }, []);
+
+    const tasksRef = doc(db, "dutyTasksContainer", "data");
+    const unsubTasks = onSnapshot(tasksRef, (docSnap) => {
+      const newList = docSnap.exists() ? docSnap.data().list || [] : [];
+      
+      // Notify if new task for current user
+      if (currentUser && newList.length > dutyTasks.length) {
+          const newTasks = newList.filter((task: any) => !dutyTasks.find((t: any) => t.id === task.id));
+          newTasks.forEach((task: any) => {
+              if (task.handlingName === currentUser) {
+                  showNotification("Tugas Baru Tersedia!", "Silahkan periksa jadwal penugasan Anda");
+              }
+          });
+      }
+      setDutyTasks(newList);
+    });
+
+    return () => {
+      unsubJamaah();
+      unsubTasks();
+    };
+  }, [currentUser]); // currentUser used in notification logic
 
   const handleUpdateJamaahList = async (newList: Jamaah[]) => {
     const docRef = doc(db, "jamaahContainer", "data");
