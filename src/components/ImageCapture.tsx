@@ -12,6 +12,7 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   React.useEffect(() => {
@@ -84,20 +85,29 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
   return (
     <div className="space-y-2">
       {isCameraOpen ? (
-        <div className="relative rounded-lg overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-48 object-cover" />
-          <div className="absolute top-2 left-2 bg-black/50 text-white p-2 rounded text-[10px]">
+        <div className={`relative rounded-lg overflow-hidden ${isFullScreen ? "fixed inset-0 z-50 bg-black" : ""}`}>
+          <video ref={videoRef} autoPlay playsInline className={`w-full ${isFullScreen ? "h-screen object-cover" : "h-48 object-cover"}`} />
+          <div className={`absolute top-2 left-2 bg-black/50 text-white p-2 rounded ${isFullScreen ? "text-lg" : "text-[10px]"}`}>
              <div>{currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}</div>
              {taskName && <div>{taskName}</div>}
           </div>
-          <button onClick={captureImage} className="absolute bottom-2 left-1/2 -translate-x-1/2 p-2 bg-[#D4AF37] text-white rounded-full"><Check /></button>
+          <button onClick={() => setIsFullScreen(!isFullScreen)} className={`absolute top-10 right-2 p-3 bg-[#D4AF37] text-white rounded-full ${isFullScreen ? "text-lg" : "text-sm"}`}>
+             {isFullScreen ? "Minimize" : "Full Screen"}
+          </button>
+          <button onClick={captureImage} className="absolute bottom-4 left-1/2 -translate-x-1/2 p-4 bg-[#D4AF37] text-white rounded-full"><Check /></button>
           <canvas ref={canvasRef} width="400" height="400" className="hidden" />
         </div>
       ) : (
-        <button type="button" onClick={startCamera} className="w-full border-2 border-dashed border-slate-250 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center gap-1">
-          <Camera className="w-6 h-6 text-[#D4AF37]" />
-          <span className="text-xs font-black uppercase text-slate-500">Ambil Foto</span>
-        </button>
+        <div className="space-y-2">
+            <button type="button" onClick={startCamera} className="w-full border-2 border-dashed border-slate-250 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center gap-1">
+              <Camera className="w-6 h-6 text-[#D4AF37]" />
+              <span className="text-xs font-black uppercase text-slate-500">Ambil Foto</span>
+            </button>
+            <button type="button" onClick={() => { setIsFullScreen(true); startCamera(); }} className="w-full border-2 border-solid border-[#D4AF37] rounded-lg p-4 bg-[#D4AF37]/10 flex flex-col items-center justify-center gap-1">
+              <Camera className="w-6 h-6 text-[#D4AF37]" />
+              <span className="text-xs font-black uppercase text-[#D4AF37]">Ambil Foto (Full Screen)</span>
+            </button>
+        </div>
       )}
     </div>
   );
