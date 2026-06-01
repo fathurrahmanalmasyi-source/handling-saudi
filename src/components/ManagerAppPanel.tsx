@@ -579,7 +579,7 @@ export default function ManagerAppPanel({
           {managerTab === 'm-manifest' && (
             <ManagerManifest 
               jamaahList={jamaahList} 
-              onUpdateJamaahList={onUpdateJamaahList} 
+              onUpdateJamaahList={onUpdateJamaahList}
               groups={groups} 
               onAddGroup={onAddGroup} 
               onRemoveGroup={onRemoveGroup}

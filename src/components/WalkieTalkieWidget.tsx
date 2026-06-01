@@ -246,38 +246,45 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
     }, { merge: true });
   };
 
-  // Double click logic
-  const dtRef = useRef<number>(0);
-  
-  const handlePttMouseDown = () => {
+  // Double click & hold state/ref structures
+  const lastClickTimeRef = useRef<number>(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handlePttMouseDown = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e && e.cancelable) e.preventDefault();
     if (!isConnected) return;
+
     const now = Date.now();
-    if (now - dtRef.current < 400) {
-      // Double click
-      const newLocked = !isLocked;
-      setIsLocked(newLocked);
-      if (newLocked) {
-        startTransmitting();
-      } else {
-        stopTransmitting();
-      }
-      dtRef.current = 0; // reset
+
+    // 1. If currently locked, any click (single) unlocks it
+    if (isLocked) {
+      setIsLocked(false);
+      stopTransmitting();
+      return;
+    }
+
+    // 2. Check for double click
+    if (now - lastClickTimeRef.current < 300) {
+      // It's a double click
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+      setIsLocked(true);
+      startTransmitting();
+      lastClickTimeRef.current = 0; // reset
     } else {
-      if (!isLocked) {
-        startTransmitting();
-      }
-      dtRef.current = now;
+      // 3. Potential single click (hold)
+      lastClickTimeRef.current = now;
+      startTransmitting();
     }
   };
 
-  const handlePttMouseUp = () => {
+  const handlePttMouseUp = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e && e.cancelable) e.preventDefault();
     if (!isConnected) return;
-    // Only stop if not locked
-    setTimeout(() => {
-      if (!isLocked) {
-         stopTransmitting();
-      }
-    }, 100);
+
+    // Only stop transmitting if we are NOT locked
+    if (!isLocked) {
+      stopTransmitting();
+    }
   };
 
   const activeTalkers = Object.values(participants).filter((p) => p.isTalking && p.callsign !== callsign);
@@ -288,23 +295,23 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
   else if (isReceiving) ledColor = "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]"; // RX
 
   return (
-    <div className="w-full bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col gap-3 text-[#111] font-sans relative overflow-hidden">
+    <div className="w-full bg-slate-950 rounded-xl p-4 shadow-lg flex flex-col gap-3 text-slate-200 font-sans relative overflow-hidden">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between w-full border-b border-slate-100 pb-2 mb-1">
+      <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2 mb-1">
          <div className="flex items-center gap-1.5">
-            <Radio className="w-4 h-4 text-[#D4AF37]" />
-            <h3 className="font-extrabold text-[#111] text-xs uppercase">Koordinasi Suara</h3>
+            <Radio className="w-4 h-4 text-slate-400" />
+            <h3 className="font-extrabold text-white text-xs uppercase">Koordinasi Suara</h3>
          </div>
          <div className="flex items-center gap-2">
             {isConnected && (
-               <div className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold">
+               <div className="flex items-center gap-1 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold">
                  <Users className="w-3 h-3" />
                  {Object.keys(participants).length} Terhubung
                </div>
             )}
             <div className={cn("w-2.5 h-2.5 rounded-full transition-colors duration-300", 
-               isConnected ? ledColor : "bg-slate-200 shadow-none")} 
+               isConnected ? ledColor : "bg-slate-700 shadow-none")} 
             />
          </div>
       </div>
@@ -315,23 +322,23 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
           {!isConnected ? (
             <>
                <div>
-                 <label className="text-[10px] uppercase text-slate-500 font-bold mb-1 block">Kode Saluran</label>
+                 <label className="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Kode Saluran</label>
                  <input 
                    type="text" 
                    value={roomId}
                    onChange={e => setRoomId(e.target.value)}
-                   className="w-full bg-slate-50 text-sm border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all font-bold"
+                   className="w-full bg-slate-900 text-sm border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:bg-slate-800 transition-all font-bold"
                    placeholder="CH-1"
                  />
                </div>
                <button 
                  onClick={connectToRoom}
-                 className="w-full bg-[#111] hover:bg-[#D4AF37] text-white font-bold text-[11px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm mt-1"
+                 className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm mt-1"
                >
                  <Power className="w-3.5 h-3.5" /> HUBUNGKAN
                </button>
                <div className="text-[10px] text-slate-400 font-medium mt-1">
-                 Masuk sebagai: <span className="font-bold text-slate-600">{callsign}</span>
+                 Masuk sebagai: <span className="font-bold text-slate-200">{callsign}</span>
                </div>
             </>
           ) : (
@@ -339,7 +346,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                <div className="flex flex-col gap-1">
                  <span className="text-slate-400 uppercase text-[10px] font-bold block">Saluran Aktif</span>
                  <div className="flex items-center gap-2">
-                   <span className="font-extrabold text-[#111] text-xl">{roomId}</span>
+                   <span className="font-extrabold text-white text-xl">{roomId}</span>
                    <div className="flex items-center gap-0.5 h-4">
                      {[1, 2, 3, 4].map((i) => (
                        <motion.div
@@ -356,7 +363,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                          }}
                          className={cn(
                            "w-1 rounded-full",
-                           isTalking || isLocked ? "bg-red-500" : isReceiving ? "bg-amber-500" : "bg-slate-300"
+                           isTalking || isLocked ? "bg-white" : isReceiving ? "bg-slate-400" : "bg-slate-700"
                          )}
                        />
                      ))}
@@ -364,14 +371,14 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                  </div>
                </div>
 
-               <div className="flex flex-col gap-1 w-full bg-slate-50 p-2 rounded-lg border border-slate-200">
-                 <span className="text-slate-500 text-[10px] font-bold uppercase">Petugas Online</span>
+               <div className="flex flex-col gap-1 w-full bg-slate-900 p-2 rounded-lg border border-slate-800">
+                 <span className="text-slate-400 text-[10px] font-bold uppercase">Petugas Online</span>
                  <div className="flex flex-wrap gap-1 mt-0.5">
-                   <span className="text-[10px] bg-[#111] text-white px-1.5 py-0.5 rounded font-bold">{callsign} (Anda)</span>
+                   <span className="text-[10px] bg-slate-700 text-white px-1.5 py-0.5 rounded font-bold">{callsign} (Anda)</span>
                    {Object.values(participants).map((p) => {
                      if (p.callsign === callsign) return null;
                      return (
-                       <span key={p.peerId} className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors", p.isTalking ? "bg-amber-100 text-amber-700" : "bg-white border border-slate-200 text-slate-700")}>
+                       <span key={p.peerId} className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors", p.isTalking ? "bg-white text-slate-900" : "bg-slate-800 border border-slate-700 text-slate-300")}>
                          {p.callsign}
                        </span>
                      );
@@ -381,7 +388,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
 
                <button 
                  onClick={cleanupConnections}
-                 className="w-full bg-white hover:bg-slate-50 text-red-600 border border-slate-200 font-bold text-[11px] py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 mt-1"
+                 className="w-full bg-slate-800 hover:bg-slate-700 text-red-400 font-bold text-[11px] py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 mt-1"
                >
                  <Power className="w-3.5 h-3.5" /> PUTUSKAN
                </button>
@@ -409,7 +416,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                </AnimatePresence>
 
                {/* PTT Button */}
-               <button
+                 <button
                  onMouseDown={handlePttMouseDown}
                  onMouseUp={handlePttMouseUp}
                  onMouseLeave={handlePttMouseUp}
@@ -418,13 +425,13 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                  className={cn(
                    "relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center gap-1.5 transition-all duration-200 select-none shadow-md border-4 active:scale-95",
                    isLocked 
-                     ? "bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.4)] border-red-200" 
+                     ? "bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.4)] border-red-900" 
                      : isTalking 
-                        ? "bg-red-500 border-red-200" 
-                        : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700"
+                        ? "bg-red-500 border-red-900" 
+                        : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
                  )}
                >
-                  {isLocked || isTalking ? <Mic className="w-8 h-8 text-white" /> : <MicOff className="w-8 h-8 text-slate-400" />}
+                  {isLocked || isTalking ? <Mic className="w-8 h-8 text-white" /> : <MicOff className="w-8 h-8 text-slate-500" />}
                   <span className={cn("text-[11px] font-extrabold uppercase tracking-widest", isLocked || isTalking ? "text-white" : "text-slate-500")}>
                     {isLocked ? 'TERKUNCI' : 'PTT'}
                   </span>
@@ -432,32 +439,32 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                
                <div className="mt-4 flex flex-col items-center w-full min-h-[32px] absolute -bottom-8">
                   {isReceiving ? (
-                    <div className="flex items-center gap-1.5 text-amber-700 text-[10px] font-bold bg-amber-100 px-2.5 py-1 rounded shadow-sm border border-amber-200">
+                    <div className="flex items-center gap-1.5 text-white text-[10px] font-bold bg-slate-700 px-2.5 py-1 rounded shadow-sm border border-slate-600">
                        <motion.div 
                          animate={{ opacity: [0, 1, 0] }} 
                          transition={{ repeat: Infinity, duration: 1 }}
-                         className="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0"
+                         className="w-1.5 h-1.5 bg-white rounded-full shrink-0"
                        />
                        <span className="truncate max-w-[80px]">MENDENGARKAN...</span>
                     </div>
                   ) : isTalking || isLocked ? (
-                    <div className="flex items-center gap-1.5 text-red-600 text-[10px] font-bold bg-red-50 px-2.5 py-1 rounded shadow-sm border border-red-200">
+                    <div className="flex items-center gap-1.5 text-white text-[10px] font-bold bg-red-600 px-2.5 py-1 rounded shadow-sm border border-red-800">
                        <motion.div 
                          animate={{ opacity: [0, 1, 0] }} 
                          transition={{ repeat: Infinity, duration: 1 }}
-                         className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0"
+                         className="w-1.5 h-1.5 bg-white rounded-full shrink-0"
                        />
                        MEMANCARKAN...
                     </div>
                   ) : (
-                    <div className="text-[9px] text-slate-500 font-bold text-center leading-tight bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                    <div className="text-[9px] text-slate-200 font-bold text-center leading-tight bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                       {isLocked ? "MIC TERKUNCI" : "TAHAN = BICARA\n2x KLIK = KUNCI"}
                     </div>
                   )}
                </div>
              </>
            ) : (
-             <div className="w-24 h-24 rounded-full bg-slate-50 border-4 border-slate-100 flex flex-col items-center justify-center gap-1.5 text-slate-300 select-none">
+             <div className="w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 flex flex-col items-center justify-center gap-1.5 text-slate-600 select-none">
                <MicOff className="w-8 h-8 opacity-40" />
                <span className="text-[11px] font-extrabold uppercase tracking-widest opacity-40">PTT</span>
              </div>

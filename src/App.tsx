@@ -301,12 +301,12 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [jamaahList, setJamaahList] = useState<Jamaah[]>(() => {
-    const saved = localStorage.getItem("ji_jamaah_list_v10_reset2");
-    if (saved) return JSON.parse(saved);
-
-    return [];
-  });
+  const [jamaahList, setJamaahList] = useState<Jamaah[]>([]);
+  
+  React.useEffect(() => {
+    localStorage.removeItem("ji_jamaah_list_v10_reset2");
+    localStorage.removeItem("jamaahList_v2");
+  }, []);
 
   const [itineraries, setItineraries] = useState<ItineraryItem[]>(() => {
     const saved = localStorage.getItem("ji_itineraries_v10_reset2");
