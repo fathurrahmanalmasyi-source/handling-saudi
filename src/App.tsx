@@ -303,10 +303,24 @@ export default function App() {
 
   const [jamaahList, setJamaahList] = useState<Jamaah[]>([]);
   
-  React.useEffect(() => {
-    localStorage.removeItem("ji_jamaah_list_v10_reset2");
-    localStorage.removeItem("jamaahList_v2");
+  // Real-time synchronization with Firestore
+  useEffect(() => {
+    const docRef = doc(db, "jamaahContainer", "data");
+
+    const unsub = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setJamaahList(docSnap.data().list || []);
+      } else {
+        setJamaahList([]);
+      }
+    });
+    return () => unsub();
   }, []);
+
+  const handleUpdateJamaahList = async (newList: Jamaah[]) => {
+    const docRef = doc(db, "jamaahContainer", "data");
+    await setDoc(docRef, { list: newList });
+  };
 
   const [itineraries, setItineraries] = useState<ItineraryItem[]>(() => {
     const saved = localStorage.getItem("ji_itineraries_v10_reset2");
@@ -1505,7 +1519,7 @@ export default function App() {
           setRooms((prev) => prev.filter((rm) => rm.groupName !== gName));
         }}
         jamaahList={jamaahList}
-        onUpdateJamaahList={setJamaahList}
+        onUpdateJamaahList={handleUpdateJamaahList}
         itineraries={itineraries}
         onUpdateItineraryList={setItineraries}
         packages={packages}
@@ -1522,6 +1536,7 @@ export default function App() {
         sops={sops}
         onUpdateSops={setSops}
         attendanceLogs={attendanceLogs}
+        onUpdateAttendanceLogs={setAttendanceLogs}
         incidentLogs={incidentLogs}
         onUpdateIncidentLogs={setIncidentLogs}
         onDeleteTask={handleDeleteTask}
@@ -2141,7 +2156,7 @@ export default function App() {
                   selectedGroupFilter={selectedGroupFilter}
                   groups={groups}
                   onUpdateRooms={setRooms}
-                  onUpdateJamaahList={setJamaahList}
+                  onUpdateJamaahList={handleUpdateJamaahList}
                   jamaahList={jamaahList}
                   currentRole="HANDLING"
                 />

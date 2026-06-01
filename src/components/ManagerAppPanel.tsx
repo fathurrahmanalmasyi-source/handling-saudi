@@ -54,6 +54,7 @@ interface ManagerAppPanelProps {
   attendanceLogs: any[];
   incidentLogs: any[];
   onUpdateIncidentLogs: (newList: any[]) => void;
+  onUpdateAttendanceLogs: (newList: any[]) => void;
   onDeleteTask?: (id: string) => void;
   onUpdateTask?: (id: string, updatedTask: Partial<DutyTask>) => void;
   onDeleteTransaction?: (id: string) => void;
@@ -98,6 +99,7 @@ export default function ManagerAppPanel({
   attendanceLogs,
   incidentLogs,
   onUpdateIncidentLogs,
+  onUpdateAttendanceLogs,
   onDeleteTask,
   onUpdateTask,
   onDeleteTransaction,
@@ -740,6 +742,7 @@ export default function ManagerAppPanel({
                           <th className="py-3 px-4">Tipe Absensi</th>
                           <th className="py-3 px-4">Lokasi Melapor</th>
                           <th className="py-3 px-4">Koordinat GPS SAT</th>
+                          <th className="py-3 px-4 text-center">Aksi</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-150 text-slate-800">
@@ -772,11 +775,20 @@ export default function ManagerAppPanel({
                                   🛰️ {log.coordinate || 'GPS Locked'}
                                 </span>
                               </td>
+                              <td className="py-3 px-4 text-center">
+                                <button
+                                  onClick={() => onUpdateAttendanceLogs(attendanceLogs.filter(l => l.id !== log.id))}
+                                  className="text-rose-500 hover:text-rose-700 transition-colors p-1"
+                                  title="Hapus Catatan"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
                             </tr>
                         ))}
                         {attendanceLogs.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="py-10 text-center text-slate-400 italic">Belum ada catatan absensi petugas terdaftar.</td>
+                            <td colSpan={7} className="py-10 text-center text-slate-400 italic">Belum ada catatan absensi petugas terdaftar.</td>
                           </tr>
                         )}
                       </tbody>
@@ -851,6 +863,13 @@ export default function ManagerAppPanel({
                               {log.isResolved ? 'Sudah Audit' : 'Selesai ditangani'}
                             </label>
                           </div>
+                          <button
+                            onClick={() => onUpdateIncidentLogs(incidentLogs.filter(i => i.id !== log.id))}
+                            className="text-rose-500 hover:text-rose-700 transition-colors p-2"
+                            title="Hapus Laporan"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                     ))}
                     {incidentLogs.length === 0 && (

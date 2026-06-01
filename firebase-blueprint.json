@@ -1,234 +1,34 @@
 {
   "entities": {
-    "SOPDoc": {
-      "title": "Standard Operating Procedure Document",
-      "description": "Standardized instructions for field team personnel.",
+    "Jamaah": {
+      "title": "Jamaah",
+      "description": "Jamaah entity",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "title": { "type": "string" },
-        "category": { "type": "string" },
-        "lastUpdated": { "type": "string" },
-        "important": { "type": "boolean" },
-        "content": { "type": "array" }
-      },
-      "required": ["id", "title", "category", "important", "content"]
-    },
-    "RoomManifest": {
-      "title": "Room Manifest Plottings",
-      "description": "Hotel room mapping assignments for pilgrim groups.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
+        "nomorJamaah": { "type": "string" },
+        "namaJamaah": { "type": "string" },
+        "nomorRoomlist": { "type": "string" },
+        "roomlistMadinah": { "type": "string" },
+        "roomlistMakkah": { "type": "string" },
+        "hotelMadinah": { "type": "string" },
+        "hotelMakkah": { "type": "string" },
         "groupName": { "type": "string" },
-        "hotelName": { "type": "string" },
-        "hotelDetailName": { "type": "string" },
-        "roomNumber": { "type": "string" },
-        "roomType": { "type": "string" },
-        "jamaahNames": { "type": "array" },
-        "notes": { "type": "string" },
-        "colorTag": { "type": "string" }
-      },
-      "required": ["id", "groupName", "hotelName", "hotelDetailName", "roomNumber", "roomType", "jamaahNames"]
-    },
-    "PackageDetail": {
-      "title": "Umroh Batch Packages",
-      "description": "Group itinerary packages, flights, hotel, and staff PIC details.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "groupName": { "type": "string" },
-        "departureDate": { "type": "string" },
-        "departureFlightCode": { "type": "string" },
-        "departureFlightRoute": { "type": "string" },
-        "departureTimeRange": { "type": "string" },
-        "returnDate": { "type": "string" },
-        "returnFlightCode": { "type": "string" },
-        "returnFlightRoute": { "type": "string" },
-        "returnTimeRange": { "type": "string" },
-        "totalJamaah": { "type": "integer" },
-        "jamaahPerPackage": { "type": "string" },
-        "hotelDetails": { "type": "string" },
-        "tourLeader": { "type": "string" },
-        "mutawwifName": { "type": "string" },
-        "arrivalMeals": { "type": "string" },
-        "returnMeals": { "type": "string" },
-        "status": { "type": "string" }
-      },
-      "required": ["id", "groupName"]
-    },
-    "HotelInfographic": {
-      "title": "Hotel Information",
-      "description": "Infographics including restaurant, reception, and wifi for each hotel.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "hotelName": { "type": "string" },
-        "city": { "type": "string" },
-        "restaurantInfo": { "type": "string" },
-        "mealTimes": { "type": "string" },
-        "receptionistInfo": { "type": "string" },
-        "wifiInfo": { "type": "string" },
-        "hotelPhoto": { "type": "string" },
-        "restaurantPhoto": { "type": "string" },
-        "receptionistPhoto": { "type": "string" }
-      },
-      "required": ["id", "hotelName"]
-    },
-    "DocumentGroup": {
-      "title": "Document Groups",
-      "description": "Files such as visas, tickets, or passports grouped by flight packages.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "groupName": { "type": "string" },
-        "items": { "type": "array" }
-      },
-      "required": ["id", "groupName", "items"]
-    },
-    "FieldExpenseReport": {
-      "title": "Field Expenses Report",
-      "description": "Local monetary spending reports filed by handling team on ground.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "handlingId": { "type": "string" },
-        "handlingName": { "type": "string" },
-        "groupName": { "type": "string" },
-        "category": { "type": "string" },
-        "amountSAR": { "type": "number" },
-        "note": { "type": "string" },
-        "date": { "type": "string" },
-        "receiptUrl": { "type": "string" },
-        "status": { "type": "string" },
-        "walletSourceId": { "type": "string" }
-      },
-      "required": ["id", "handlingName", "amountSAR", "status"]
-    },
-    "BroadcastMessage": {
-      "title": "Broadcast Message",
-      "description": "Critical directives broadcast by managers to field operators.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "sender": { "type": "string" },
-        "title": { "type": "string" },
-        "text": { "type": "string" },
-        "time": { "type": "string" },
-        "priority": { "type": "string" },
-        "isRead": { "type": "boolean" },
-        "timestamp": { "type": "integer" }
-      },
-      "required": ["id", "sender", "title", "text", "time", "priority", "isRead"]
-    },
-    "DutyTask": {
-      "title": "Duty Handling Tasks",
-      "description": "Duty rosters assigned to specific handling agents on the ground.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "handlingName": { "type": "string" },
-        "roleTag": { "type": "string" },
-        "groupName": { "type": "string" },
-        "date": { "type": "string" },
-        "timeRange": { "type": "string" },
-        "location": { "type": "string" },
-        "status": { "type": "string" }
-      },
-      "required": ["id", "handlingName", "roleTag", "groupName", "status"]
-    },
-    "WalletAccount": {
-      "title": "Financial Wallets",
-      "description": "Monetary cash or bank accounts held by various team personnel.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "balanceSAR": { "type": "number" },
-        "balanceIDR": { "type": "number" },
-        "type": { "type": "string" },
-        "holder": { "type": "string" }
-      },
-      "required": ["id", "name", "balanceSAR", "holder"]
-    },
-    "CashflowTransaction": {
-      "title": "Cashflow Transactions",
-      "description": "Central ledger tracking all entries of incoming/outgoing cashflows.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "category": { "type": "string" },
-        "type": { "type": "string" },
-        "amountSAR": { "type": "number" },
-        "walletId": { "type": "string" },
-        "date": { "type": "string" },
-        "byUser": { "type": "string" },
-        "proofUrl": { "type": "string" },
-        "status": { "type": "string" }
-      },
-      "required": ["id", "title", "type", "amountSAR", "walletId", "date"]
-    },
-    "TeamMember": {
-      "title": "Team Member Personnel",
-      "description": "Personnel profiles of staff working in Ground Handling or Operations.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "role": { "type": "string" },
+        "passportNo": { "type": "string" },
         "phone": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" },
-        "status": { "type": "string" }
+        "visaStatus": { "type": "string" },
+        "packageTag": { "type": "string" },
+        "age": { "type": "number" },
+        "gender": { "type": "string" },
+        "companionInfo": { "type": "string" }
       },
-      "required": ["id", "name", "role", "phone", "username", "status"]
+      "required": ["id", "nomorJamaah", "namaJamaah", "groupName", "visaStatus"]
     }
   },
   "firestore": {
-    "rooms": {
-      "schema": "RoomManifest",
-      "description": "All localized rooming list coordinates."
-    },
-    "documents": {
-      "schema": "DocumentGroup",
-      "description": "Grouped visas, passports and flight manifests."
-    },
-    "broadcasts": {
-      "schema": "BroadcastMessage",
-      "description": "Emergency alerts and notifications sent to mobile teams."
-    },
-    "dutyTasks": {
-      "schema": "DutyTask",
-      "description": "Handling tasks assigned on current itineraries."
-    },
-    "wallets": {
-      "schema": "WalletAccount",
-      "description": "Cash holdings of each ground handler."
-    },
-    "expenses": {
-      "schema": "FieldExpenseReport",
-      "description": "Reported and registered costs, pre-approval logs."
-    },
-    "transactions": {
-      "schema": "CashflowTransaction",
-      "description": "General Cash Ledger."
-    },
-    "sops": {
-      "schema": "SOPDoc",
-      "description": "Operating instructions."
-    },
-    "teamMembers": {
-      "schema": "TeamMember",
-      "description": "Handling field team directory."
-    },
-    "packages": {
-      "schema": "PackageDetail",
-      "description": "Overview of batches & packages currently processed."
-    },
-    "hotelInfos": {
-      "schema": "HotelInfographic",
-      "description": "Hotel amenities visual metadata files."
+    "jamaahList": {
+      "schema": { "$ref": "#/entities/Jamaah" },
+      "description": "Collection of all jamaah"
     }
   }
 }
