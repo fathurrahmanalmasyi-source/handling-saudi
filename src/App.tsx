@@ -562,7 +562,7 @@ export default function App() {
   useBiSync("packages_v2", packages, setPackages, packages);
   useBiSync("hotelInfos_v2", hotelInfos, setHotelInfos, hotelInfos);
   useBiSync("documents_v2", documents, setDocuments, documents);
-  useBiSync("dutyTasks_v2", dutyTasks, setDutyTasks, dutyTasks);
+  // useBiSync("dutyTasks_v2", dutyTasks, setDutyTasks, dutyTasks);
   useBiSync("wallets_v2", wallets, setWallets, wallets);
   useBiSync("expenses_v2", expenses, setExpenses, expenses);
   useBiSync("transactions_v2", transactions, setTransactions, transactions);
@@ -2885,9 +2885,9 @@ export default function App() {
                                   Absensi Foto
                                 </label>
                                 <ImageCapture 
-                                    onCapture={setCapturedPhoto} 
-                                    onClear={() => setCapturedPhoto(null)} 
-                                    photoUrl={capturedPhoto} 
+                                    onCapture={setPreviewPhoto} 
+                                    onClear={() => setPreviewPhoto(null)} 
+                                    photoUrl={previewPhoto} 
                                 />
                               </div>
 
@@ -2957,6 +2957,14 @@ export default function App() {
                                       <span className="text-[10px] text-slate-400 block mt-1 font-mono">
                                         {log.date} @ {log.time}
                                       </span>
+                                      {log.photo && (
+                                        <button 
+                                            onClick={() => setPreviewPhoto(log.photo)}
+                                            className="text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 mt-1"
+                                        >
+                                            Preview
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
 
