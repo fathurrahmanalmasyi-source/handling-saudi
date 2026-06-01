@@ -5,12 +5,21 @@ interface Props {
   onCapture: (base64: string) => void;
   onClear: () => void;
   photoUrl: string | null;
+  taskName?: string;
 }
 
-export default function ImageCapture({ onCapture, onClear, photoUrl }: Props) {
+export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  React.useEffect(() => {
+    if (isCameraOpen) {
+      const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isCameraOpen]);
 
   const startCamera = async () => {
     try {
@@ -31,6 +40,18 @@ export default function ImageCapture({ onCapture, onClear, photoUrl }: Props) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
         context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        context.fillRect(0, canvasRef.current.height - 60, canvasRef.current.width, 60);
+        context.fillStyle = 'white';
+        context.font = '14px sans-serif';
+        context.fillText(`${currentTime.toLocaleDateString()} ${currentTime.toLocaleTimeString()}`, 10, canvasRef.current.height - 35);
+        if (taskName) {
+            context.font = '12px sans-serif';
+            context.fillText(taskName, 10, canvasRef.current.height - 15);
+        } else {
+            context.font = '12px sans-serif';
+            context.fillText("Presensi Tugas", 10, canvasRef.current.height - 15);
+        }
         const dataUrl = canvasRef.current.toDataURL('image/jpeg');
         onCapture(dataUrl);
         stopCamera();
@@ -60,6 +81,10 @@ export default function ImageCapture({ onCapture, onClear, photoUrl }: Props) {
       {isCameraOpen ? (
         <div className="relative rounded-lg overflow-hidden">
           <video ref={videoRef} className="w-full h-48 object-cover" />
+          <div className="absolute top-2 left-2 bg-black/50 text-white p-2 rounded text-[10px]">
+             <div>{currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}</div>
+             {taskName && <div>{taskName}</div>}
+          </div>
           <button onClick={captureImage} className="absolute bottom-2 left-1/2 -translate-x-1/2 p-2 bg-[#D4AF37] text-white rounded-full"><Check /></button>
           <canvas ref={canvasRef} width="400" height="400" className="hidden" />
         </div>
