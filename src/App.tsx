@@ -119,6 +119,7 @@ import ManagerAppPanel from "./components/ManagerAppPanel";
 import WalkieTalkieWidget from "./components/WalkieTalkieWidget";
 import { INITIAL_6_GROUPS_ITINERARIES } from "./data/initialItineraries";
 import HotelInfographicModal from "./components/HotelInfographicModal";
+import ImageCapture from "./components/ImageCapture";
 import { requestNotificationPermission, showNotification } from "./notifications";
 
 export default function App() {
@@ -140,6 +141,7 @@ export default function App() {
   const [selectedInfographic, setSelectedInfographic] = useState<string | null>(
     null,
   );
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   // Database / Interactive State in LocalStorage to persist changes
   const [sops, setSops] = useState<SOPDoc[]>(() => {
@@ -311,34 +313,31 @@ export default function App() {
 
   const [jamaahList, setJamaahList] = useState<Jamaah[]>([]);
   
-  // Real-time synchronization for Jamaah and DutyTasks
+  // Real-time synchronization for Jamaah
   useEffect(() => {
     const jamaahRef = doc(db, "jamaahContainer", "data");
     const unsubJamaah = onSnapshot(jamaahRef, (docSnap) => {
       setJamaahList(docSnap.exists() ? docSnap.data().list || [] : []);
     });
 
-    const tasksRef = doc(db, "dutyTasksContainer", "data");
-    const unsubTasks = onSnapshot(tasksRef, (docSnap) => {
-      const newList = docSnap.exists() ? docSnap.data().list || [] : [];
-      
-      // Notify if new task for current user
-      if (currentUser && newList.length > dutyTasks.length) {
-          const newTasks = newList.filter((task: any) => !dutyTasks.find((t: any) => t.id === task.id));
-          newTasks.forEach((task: any) => {
-              if (task.handlingName === currentUser) {
-                  showNotification("Tugas Baru Tersedia!", "Silahkan periksa jadwal penugasan Anda");
-              }
-          });
-      }
-      setDutyTasks(newList);
-    });
-
     return () => {
       unsubJamaah();
-      unsubTasks();
     };
-  }, [currentUser]); // currentUser used in notification logic
+  }, []);
+
+  // Notification logic for new duty tasks
+  const prevDutyTasksRef = useRef<DutyTask[]>([]);
+  useEffect(() => {
+    if (currentUser && dutyTasks.length > prevDutyTasksRef.current.length) {
+        const newTasks = dutyTasks.filter((task) => !prevDutyTasksRef.current.find((t) => t.id === task.id));
+        newTasks.forEach((task) => {
+            if (task.handlingName === currentUser) {
+                showNotification("Tugas Baru Tersedia!", "Silahkan periksa jadwal penugasan Anda");
+            }
+        });
+    }
+    prevDutyTasksRef.current = dutyTasks;
+  }, [dutyTasks, currentUser]);
 
   const handleUpdateJamaahList = async (newList: Jamaah[]) => {
     const docRef = doc(db, "jamaahContainer", "data");
@@ -2885,20 +2884,19 @@ export default function App() {
                                 <label className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">
                                   Absensi Foto
                                 </label>
-                                <div className="border border-dashed border-slate-250 rounded-lg p-3.5 bg-slate-50/50 flex flex-col items-center justify-center text-center">
-                                  <Camera className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                                  <span className="text-[10px] text-slate-500 font-extrabold mt-1 uppercase">
-                                    Kamera Selfie Aktif
-                                  </span>
-                                  <span className="text-[9px] text-slate-400 mt-0.5">
-                                    Sertifikasi Wajah & Latar Penugasan
-                                  </span>
-                                </div>
+                                <ImageCapture 
+                                    onCapture={setCapturedPhoto} 
+                                    onClear={() => setCapturedPhoto(null)} 
+                                    photoUrl={capturedPhoto} 
+                                />
                               </div>
 
                               <button
                                 type="submit"
                                 className="w-full py-2.5 bg-[#1A1A1A] hover:bg-black border border-[#D4AF37]/35 text-[#D4AF37] font-black text-xs rounded-lg transition-all cursor-pointer shadow-xs uppercase tracking-tight"
+                                onClick={() => {
+                                  // I might need to put the handler here or ensure the form's submit works
+                                }}
                               >
                                 Kirim Absen Saya
                               </button>
@@ -3886,6 +3884,17 @@ export default function App() {
             hotelInfo={hotelInfos.find((h) => h.id === selectedInfographic)!}
             onClose={() => setSelectedInfographic(null)}
           />
+        )}
+        {previewPhoto && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-4 rounded-lg max-w-sm w-full space-y-4">
+               <img src={previewPhoto} className="w-full h-auto rounded" alt="Presensi" />
+               <div className="flex gap-2">
+                 <button onClick={() => setPreviewPhoto(null)} className="flex-1 p-2 bg-slate-200 text-xs font-bold uppercase rounded">Tutup</button>
+                 <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent("Lihat foto presensi: " + previewPhoto.substring(0, 50) + "...")}`)} className="flex-1 p-2 bg-emerald-500 text-white text-xs font-bold uppercase rounded">Share ke WA</button>
+               </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
