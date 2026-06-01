@@ -21,17 +21,22 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
     }
   }, [isCameraOpen]);
 
+  // Automatically start camera on mount
+  React.useEffect(() => {
+    startCamera();
+  }, []);
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.muted = true; // Essential for autoplay
+        videoRef.current.play().catch(e => console.error("Play failed:", e));
         setIsCameraOpen(true);
       }
     } catch (err) {
       console.error("Camera access failed", err);
-      alert("Izin kamera gagal/tidak didapatkan.");
     }
   };
 
@@ -80,7 +85,7 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
     <div className="space-y-2">
       {isCameraOpen ? (
         <div className="relative rounded-lg overflow-hidden">
-          <video ref={videoRef} className="w-full h-48 object-cover" />
+          <video ref={videoRef} autoPlay playsInline className="w-full h-48 object-cover" />
           <div className="absolute top-2 left-2 bg-black/50 text-white p-2 rounded text-[10px]">
              <div>{currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}</div>
              {taskName && <div>{taskName}</div>}

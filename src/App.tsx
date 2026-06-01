@@ -142,6 +142,7 @@ export default function App() {
     null,
   );
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [showFullScreenCamera, setShowFullScreenCamera] = useState(false);
 
   // Database / Interactive State in LocalStorage to persist changes
   const [sops, setSops] = useState<SOPDoc[]>(() => {
@@ -3897,9 +3898,28 @@ export default function App() {
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div className="bg-white p-4 rounded-lg max-w-sm w-full space-y-4">
                <img src={previewPhoto} className="w-full h-auto rounded" alt="Presensi" />
-               <div className="flex gap-2">
-                 <button onClick={() => setPreviewPhoto(null)} className="flex-1 p-2 bg-slate-200 text-xs font-bold uppercase rounded">Tutup</button>
-                 <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent("Lihat foto presensi: " + previewPhoto.substring(0, 50) + "...")}`)} className="flex-1 p-2 bg-emerald-500 text-white text-xs font-bold uppercase rounded">Share ke WA</button>
+               <div className="grid grid-cols-2 gap-2">
+                 <button onClick={() => setPreviewPhoto(null)} className="col-span-2 p-2 bg-slate-200 text-xs font-bold uppercase rounded text-slate-800">Tutup</button>
+                 <button onClick={() => {
+                     const link = document.createElement("a");
+                     link.href = previewPhoto;
+                     link.download = "presensi.jpg";
+                     link.click();
+                 }} className="p-2 bg-blue-600 text-white text-xs font-bold uppercase rounded">Download</button>
+                 <button onClick={async () => {
+                     try {
+                         const response = await fetch(previewPhoto);
+                         const blob = await response.blob();
+                         const file = new File([blob], "presensi.jpg", { type: "image/jpeg" });
+                         if (navigator.share) {
+                             await navigator.share({ files: [file] });
+                         } else {
+                             window.open(`https://wa.me/?text=${encodeURIComponent("Lihat foto presensi")}`);
+                         }
+                     } catch (e) {
+                         console.error("Share failed", e);
+                     }
+                 }} className="p-2 bg-emerald-600 text-white text-xs font-bold uppercase rounded">Share</button>
                </div>
             </div>
           </div>
