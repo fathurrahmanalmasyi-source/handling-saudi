@@ -22,10 +22,6 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
     }
   }, [isCameraOpen]);
 
-  // Automatically start camera on mount
-  React.useEffect(() => {
-    startCamera();
-  }, []);
 
   const startCamera = async () => {
     try {
