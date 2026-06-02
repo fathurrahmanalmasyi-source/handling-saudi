@@ -54,6 +54,28 @@
         "status": { "type": "string", "enum": ["Aktif", "Standby", "Cuti"] }
       },
       "required": ["id", "name", "role", "phone", "username", "status"]
+    },
+    "VendorOrder": {
+      "title": "VendorOrder",
+      "description": "Vendor order booking linked to itinerary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupName": { "type": "string" },
+        "itineraryId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "category": { "type": "string" },
+        "itemDescription": { "type": "string" },
+        "qty": { "type": "number" },
+        "unitPriceSAR": { "type": "number" },
+        "totalPriceSAR": { "type": "number" },
+        "deliveryDate": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "reminderSent": { "type": "boolean" },
+        "reminderPhone": { "type": "string" }
+      },
+      "required": ["id", "groupName", "vendorName", "category", "itemDescription", "qty", "unitPriceSAR", "totalPriceSAR", "deliveryDate", "status"]
     }
   },
   "firestore": {
@@ -68,6 +90,10 @@
     "teamMembers_v2": {
       "schema": { "$ref": "#/entities/TeamMember" },
       "description": "Collection of all ground field team members"
+    },
+    "vendorOrders_v2": {
+      "schema": { "$ref": "#/entities/VendorOrder" },
+      "description": "Collection of all vendor order bookings"
     }
   }
 }

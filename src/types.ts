@@ -190,3 +190,24 @@ export const INITIAL_WALLETS: WalletAccount[] = [];
 export const INITIAL_EXPENSE_REPORTS: FieldExpenseReport[] = [];
 
 export const INITIAL_CASHFLOW: CashflowTransaction[] = [];
+
+// --- Vendor & Booking Ordering System ---
+export interface VendorOrder {
+  id: string;
+  groupName: string;
+  itineraryId?: string; // Opt linked itinerary item id
+  vendorName: string; // e.g. "Catering Al-Jazeerah", "Saptco Bus Executive", "Medina Movenpick Hotel"
+  category: 'Snack' | 'Transportasi' | 'Hotel' | 'Catering' | 'Lainnya';
+  itemDescription: string; // e.g. "Pemesanan 45 nasi box bumbu kebuli", "Bis Sholawat 2 unit Mercedes"
+  qty: number;
+  unitPriceSAR: number;
+  totalPriceSAR: number;
+  deliveryDate: string; // e.g. "2026-06-12"
+  status: 'Pending' | 'Dipesan' | 'Terkonfirmasi' | 'Selesai';
+  notes?: string;
+  reminderSent: boolean;
+  reminderPhone?: string; // Vendor contact
+}
+
+export const INITIAL_VENDOR_ORDERS: VendorOrder[] = [];
+

@@ -89,6 +89,7 @@ import {
   FieldExpenseReport,
   CashflowTransaction,
   HotelInfographic,
+  VendorOrder,
   INITIAL_SOPS,
   INITIAL_ROOMLIST,
   INITIAL_PACKAGES,
@@ -99,6 +100,7 @@ import {
   INITIAL_WALLETS,
   INITIAL_EXPENSE_REPORTS,
   INITIAL_CASHFLOW,
+  INITIAL_VENDOR_ORDERS,
   TEAMS,
 } from "./types";
 
@@ -298,6 +300,11 @@ export default function App() {
       return saved ? JSON.parse(saved) : INITIAL_CASHFLOW;
     },
   );
+
+  const [vendorOrders, setVendorOrders] = useState<VendorOrder[]>(() => {
+    const saved = localStorage.getItem("ji_vendor_orders_v1");
+    return saved ? JSON.parse(saved) : INITIAL_VENDOR_ORDERS;
+  });
 
   // State to track presensi details
   const [presensiDutyId, setPresensiDutyId] = useState("");
@@ -596,6 +603,7 @@ export default function App() {
     attendanceLogs,
   );
   useBiSync("incidentLogs_v2", incidentLogs, setIncidentLogs, incidentLogs);
+  useBiSync("vendorOrders_v2", vendorOrders, setVendorOrders, vendorOrders);
 
   // Sync broadcasts and trigger native/PWA alerts upon receipt of newly disptached guidelines
   useBiSync(
@@ -789,6 +797,10 @@ export default function App() {
       "ji_hotel_infos_v1_reset2",
       JSON.stringify(hotelInfos),
     );
+    localStorage.setItem(
+      "ji_vendor_orders_v1",
+      JSON.stringify(vendorOrders),
+    );
   }, [
     rooms,
     documents,
@@ -807,6 +819,7 @@ export default function App() {
     taskChecklists,
     packages,
     hotelInfos,
+    vendorOrders,
   ]);
 
   // Dynamically Sync Rooms on JamaahList updates to maintain 100% manifest integration
@@ -1585,6 +1598,8 @@ export default function App() {
         onUpdateTask={handleUpdateTask}
         onDeleteTransaction={handleDeleteTransaction}
         onUpdateTransaction={handleUpdateTransaction}
+        vendorOrders={vendorOrders}
+        onUpdateVendorOrders={setVendorOrders}
       />
     );
   }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Compass, FileSpreadsheet, Calendar, Clock, Hotel, Files, Users, DollarSign, LogOut, Send,
-  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList, Bed, Trash2, UserCheck, FileText
+  AlertTriangle, Smartphone, ChevronRight, Menu, X, ClipboardList, Bed, Trash2, UserCheck, FileText,
+  Building2
 } from 'lucide-react';
 
 // Subcomponents import
@@ -14,8 +15,9 @@ import ManagerHotelInfo from './ManagerHotelInfo';
 import ManagerStaffTeam, { TeamMember } from './ManagerStaffTeam';
 import ManagerCashflow from './ManagerCashflow';
 import SaudiClockWidget from './SaudiClockWidget';
+import ManagerVendor from './ManagerVendor';
 
-import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc, PackageDetail, HotelInfographic } from '../types';
+import { RoomManifest, DocumentGroup, BroadcastMessage, DutyTask, WalletAccount, FieldExpenseReport, CashflowTransaction, SOPDoc, PackageDetail, HotelInfographic, VendorOrder } from '../types';
 
 interface ManagerAppPanelProps {
   currentUser: string;
@@ -60,6 +62,8 @@ interface ManagerAppPanelProps {
   onDeleteTransaction?: (id: string) => void;
   onUpdateTransaction?: (id: string, updatedTx: Partial<CashflowTransaction>) => void;
   onTransferFunds?: (fromWalletId: string, toWalletId: string, amountSAR: number) => void;
+  vendorOrders: VendorOrder[];
+  onUpdateVendorOrders: React.Dispatch<React.SetStateAction<VendorOrder[]>>;
 }
 
 export default function ManagerAppPanel({
@@ -104,7 +108,9 @@ export default function ManagerAppPanel({
   onUpdateTask,
   onDeleteTransaction,
   onUpdateTransaction,
-  onTransferFunds
+  onTransferFunds,
+  vendorOrders,
+  onUpdateVendorOrders
 }: ManagerAppPanelProps) {
   // Navigation for Sidebar
   const [managerTab, setManagerTab] = useState<string>('m-dashboard');
@@ -244,6 +250,17 @@ export default function ManagerAppPanel({
                 >
                   <ClipboardList className="w-4 h-4 shrink-0" />
                   <span>Laporan</span>
+                </button>
+                <button
+                  onClick={() => setManagerTab('m-vendor')}
+                  className={`w-full py-2.5 px-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                    managerTab === 'm-vendor' 
+                      ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                      : 'hover:bg-slate-100 hover:text-slate-900 text-slate-650'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <span>Vendor & Booking</span>
                 </button>
               </div>
             </div>
@@ -673,6 +690,16 @@ export default function ManagerAppPanel({
               onUpdateTransaction={onUpdateTransaction}
               onTransferFunds={onTransferFunds}
               currentUser={currentUser}
+            />
+          )}
+
+          {/* TAB m-vendor VIEW */}
+          {managerTab === 'm-vendor' && (
+            <ManagerVendor
+              vendorOrders={vendorOrders}
+              onUpdateVendorOrders={onUpdateVendorOrders}
+              itineraries={itineraries}
+              groups={groups}
             />
           )}
 
