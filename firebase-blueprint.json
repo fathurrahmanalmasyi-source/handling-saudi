@@ -23,12 +23,51 @@
         "companionInfo": { "type": "string" }
       },
       "required": ["id", "nomorJamaah", "namaJamaah", "groupName", "visaStatus"]
+    },
+    "DutyTask": {
+      "title": "DutyTask",
+      "description": "Operation tasks assigned to team members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roleTag": { "type": "string" },
+        "location": { "type": "string" },
+        "groupName": { "type": "string" },
+        "date": { "type": "string" },
+        "timeRange": { "type": "string" },
+        "handlingName": { "type": "string" },
+        "status": { "type": "string", "enum": ["Belum Selesai", "Sedang Berjalan", "Selesai"] }
+      },
+      "required": ["id", "roleTag", "location", "groupName", "date", "timeRange", "handlingName", "status"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "Ground squad crew member on duty",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "phone": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "status": { "type": "string", "enum": ["Aktif", "Standby", "Cuti"] }
+      },
+      "required": ["id", "name", "role", "phone", "username", "status"]
     }
   },
   "firestore": {
-    "jamaahList": {
+    "jamaahList_v2": {
       "schema": { "$ref": "#/entities/Jamaah" },
       "description": "Collection of all jamaah"
+    },
+    "dutyTasks_v2": {
+      "schema": { "$ref": "#/entities/DutyTask" },
+      "description": "Collection of all operational duty tasks"
+    },
+    "teamMembers_v2": {
+      "schema": { "$ref": "#/entities/TeamMember" },
+      "description": "Collection of all ground field team members"
     }
   }
 }

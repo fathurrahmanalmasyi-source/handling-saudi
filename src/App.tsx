@@ -476,6 +476,12 @@ export default function App() {
     const isIncomingRef = useRef(false);
     const lastStateRef = useRef<T[]>([]);
 
+    // Store localState inside a ref to prevent stale closures and false mismatch conditions in onSnapshot
+    const localStateRef = useRef(localState);
+    useEffect(() => {
+      localStateRef.current = localState;
+    }, [localState]);
+
     useEffect(() => {
       const unsubscribe = onSnapshot(
         collection(db, colName),
@@ -483,6 +489,19 @@ export default function App() {
           const incoming: T[] = snapshot.docs.map(
             (d) => ({ id: d.id, ...d.data() }) as T,
           );
+
+          // If Firestore is empty on load but local state has items, seed Firestore instead of wiping local database.
+          if (snapshot.empty && localStateRef.current.length > 0) {
+            localStateRef.current.forEach(async (item) => {
+              try {
+                await setDoc(doc(db, colName, item.id), item);
+              } catch (e) {
+                // silent pass
+              }
+            });
+            lastStateRef.current = localStateRef.current;
+            return;
+          }
 
           if (onDocAdded && lastStateRef.current.length > 0) {
             const lastIds = new Set(lastStateRef.current.map((x) => x.id));
@@ -493,7 +512,7 @@ export default function App() {
             });
           }
 
-          const localStr = JSON.stringify(localState);
+          const localStr = JSON.stringify(localStateRef.current);
           const incomingStr = JSON.stringify(incoming);
 
           if (localStr !== incomingStr) {
@@ -563,7 +582,7 @@ export default function App() {
   useBiSync("packages_v2", packages, setPackages, packages);
   useBiSync("hotelInfos_v2", hotelInfos, setHotelInfos, hotelInfos);
   useBiSync("documents_v2", documents, setDocuments, documents);
-  // useBiSync("dutyTasks_v2", dutyTasks, setDutyTasks, dutyTasks);
+  useBiSync("dutyTasks_v2", dutyTasks, setDutyTasks, dutyTasks);
   useBiSync("wallets_v2", wallets, setWallets, wallets);
   useBiSync("expenses_v2", expenses, setExpenses, expenses);
   useBiSync("transactions_v2", transactions, setTransactions, transactions);
