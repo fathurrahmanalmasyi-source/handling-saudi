@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Building2, Plus, Edit2, Trash2, Bell, CheckCircle2, AlertCircle, Clock, 
-  ExternalLink, Search, Filter, Phone, DollarSign, ListOrdered, CalendarDays, ClipboardCheck, ArrowUpRight
+  ExternalLink, Search, Filter, Phone, DollarSign, ListOrdered, CalendarDays, ClipboardCheck, ArrowUpRight,
+  Copy, Check
 } from 'lucide-react';
 import { VendorOrder } from '../types';
 import { ItineraryItem } from './ManagerItinerary';
@@ -46,6 +47,7 @@ export default function ManagerVendor({
 
   // WhatsApp Reminder State
   const [reminderModalOrder, setReminderModalOrder] = useState<VendorOrder | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Suggested preset descriptions for fast ordering
   const descPresets: Record<string, string[]> = {
@@ -828,35 +830,8 @@ export default function ManagerVendor({
       )}
 
       {/* 6. WA-Style Dialog Prompt Modal */}
-      {reminderModalOrder && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="bg-emerald-600 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                <h3 className="font-black text-sm uppercase tracking-wide">Kirim Pengingat Layanan Vendor</h3>
-              </div>
-              <button 
-                onClick={() => setReminderModalOrder(null)}
-                className="text-white/80 hover:text-white font-extrabold text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Simulated smartphone WhatsApp box */}
-            <div className="p-5 space-y-4 text-xs font-semibold">
-              <p className="text-slate-500">
-                Pesan WhatsApp pengingat otomatis telah dikompilasi berdasarkan detail rute dan itinerary kelompok!
-              </p>
-
-              <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-150 text-[11px] text-slate-800 space-y-3 shadow-inner">
-                <div className="flex items-center gap-2 text-emerald-700 font-extrabold uppercase text-[10px]">
-                  <span>📲 Draft Pesanan WhatsApp (Vendor: {reminderModalOrder.vendorName})</span>
-                </div>
-                <div className="bg-white p-3 rounded border border-slate-200 whitespace-pre-wrap font-mono select-all select-text tracking-tight shadow-3xs leading-relaxed">
-{`Halo ${reminderModalOrder.vendorName},
+      {reminderModalOrder && (() => {
+        const waDraftText = `Halo ${reminderModalOrder.vendorName},
 Kami dari Tim Manajemen Jejak Imani ingin mengkonfirmasi kesiapan pesanan berikut:
 
 • Kategori: ${reminderModalOrder.category}
@@ -865,47 +840,97 @@ Kami dari Tim Manajemen Jejak Imani ingin mengkonfirmasi kesiapan pesanan beriku
 • Jumlah: ${reminderModalOrder.qty} Pax / Unit
 • Tanggal Pengiriman: ${reminderModalOrder.deliveryDate || '-'}
 
-Mohon konfirmasinya kembali agar kru handling lapangan kami dapat berkoordinasi dengan lancar. Terima kasih banyak!`}
+Mohon konfirmasinya kembali agar kru handling lapangan kami dapat berkoordinasi dengan lancar. Terima kasih banyak!`;
+
+        return (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+              {/* Header */}
+              <div className="bg-emerald-600 text-white p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  <h3 className="font-black text-sm uppercase tracking-wide">Kirim Pengingat Layanan Vendor</h3>
                 </div>
+                <button 
+                  onClick={() => setReminderModalOrder(null)}
+                  className="text-white/80 hover:text-white font-extrabold text-sm"
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-4 font-bold">
-                <div className="text-[11px] text-slate-500">
-                  Phone: <span className="font-mono text-slate-900 font-black">{reminderModalOrder.reminderPhone || '(Belum diset - diset default)'}</span>
+              {/* Simulated smartphone WhatsApp box */}
+              <div className="p-5 space-y-4 text-xs font-semibold">
+                <p className="text-slate-500">
+                  Pesan WhatsApp pengingat otomatis telah dikompilasi berdasarkan detail rute dan itinerary kelompok!
+                </p>
+
+                <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-150 text-[11px] text-slate-800 space-y-3 shadow-inner">
+                  <div className="flex items-center justify-between gap-2 text-emerald-700 font-extrabold uppercase text-[10px]">
+                    <span>📲 Draft Pesanan WhatsApp (Vendor: {reminderModalOrder.vendorName})</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(waDraftText);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2050);
+                      }}
+                      className="flex items-center gap-1 bg-white border border-emerald-250 text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded cursor-pointer transition-all shadow-3xs"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span>Tersalin!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-emerald-600" />
+                          <span>Salin Teks</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="bg-white p-3 rounded border border-slate-200 whitespace-pre-wrap font-mono select-all select-text tracking-tight shadow-3xs leading-relaxed">
+                    {waDraftText}
+                  </div>
                 </div>
-                
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => {
-                      // Mark reminder status as sent
-                      confirmReminderSent();
-                    }}
-                    className="flex-1 sm:flex-initial px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-850 rounded text-center transition-all cursor-pointer"
-                  >
-                    Tandai Dikirim
-                  </button>
-                  <a
-                    href={`https://wa.me/${(reminderModalOrder.reminderPhone || '62812345678').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                      `Halo ${reminderModalOrder.vendorName}, Kami dari Tim Manajemen Jejak Imani ingin mengkonfirmasi kesiapan pesanan...`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => {
-                      // Also mark as sent
-                      confirmReminderSent();
-                    }}
-                    className="flex-1 sm:flex-initial px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-center flex items-center justify-center gap-1.5 shadow-3xs transition-transform active:scale-95 duration-100 cursor-pointer"
-                  >
-                    <span>Hubungi WA Vendor</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </a>
+
+                {/* Action buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-4 font-bold">
+                  <div className="text-[11px] text-slate-500">
+                    Phone: <span className="font-mono text-slate-900 font-black">{reminderModalOrder.reminderPhone || '(Belum diset - diset default)'}</span>
+                  </div>
+                  
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => {
+                        // Mark reminder status as sent
+                        confirmReminderSent();
+                      }}
+                      className="flex-1 sm:flex-initial px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-850 rounded text-center transition-all cursor-pointer"
+                    >
+                      Tandai Dikirim
+                    </button>
+                    <a
+                      href={`https://wa.me/${(reminderModalOrder.reminderPhone || '62812345678').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waDraftText)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => {
+                        // Also mark as sent
+                        confirmReminderSent();
+                      }}
+                      className="flex-1 sm:flex-initial px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-center flex items-center justify-center gap-1.5 shadow-3xs transition-transform active:scale-95 duration-100 cursor-pointer"
+                    >
+                      <span>Hubungi WA Vendor</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
