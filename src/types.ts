@@ -27,6 +27,7 @@ export interface RoomManifest {
   jamaahNames: string[];
   notes?: string;
   colorTag?: 'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'slate';
+  checklist?: Record<string, boolean>;
 }
 
 // Define Package Info

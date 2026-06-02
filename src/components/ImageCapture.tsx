@@ -23,17 +23,24 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
   }, [isCameraOpen]);
 
 
-  const startCamera = async () => {
+  const startCamera = async (fullScreen: boolean = false) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true; // Essential for autoplay
-        videoRef.current.play().catch(e => console.error("Play failed:", e));
+        setIsFullScreen(fullScreen);
+        videoRef.current.play().catch(e => {
+            console.error("Play failed:", e);
+            alert("Gagal memutar video: " + e.message);
+        });
         setIsCameraOpen(true);
+      } else {
+        alert("Elemen video tidak ditemukan.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Camera access failed", err);
+      alert("Izin kamera gagal/tidak didapatkan: " + (err.message || err));
     }
   };
 
@@ -95,11 +102,11 @@ export default function ImageCapture({ onCapture, onClear, photoUrl, taskName }:
         </div>
       ) : (
         <div className="space-y-2">
-            <button type="button" onClick={startCamera} className="w-full border-2 border-dashed border-slate-250 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center gap-1">
+            <button type="button" onClick={() => startCamera(false)} className="w-full border-2 border-dashed border-slate-250 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center gap-1">
               <Camera className="w-6 h-6 text-[#D4AF37]" />
               <span className="text-xs font-black uppercase text-slate-500">Ambil Foto</span>
             </button>
-            <button type="button" onClick={() => { setIsFullScreen(true); startCamera(); }} className="w-full border-2 border-solid border-[#D4AF37] rounded-lg p-4 bg-[#D4AF37]/10 flex flex-col items-center justify-center gap-1">
+            <button type="button" onClick={() => startCamera(true)} className="w-full border-2 border-solid border-[#D4AF37] rounded-lg p-4 bg-[#D4AF37]/10 flex flex-col items-center justify-center gap-1">
               <Camera className="w-6 h-6 text-[#D4AF37]" />
               <span className="text-xs font-black uppercase text-[#D4AF37]">Ambil Foto (Full Screen)</span>
             </button>

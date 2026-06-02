@@ -21,6 +21,7 @@ export interface Jamaah {
   age?: number;               // Data Umur
   gender?: 'Laki-laki' | 'Perempuan'; // Jenis Kelamin
   companionInfo?: string;     // Satu akun pendaftaran dengan siapa saja
+  bus?: string;               // Alokasi Bus (Bus 1 / 2 / 3 dst)
 }
 
 interface ManagerManifestProps {
@@ -75,6 +76,7 @@ export default function ManagerManifest({
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [companionInfo, setCompanionInfo] = useState('');
+  const [bus, setBus] = useState('');
 
   // New Group input
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -110,6 +112,7 @@ export default function ManagerManifest({
   const [editAge, setEditAge] = useState<string>('');
   const [editGender, setEditGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [editCompanionInfo, setEditCompanionInfo] = useState('');
+  const [editBus, setEditBus] = useState('');
 
   const [activeGroupDropdown, setActiveGroupDropdown] = useState<string | null>(null);
   const [activeJemaahDropdown, setActiveJemaahDropdown] = useState<string | null>(null);
@@ -157,7 +160,8 @@ export default function ManagerManifest({
       packageTag: selectedPackageTag,
       age: age ? parseInt(age) || undefined : undefined,
       gender,
-      companionInfo: companionInfo.trim() || undefined
+      companionInfo: companionInfo.trim() || undefined,
+      bus: bus.trim() || undefined
     };
 
     onUpdateJamaahList([newItem, ...jamaahList]);
@@ -178,6 +182,7 @@ export default function ManagerManifest({
     setAge('');
     setGender('Laki-laki');
     setCompanionInfo('');
+    setBus('');
   };
 
   const handleEditInit = (item: Jamaah) => {
@@ -197,6 +202,7 @@ export default function ManagerManifest({
     setEditAge(item.age ? String(item.age) : '');
     setEditGender(item.gender || 'Laki-laki');
     setEditCompanionInfo(item.companionInfo || '');
+    setEditBus(item.bus || '');
     setIsEditModalOpen(true);
   };
 
@@ -224,7 +230,8 @@ export default function ManagerManifest({
           packageTag: editPackageTag,
           age: editAge ? parseInt(editAge) || undefined : undefined,
           gender: editGender,
-          companionInfo: editCompanionInfo.trim() || undefined
+          companionInfo: editCompanionInfo.trim() || undefined,
+          bus: editBus.trim() || undefined
         };
       }
       return item;
@@ -425,6 +432,11 @@ export default function ManagerManifest({
                                         {item.companionInfo && (
                                           <span className="bg-violet-50 text-violet-800 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-violet-150 max-w-[150px] truncate" title={item.companionInfo}>
                                             {item.companionInfo}
+                                          </span>
+                                        )}
+                                        {item.bus && (
+                                          <span className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase border border-amber-300">
+                                            🚍 {item.bus}
                                           </span>
                                         )}
                                       </div>
@@ -755,6 +767,11 @@ export default function ManagerManifest({
                                     👥 {item.companionInfo}
                                   </span>
                                 )}
+                                {item.bus && (
+                                  <span className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase border border-amber-300">
+                                    🚍 {item.bus}
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="py-2 px-3 font-mono">
@@ -909,6 +926,11 @@ export default function ManagerManifest({
                                 {item.companionInfo && (
                                   <span className="bg-violet-50 text-violet-800 px-1 py-0.5 rounded text-[8.5px] font-extrabold border border-violet-150 max-w-[180px] truncate" title={item.companionInfo}>
                                     {item.companionInfo}
+                                  </span>
+                                )}
+                                {item.bus && (
+                                  <span className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase border border-amber-300">
+                                    🚍 {item.bus}
                                   </span>
                                 )}
                               </div>
@@ -1381,6 +1403,40 @@ export default function ManagerManifest({
               </div>
 
               <div>
+                <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left font-black">Alokasi Rombongan Bus</label>
+                <select
+                  value={bus.startsWith('Bus') ? bus : (bus ? 'Lainnya' : '')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'Lainnya') {
+                      setBus('Bus ');
+                    } else {
+                      setBus(val);
+                    }
+                  }}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs block font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                >
+                  <option value="">- Belum Ditentukan -</option>
+                  <option value="Bus 1">🚍 Bus 1</option>
+                  <option value="Bus 2">🚍 Bus 2</option>
+                  <option value="Bus 3">🚍 Bus 3</option>
+                  <option value="Bus 4">🚍 Bus 4</option>
+                  <option value="Bus 5">🚍 Bus 5</option>
+                  <option value="Lainnya">Tulis Kustom ...</option>
+                </select>
+                {(!['', 'Bus 1', 'Bus 2', 'Bus 3', 'Bus 4', 'Bus 5'].includes(bus)) && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Bus 6, Bus VIP, dll"
+                    value={bus}
+                    onChange={(e) => setBus(e.target.value)}
+                    className="mt-1.5 w-full p-2 bg-slate-55 border border-slate-200 rounded text-xs font-bold text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                )}
+              </div>
+
+              <div>
                 <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left">Satu Akun Pendaftaran Dengan (Keluarga/Mahram)</label>
                 <input
                   type="text"
@@ -1596,6 +1652,40 @@ export default function ManagerManifest({
                     <option value="Perempuan">♀ Perempuan</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1 uppercase text-left font-black">Alokasi Rombongan Bus</label>
+                <select
+                  value={editBus.startsWith('Bus') ? editBus : (editBus ? 'Lainnya' : '')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'Lainnya') {
+                      setEditBus('Bus ');
+                    } else {
+                      setEditBus(val);
+                    }
+                  }}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs block font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                >
+                  <option value="">- Belum Ditentukan -</option>
+                  <option value="Bus 1">🚍 Bus 1</option>
+                  <option value="Bus 2">🚍 Bus 2</option>
+                  <option value="Bus 3">🚍 Bus 3</option>
+                  <option value="Bus 4">🚍 Bus 4</option>
+                  <option value="Bus 5">🚍 Bus 5</option>
+                  <option value="Lainnya">Tulis Kustom ...</option>
+                </select>
+                {(!['', 'Bus 1', 'Bus 2', 'Bus 3', 'Bus 4', 'Bus 5'].includes(editBus)) && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Bus 6, Bus VIP, dll"
+                    value={editBus}
+                    onChange={(e) => setEditBus(e.target.value)}
+                    className="mt-1.5 w-full p-2 bg-slate-55 border border-slate-200 rounded text-xs font-bold text-slate-850 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                )}
               </div>
 
               <div>

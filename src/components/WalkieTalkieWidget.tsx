@@ -143,10 +143,10 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
         }, { merge: true });
     } catch(e) {}
 
-    Object.values(callsRef.current).forEach((c) => c.close());
+    (Object.values(callsRef.current) as any[]).forEach((c) => c.close());
     callsRef.current = {};
 
-    Object.values(audioElementsRef.current).forEach((a) => {
+    (Object.values(audioElementsRef.current) as any[]).forEach((a) => {
       a.pause();
       a.srcObject = null;
     });
@@ -287,7 +287,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
     }
   };
 
-  const activeTalkers = Object.values(participants).filter((p) => p.isTalking && p.callsign !== callsign);
+  const activeTalkers = (Object.values(participants) as PeerData[]).filter((p) => p.isTalking && p.callsign !== callsign);
   const isReceiving = activeTalkers.length > 0;
   
   let ledColor = "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"; // Standby
@@ -375,7 +375,7 @@ export default function WalkieTalkieWidget({ currentUser }: WalkieTalkieWidgetPr
                  <span className="text-slate-400 text-[10px] font-bold uppercase">Petugas Online</span>
                  <div className="flex flex-wrap gap-1 mt-0.5">
                    <span className="text-[10px] bg-slate-700 text-white px-1.5 py-0.5 rounded font-bold">{callsign} (Anda)</span>
-                   {Object.values(participants).map((p) => {
+                   {(Object.values(participants) as PeerData[]).map((p) => {
                      if (p.callsign === callsign) return null;
                      return (
                        <span key={p.peerId} className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors", p.isTalking ? "bg-white text-slate-900" : "bg-slate-800 border border-slate-700 text-slate-300")}>

@@ -2181,7 +2181,7 @@ export default function App() {
                   onUpdateRooms={setRooms}
                   onUpdateJamaahList={handleUpdateJamaahList}
                   jamaahList={jamaahList}
-                  currentRole="HANDLING"
+                  currentRole={currentRole || "HANDLING"}
                 />
               </div>
             )}

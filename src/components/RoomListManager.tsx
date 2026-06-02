@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Search, Hotel, X, Check, Edit2, Info, UserPlus, Filter, CheckCircle2, Sliders, Palette, Trash2, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Download, Search, Hotel, X, Check, Edit2, Info, UserPlus, Filter, CheckCircle2, Sliders, Palette, Trash2, MoreVertical, AlertTriangle, ClipboardCheck, Plus } from 'lucide-react';
 import { RoomManifest } from '../types';
 import { Jamaah } from './ManagerManifest';
 
@@ -263,6 +263,7 @@ export default function RoomListManager({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [selectedHotelFilter, setSelectedHotelFilter] = useState<string>('');
+  const [selectedBusFilter, setSelectedBusFilter] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Tab Manager khusus di menu Roomlist
@@ -271,17 +272,102 @@ export default function RoomListManager({
   // Mode Edit Inline Nomor Kamar (Handling Executive Only)
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [editingRoomNum, setEditingRoomNum] = useState<string>('');
+  const [isBulkEditMode, setIsBulkEditMode] = useState<boolean>(false);
   const [localRooms, setLocalRooms] = useState<RoomManifest[]>(rooms);
   const [activeRoomDropdownId, setActiveRoomDropdownId] = useState<string | null>(null);
+
+  // Sorting State
+  const [sortBy, setSortBy] = useState<'roomlist' | 'roomNumber'>('roomlist');
+
+  // Checklist states
+  const [checklistItems, setChecklistItems] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ji_roomlist_checklist_items');
+    return saved ? JSON.parse(saved) : ['Tentcard Greeting', 'Cover Key', 'Zamzam 5L', 'Handuk Sesuai', 'Amenities Sesuai', 'Kamar Bersih'];
+  });
+  const [isEditChecklistTemplateOpen, setIsEditChecklistTemplateOpen] = useState(false);
+  const [isRekapanChecklistOpen, setIsRekapanChecklistOpen] = useState(false);
+  const [checklistRoomId, setChecklistRoomId] = useState<string | null>(null);
+  
+  // Custom checklist items edit state
+  const [newChecklistItem, setNewChecklistItem] = useState('');
+
+  // Print checklist PDF state
+  const [isPreviewChecklistPDFOpen, setIsPreviewChecklistPDFOpen] = useState(false);
+
+  // Local state for cached checklists of physical rooms
+  // Key: "Hotel Name::Room Number" -> Record<string, boolean>
+  const [physicalRoomChecklists, setPhysicalRoomChecklists] = useState<Record<string, Record<string, boolean>>>(() => {
+    const saved = localStorage.getItem('ji_physical_room_checklists');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Save/retrieve helper context for physical room checklist integration
+  const handleRoomNumberChange = (
+    room: RoomManifest,
+    newRoomNumber: string,
+    currentRoomsList: RoomManifest[]
+  ): RoomManifest[] => {
+    const trimmedOld = (room.roomNumber || '').trim();
+    const trimmedNew = newRoomNumber.trim();
+    const hotelKey = room.hotelDetailName;
+    const currentChecklist = room.checklist || {};
+
+    const updatedPhysical = { ...physicalRoomChecklists };
+
+    // 1. If old room number is not empty & not TBD, save its checklist state in physical cache
+    if (trimmedOld && trimmedOld !== 'TBD') {
+      const oldKey = `${hotelKey}::${trimmedOld}`;
+      updatedPhysical[oldKey] = currentChecklist;
+    }
+
+    // 2. Fetch or initialize the checklist for the new room number
+    let newChecklist: Record<string, boolean> = {};
+    if (trimmedNew && trimmedNew !== 'TBD') {
+      const newKey = `${hotelKey}::${trimmedNew}`;
+      if (updatedPhysical[newKey]) {
+        // Retrieve if already cached
+        newChecklist = updatedPhysical[newKey];
+      } else if (trimmedOld === 'TBD' || !trimmedOld) {
+        // If they checked it as TBD, then assign a number for the first time,
+        // preserve the checklist they did as TBD and save it to the new room!
+        newChecklist = currentChecklist;
+        updatedPhysical[newKey] = currentChecklist;
+      } else {
+        // Moving from one room to another (e.g. 402 -> 405), and 405 has no cache,
+        // so we start fresh (checklist is physical to that room, not guest!)
+        newChecklist = {};
+      }
+    } else {
+      // Revert to TBD or empty, keep it empty or same
+      newChecklist = trimmedOld === 'TBD' || !trimmedOld ? currentChecklist : {};
+    }
+
+    // State updates
+    setPhysicalRoomChecklists(updatedPhysical);
+    localStorage.setItem('ji_physical_room_checklists', JSON.stringify(updatedPhysical));
+
+    // Map and return updated rooms
+    return currentRoomsList.map(r => {
+      if (r.id === room.id) {
+        return {
+          ...r,
+          roomNumber: trimmedNew,
+          checklist: newChecklist
+        };
+      }
+      return r;
+    });
+  };
 
   // Sync rooms props ke local rooms
   React.useEffect(() => {
     setLocalRooms(rooms);
   }, [rooms]);
 
-  // Reset hotel filter when group changes
+  // Reset hotel and bus filter when group changes
   React.useEffect(() => {
     setSelectedHotelFilter('');
+    setSelectedBusFilter('');
   }, [selectedGroup]);
 
   // Dialog Detail Info
@@ -470,19 +556,71 @@ export default function RoomListManager({
     return Array.from(list);
   }, [localRooms, selectedGroup]);
 
-  // Filter logic
+  // List unique buses configuration based on selected group or overall jamaah
+  const uniqueBuses = React.useMemo(() => {
+    const list = new Set<string>();
+    (jamaahList || []).forEach(j => {
+      if (j.bus && (!selectedGroup || selectedGroup === 'All' || j.groupName === selectedGroup)) {
+        list.add(j.bus);
+      }
+    });
+    return Array.from(list).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [jamaahList, selectedGroup]);
+
+  // Filter logic and sorting
   const filteredRooms = React.useMemo(() => {
-    return localRooms.filter((room) => {
+    const list = localRooms.filter((room) => {
       const matchesSearch = 
         room.roomNumber.includes(searchTerm) ||
         room.jamaahNames.some(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
         
-      const matchesGroup = selectedGroup === 'All' || room.groupName === selectedGroup;
-      const matchesHotel = selectedHotelFilter === 'All' || room.hotelDetailName === selectedHotelFilter;
+      const matchesGroup = !selectedGroup || selectedGroup === 'All' || room.groupName === selectedGroup;
+      const matchesHotel = !selectedHotelFilter || selectedHotelFilter === 'All' || room.hotelDetailName === selectedHotelFilter;
       
-      return matchesSearch && matchesGroup && matchesHotel;
+      const matchesBus = !selectedBusFilter || selectedBusFilter === 'All' || room.jamaahNames.some(name => {
+        const j = (jamaahList || []).find(jamaah => 
+          jamaah.namaJamaah.toLowerCase() === name.toLowerCase() && 
+          jamaah.groupName === room.groupName
+        );
+        return j?.bus === selectedBusFilter;
+      });
+
+      return matchesSearch && matchesGroup && matchesHotel && matchesBus;
     });
-  }, [localRooms, searchTerm, selectedGroup, selectedHotelFilter]);
+
+    const getRoomlistValue = (room: RoomManifest) => {
+      const matchingJamaah = (jamaahList || []).filter((j) => {
+        return j.groupName === room.groupName && room.jamaahNames.includes(j.namaJamaah);
+      });
+      return matchingJamaah[0]?.nomorRoomlist || room.id.split('-').pop() || '';
+    };
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'roomlist') {
+        const valA = getRoomlistValue(a);
+        const valB = getRoomlistValue(b);
+        
+        const numA = parseInt(valA.replace(/\D/g, ''), 10);
+        const numB = parseInt(valB.replace(/\D/g, ''), 10);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+      } else {
+        const valA = a.roomNumber || '';
+        const valB = b.roomNumber || '';
+        
+        const numA = parseInt(valA.replace(/\D/g, ''), 10);
+        const numB = parseInt(valB.replace(/\D/g, ''), 10);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+      }
+    });
+  }, [localRooms, searchTerm, selectedGroup, selectedHotelFilter, sortBy, jamaahList]);
 
   // Precompute adjacent groups of the visible filtered rooms to assign their colors
   const adjacentGroups = React.useMemo(() => {
@@ -508,7 +646,9 @@ export default function RoomListManager({
   // Save Inline Room Number Edition (Handling Staff Only)
   const handleSaveRoomNumber = (id: string) => {
     if (!editingRoomNum.trim()) return;
-    const updated = localRooms.map(r => r.id === id ? { ...r, roomNumber: editingRoomNum.trim() } : r);
+    const target = localRooms.find(r => r.id === id);
+    if (!target) return;
+    const updated = handleRoomNumberChange(target, editingRoomNum.trim(), localRooms);
     setLocalRooms(updated);
     if (onUpdateRooms) {
       onUpdateRooms(updated);
@@ -538,11 +678,13 @@ export default function RoomListManager({
       .map(n => n.trim())
       .filter(n => n.length > 0);
 
-    const updatedRooms = localRooms.map(r => {
+    // Run first step room number and checklist state allocation through handleRoomNumberChange
+    let updatedRooms = handleRoomNumberChange(editingRoom, editedRoomNumber, localRooms);
+
+    updatedRooms = updatedRooms.map(r => {
       if (r.id === editingRoom.id) {
         return {
           ...r,
-          roomNumber: editedRoomNumber.trim(),
           roomType: editedRoomType,
           hotelName: editedHotelName,
           hotelDetailName: editedHotelDetailName.trim(),
@@ -628,30 +770,52 @@ export default function RoomListManager({
       
       {/* TABS SELECTOR (View list vs Plotting/Tentukan Roomlist) - Only for MANAGER */}
       {currentRole === 'MANAGER' && (
-        <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm">
-          <button
-            onClick={() => setActiveSubSection('view-list')}
-            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeSubSection === 'view-list' 
-                ? 'bg-white text-slate-900 shadow-2xs' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Hotel className="w-3.5 h-3.5" />
-            <span>Daftar Hotel & Kamar</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveSubSection('plot-roomlist')}
-            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeSubSection === 'plot-roomlist' 
-                ? 'bg-white text-slate-900 shadow-2xs' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Tentukan No Roomlist</span>
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white p-2 text-slate-800 rounded-xl border border-slate-200 shadow-3xs">
+          <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60 max-w-sm w-full sm:w-auto text-[10pt] font-sans">
+            <button
+              onClick={() => setActiveSubSection('view-list')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 text-[10px] font-black uppercase text-center rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeSubSection === 'view-list' 
+                  ? 'bg-white text-slate-900 shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Hotel className="w-3.5 h-3.5" />
+              <span>Daftar Hotel & Kamar</span>
+            </button>
+            
+            <button
+              onClick={() => setActiveSubSection('plot-roomlist')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 text-[10px] font-black uppercase text-center rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeSubSection === 'plot-roomlist' 
+                  ? 'bg-white text-slate-900 shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Tentukan No Roomlist</span>
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 font-sans">
+            <button
+              type="button"
+              onClick={() => setIsEditChecklistTemplateOpen(true)}
+              className="py-1.5 px-3 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/35 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Atur Template Checklist</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRekapanChecklistOpen(true)}
+              className="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Rekap Hasil Checklist</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -783,7 +947,7 @@ export default function RoomListManager({
           
           {/* SEARCH & FILTERS PANEL */}
           <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2.5 shadow-3xs">
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
               {/* Filter Group */}
               <div>
                 <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">PILIH GRUP</label>
@@ -807,11 +971,26 @@ export default function RoomListManager({
                   onChange={(e) => setSelectedHotelFilter(e.target.value)}
                   className="w-full text-xs bg-slate-50 border border-slate-200 py-1.5 px-2.5 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 >
-                    <option value="">-- Pilih Hotel --</option>
-                    {uniqueHotels.map(h => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
+                  <option value="">-- Pilih Hotel --</option>
+                  {uniqueHotels.map(h => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter Bus */}
+              <div>
+                <label className="block text-[9px] font-bold text-slate-400 mb-1 tracking-wide uppercase">PILIH ALOKASI BUS</label>
+                <select
+                  value={selectedBusFilter}
+                  onChange={(e) => setSelectedBusFilter(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 py-1.5 px-2.5 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                >
+                  <option value="">-- Semua Bus --</option>
+                  {uniqueBuses.map(b => (
+                    <option key={b} value={b}>🚍 {b}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -863,15 +1042,67 @@ export default function RoomListManager({
             </div>
 
             {/* ACTION DOWNLOAD PDF UNDER FILTER */}
-            <div className="flex justify-end pt-2.5 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsPreviewOpen(true)}
-                className="py-1.5 px-3.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] border border-[#D4AF37]/35 rounded-lg cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide shrink-0"
-              >
-                <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>UNDUH PDF ROOMLIST</span>
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wide">URUTKAN KAMAR:</span>
+                <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] font-bold select-none">
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('roomlist')}
+                    className={`px-2.5 py-1 rounded transition-all cursor-pointer whitespace-nowrap ${
+                      sortBy === 'roomlist'
+                        ? 'bg-[#D4AF37] text-slate-900 font-extrabold shadow-3xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    No. Roomlist
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('roomNumber')}
+                    className={`px-2.5 py-1 rounded transition-all cursor-pointer whitespace-nowrap ${
+                      sortBy === 'roomNumber'
+                        ? 'bg-[#D4AF37] text-slate-900 font-extrabold shadow-3xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    No. Kamar
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkEditMode(!isBulkEditMode)}
+                  className={`py-1.5 px-3 border rounded-lg cursor-pointer transition-all shadow-3xs flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide shrink-0 ${
+                    isBulkEditMode 
+                      ? 'bg-amber-400 text-slate-900 border-amber-500 font-black' 
+                      : 'bg-white hover:bg-slate-50 text-slate-705 border-slate-200'
+                  }`}
+                  title="Aktifkan mode edit cepat nomor kamar tanpa membuka popup"
+                >
+                  <span>⚡ {isBulkEditMode ? 'SELESAI INPUT CEPAT' : 'INPUT CEPAT NO. KAMAR'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewChecklistPDFOpen(true)}
+                  className="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg cursor-pointer transition-all shadow-3xs flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>PDF REKAP CHECKLIST</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="py-1.5 px-3.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] border border-[#D4AF37]/35 rounded-lg cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5 font-extrabold text-[10px] tracking-wide shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>UNDUH PDF ROOMLIST</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -884,8 +1115,23 @@ export default function RoomListManager({
               </p>
             </div>
           ) : (
-            /* COMPACT TABLE (py-1.5 spacing & 5 columns) */
-            <div className="bg-white rounded-xl border border-slate-200 shadow-3xs overflow-x-auto">
+            <div className="space-y-3">
+              {/* INFORMATION BANNER ABOUT TBD ROOMS & Persisted Checklist */}
+              <div className="bg-[#FAF3E0] border border-amber-300 rounded-xl p-3.5 text-[10.5px] text-amber-900 font-medium leading-relaxed flex items-start gap-2.5 shadow-3xs hover:border-amber-400 transition-all">
+                <span className="text-base select-none">🏢</span>
+                <div className="space-y-1">
+                  <strong className="block text-amber-950 text-[11px] font-black uppercase tracking-wide">💡 Sinkronisasi Checklist Berbasis FISIK KAMAR:</strong>
+                  <span>Kondisi perlengkapan kini diikat secara dinamis ke <span className="underline font-bold text-amber-950">Fisik Kamar Hotel</span>, bukan sekadar mutasi nama jamaah. Karakteristik sistem baru:</span>
+                  <ul className="list-disc list-inside mt-1.5 font-bold space-y-1 text-amber-950">
+                    <li><span className="text-indigo-805">Pra-Inspeksi TBD</span>: Kamar TBD tetap bisa di-checklist sebelum plotting nomor resmi. Begitu nomor kamar resmi diinput, checklist otomatis bertransisi mengikat nomor kamar baru tersebut!</li>
+                    <li><span className="text-emerald-705">Konsistensi Kondisi Fisik</span>: Jika Jamaah dimutasi dari Kamar <span className="font-mono bg-amber-100 p-0.5 rounded">402</span> ke Kamar <span className="font-mono bg-amber-100 p-0.5 rounded">505</span>, kondisi perlengkapan Kamar 402 tidak ikut pindah (tetap bertahan di Kamar 402), dan mereka mewarisi status rill Kamar 505!</li>
+                    <li><span className="text-indigo-805">Operasional Super Cepat</span>: Gunakan tombol <strong className="text-emerald-700">Set Semua OK</strong> atau <strong className="text-indigo-750">Salin Laporan</strong> untuk mengisi berkas checklist ruko/kamar dalam 1 detik!</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* COMPACT TABLE (py-1.5 spacing & 5 columns) */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-3xs overflow-x-auto">
               <table className="w-full text-left text-[11px] border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold uppercase tracking-wide text-[10px]">
@@ -951,7 +1197,40 @@ export default function RoomListManager({
 
                           {/* 3. NOMOR KAMAR INTERACTIVE ACTION */}
                           <td className="py-2 px-3 font-mono whitespace-nowrap">
-                            <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
+                            {isBulkEditMode ? (
+                              <input
+                                type="text"
+                                value={room.roomNumber || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updated = localRooms.map(r => r.id === room.id ? { ...r, roomNumber: val } : r);
+                                  setLocalRooms(updated);
+                                }}
+                                onBlur={(e) => {
+                                  const val = e.target.value;
+                                  const updated = handleRoomNumberChange(room, val, localRooms);
+                                  setLocalRooms(updated);
+                                  if (onUpdateRooms) {
+                                    onUpdateRooms(updated);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const val = (e.target as HTMLInputElement).value;
+                                    const updated = handleRoomNumberChange(room, val, localRooms);
+                                    setLocalRooms(updated);
+                                    if (onUpdateRooms) {
+                                      onUpdateRooms(updated);
+                                    }
+                                    (e.target as HTMLInputElement).blur();
+                                  }
+                                }}
+                                placeholder="Edit..."
+                                className="w-16 p-0.5 bg-amber-50 text-[11px] font-black font-mono text-slate-900 border border-amber-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-amber-500 uppercase"
+                              />
+                            ) : (
+                              <span className="font-bold text-slate-900">{room.roomNumber || 'TBD'}</span>
+                            )}
                           </td>
 
                           {/* 4. TYPE BED */}
@@ -993,6 +1272,28 @@ export default function RoomListManager({
                                 <span className="text-slate-300 text-[10px] select-none font-mono">-</span>
                               ) : null}
 
+                              {/* Direct Checklist Action Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChecklistRoomId(room.id);
+                                }}
+                                className={`p-1 border rounded-md transition-all cursor-pointer shadow-3xs inline-flex items-center justify-center shrink-0 ${
+                                  room.checklist && Object.values(room.checklist).filter(Boolean).length > 0
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100/70'
+                                    : 'bg-white hover:bg-slate-100 text-slate-450 hover:text-slate-900 border-slate-200'
+                                }`}
+                                title="Checklist Perlengkapan"
+                              >
+                                <ClipboardCheck className="w-3.5 h-3.5" />
+                                {room.checklist && Object.values(room.checklist).filter(Boolean).length > 0 && (
+                                  <span className="ml-1 text-[9px] font-black text-emerald-700 font-mono">
+                                    {Object.values(room.checklist).filter(Boolean).length}/{checklistItems.length}
+                                  </span>
+                                )}
+                              </button>
+
                               {/* Actions Group depending on role permission */}
                               <div className="relative inline-block text-left overflow-visible shrink-0">
                                 <button
@@ -1014,7 +1315,7 @@ export default function RoomListManager({
                                       className="fixed inset-0 z-30 cursor-default bg-transparent"
                                       onClick={() => setActiveRoomDropdownId(null)}
                                     />
-                                    <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-40 text-left animate-in fade-in slide-in-from-top-1 duration-105">
+                                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-40 text-left animate-in fade-in slide-in-from-top-1 duration-105">
                                       {currentRole === 'MANAGER' ? (
                                         <>
                                           <button
@@ -1054,6 +1355,7 @@ export default function RoomListManager({
                                           <span>Edit No Kamar</span>
                                         </button>
                                       )}
+                                      
                                       <button
                                         type="button"
                                         onClick={() => {
@@ -1064,6 +1366,18 @@ export default function RoomListManager({
                                       >
                                         <Info className="w-3 h-3 text-blue-600" />
                                         <span>Detail Manifest</span>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveRoomDropdownId(null);
+                                          setChecklistRoomId(room.id);
+                                        }}
+                                        className="w-full text-left px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors flex items-center gap-1.5 font-sans border-t border-slate-100"
+                                      >
+                                        <ClipboardCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                        <span>Checklist Perlengkapan</span>
                                       </button>
                                     </div>
                                   </>
@@ -1085,6 +1399,7 @@ export default function RoomListManager({
                   )}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>
@@ -1547,6 +1862,7 @@ export default function RoomListManager({
                   <div className="mt-4 text-[11pt] font-medium space-y-1.5 text-left mb-2 text-black">
                     <p><span className="font-semibold uppercase w-20 inline-block">Grup</span>: {selectedGroup || 'Semua Grup'}</p>
                     <p><span className="font-semibold uppercase w-20 inline-block">Hotel</span>: {selectedHotelFilter || 'Semua Hotel'}</p>
+                    <p><span className="font-semibold uppercase w-20 inline-block">Bus</span>: {selectedBusFilter || 'Semua Bus'}</p>
                   </div>
                 </div>
 
@@ -1619,7 +1935,8 @@ export default function RoomListManager({
                   const originalTitle = document.title;
                   const hotelNameClean = selectedHotelFilter || 'Semua Hotel';
                   const groupNameClean = selectedGroup || 'Semua Grup';
-                  document.title = `Roomlist [${hotelNameClean}] - [${groupNameClean}]`;
+                  const busNameClean = selectedBusFilter || 'Semua Bus';
+                  document.title = `Roomlist [${hotelNameClean}] - [${groupNameClean}] - [${busNameClean}]`;
                   
                   const printableArea = document.getElementById('printable-area');
                   let printContainer = document.getElementById('print-container');
@@ -1657,6 +1974,665 @@ export default function RoomListManager({
           </div>
         </div>
       )}
+
+      {/* 1. MODAL CHECKLIST PERLENGKAPAN KAMAR (PORTAL HANDLING / ALL) */}
+      {checklistRoomId && (() => {
+        const targetRoom = localRooms.find(r => r.id === checklistRoomId);
+        if (!targetRoom) return null;
+        const currentChecklist = targetRoom.checklist || {};
+        
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-120">
+              <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5 text-[#D4AF37]" />
+                  <div>
+                    <span className="text-[10px] uppercase font-black text-slate-400 block tracking-wider">Checklist Perlengkapan</span>
+                    <span className="text-xs font-bold text-white">Kamar #{targetRoom.roomNumber || 'TBD'} (RL #{targetRoom.id.split('-').pop() || '-'})</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setChecklistRoomId(null)} 
+                  className="text-slate-400 hover:text-white bg-slate-850 p-1 rounded-full transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-3.5 overflow-y-auto max-h-[85vh]">
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 space-y-1">
+                  <p className="text-[10px] text-slate-400 font-bold block uppercase tracking-wide">PENGHUNI {targetRoom.roomType}</p>
+                  <p className="text-xs font-extrabold text-slate-800 leading-snug">
+                    {targetRoom.jamaahNames.join(', ')}
+                  </p>
+                </div>
+
+                {/* QUICK ACTIONS FOR RUSHED OPERATIONS */}
+                <div className="bg-amber-50/50 p-2 rounded-xl border border-amber-200/60 text-left space-y-2">
+                  <span className="text-[9px] font-black tracking-wider text-amber-800 block uppercase">⚡ UTILITY CEPAT LAPORAN (SITUASI MEBET):</span>
+                  
+                  {/* Button Group */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const fullOK: Record<string, boolean> = {};
+                        checklistItems.forEach(item => { fullOK[item] = true; });
+                        const updated = localRooms.map(r => {
+                          if (r.id === checklistRoomId) {
+                            return { ...r, checklist: fullOK };
+                          }
+                          return r;
+                        });
+                        setLocalRooms(updated);
+                        if (onUpdateRooms) onUpdateRooms(updated);
+                        
+                        // Also write to physical cache
+                        const trimmedNum = (targetRoom.roomNumber || '').trim();
+                        if (trimmedNum && trimmedNum !== 'TBD') {
+                          const key = `${targetRoom.hotelDetailName}::${trimmedNum}`;
+                          const updatedPhysical = {
+                            ...physicalRoomChecklists,
+                            [key]: fullOK
+                          };
+                          setPhysicalRoomChecklists(updatedPhysical);
+                          localStorage.setItem('ji_physical_room_checklists', JSON.stringify(updatedPhysical));
+                        }
+                      }}
+                      className="py-1 px-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[8.5px] font-black text-center transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-1 uppercase"
+                    >
+                      <span>✅ SET SEMUA OK</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const emptyCheck: Record<string, boolean> = {};
+                        const updated = localRooms.map(r => {
+                          if (r.id === checklistRoomId) {
+                            return { ...r, checklist: emptyCheck };
+                          }
+                          return r;
+                        });
+                        setLocalRooms(updated);
+                        if (onUpdateRooms) onUpdateRooms(updated);
+                        
+                        // Also write to physical cache
+                        const trimmedNum = (targetRoom.roomNumber || '').trim();
+                        if (trimmedNum && trimmedNum !== 'TBD') {
+                          const key = `${targetRoom.hotelDetailName}::${trimmedNum}`;
+                          const updatedPhysical = {
+                            ...physicalRoomChecklists,
+                            [key]: emptyCheck
+                          };
+                          setPhysicalRoomChecklists(updatedPhysical);
+                          localStorage.setItem('ji_physical_room_checklists', JSON.stringify(updatedPhysical));
+                        }
+                      }}
+                      className="py-1 px-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded text-[8.5px] font-bold text-center transition-all cursor-pointer border border-slate-200 shadow-3xs flex items-center justify-center gap-1 uppercase"
+                    >
+                      <span>🔄 KOSONGKAN</span>
+                    </button>
+                  </div>
+
+                  {/* Dropdown to Copy from another Room */}
+                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-200/60">
+                    <span className="text-[8.5px] font-bold text-slate-500 whitespace-nowrap">SALIN CHECKLIST:</span>
+                    <select
+                      onChange={(e) => {
+                        const sourceRoomId = e.target.value;
+                        if (!sourceRoomId) return;
+                        const sourceRoom = localRooms.find(r => r.id === sourceRoomId);
+                        if (sourceRoom) {
+                          const copiedChecklist = sourceRoom.checklist || {};
+                          const updated = localRooms.map(r => {
+                            if (r.id === checklistRoomId) {
+                              return { ...r, checklist: copiedChecklist };
+                            }
+                            return r;
+                          });
+                          setLocalRooms(updated);
+                          if (onUpdateRooms) onUpdateRooms(updated);
+
+                          // Write physical cache
+                          const trimmedNum = (targetRoom.roomNumber || '').trim();
+                          if (trimmedNum && trimmedNum !== 'TBD') {
+                            const key = `${targetRoom.hotelDetailName}::${trimmedNum}`;
+                            const updatedPhysical = {
+                              ...physicalRoomChecklists,
+                              [key]: copiedChecklist
+                            };
+                            setPhysicalRoomChecklists(updatedPhysical);
+                            localStorage.setItem('ji_physical_room_checklists', JSON.stringify(updatedPhysical));
+                          }
+                        }
+                        // Reset select value
+                        e.target.value = "";
+                      }}
+                      className="text-[9px] font-bold bg-white text-slate-800 border border-slate-200 py-0.5 px-1 rounded flex-1 focus:outline-none cursor-pointer"
+                    >
+                      <option value="">-- Salin dari Kamar Lain --</option>
+                      {localRooms
+                        .filter(r => r.id !== checklistRoomId && r.hotelDetailName === targetRoom.hotelDetailName)
+                        .map(r => (
+                          <option key={r.id} value={r.id}>
+                            Kamar #{r.roomNumber || 'TBD'} ({r.jamaahNames[0] || 'Tanpa Nama'}...)
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  <label className="text-[9px] font-black tracking-widest text-[#D4AF37] block uppercase mb-1">DATA PERLENGKAPAN</label>
+                  {checklistItems.map((item) => {
+                    const isChecked = !!currentChecklist[item];
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => {
+                          const updatedChecklist = {
+                            ...(targetRoom.checklist || {}),
+                            [item]: !isChecked
+                          };
+
+                          const updated = localRooms.map(r => {
+                            if (r.id === checklistRoomId) {
+                              return {
+                                ...r,
+                                checklist: updatedChecklist
+                              };
+                            }
+                            return r;
+                          });
+                          setLocalRooms(updated);
+                          if (onUpdateRooms) onUpdateRooms(updated);
+
+                          // Also write to physical room checklists if active room number is specified
+                          const trimmedNum = (targetRoom.roomNumber || '').trim();
+                          if (trimmedNum && trimmedNum !== 'TBD') {
+                            const key = `${targetRoom.hotelDetailName}::${trimmedNum}`;
+                            const updatedPhysical = {
+                              ...physicalRoomChecklists,
+                              [key]: updatedChecklist
+                            };
+                            setPhysicalRoomChecklists(updatedPhysical);
+                            localStorage.setItem('ji_physical_room_checklists', JSON.stringify(updatedPhysical));
+                          }
+                        }}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left font-sans transition-all cursor-pointer ${
+                          isChecked 
+                            ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900 shadow-3xs' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-xs font-bold">{item}</span>
+                        <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${
+                          isChecked ? 'bg-emerald-500 text-white' : 'border border-slate-350 bg-white'
+                        }`}>
+                          {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-bold">
+                  <span>Selesai: {Object.values(currentChecklist).filter(Boolean).length} / {checklistItems.length} Item</span>
+                  <button
+                    type="button"
+                    onClick={() => setChecklistRoomId(null)}
+                    className="px-4 py-1.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] font-extrabold rounded-lg transition-all shadow-xs"
+                  >
+                    Selesai & Simpan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 2. MODAL TEMPLATE CHECKLIST SETTING (MANAGER ONLY) */}
+      {isEditChecklistTemplateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-120">
+            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-[#D4AF37]" />
+                <div>
+                  <span className="text-[10px] uppercase font-black text-slate-400 block tracking-wider">Portal Manager</span>
+                  <span className="text-xs font-bold text-white">Atur Template Perlengkapan</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEditChecklistTemplateOpen(false)} 
+                className="text-slate-400 hover:text-white bg-slate-850 p-1 rounded-full transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-[10.5px] text-slate-500 font-semibold leading-relaxed">
+                Tentukan daftar item perlengkapan kamar yang harus dipersiapkan dan di-checklist oleh petugas lapangan handling bandara/hotel.
+              </p>
+
+              {/* Add New Item */}
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!newChecklistItem.trim()) return;
+                  if (checklistItems.includes(newChecklistItem.trim())) {
+                    alert("Item checklist ini sudah terdaftar!");
+                    return;
+                  }
+                  const updated = [...checklistItems, newChecklistItem.trim()];
+                  setChecklistItems(updated);
+                  localStorage.setItem('ji_roomlist_checklist_items', JSON.stringify(updated));
+                  setNewChecklistItem('');
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <input
+                  type="text"
+                  placeholder="Tambah perlengkapan baru..."
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  className="w-full py-1.5 px-3 text-xs bg-slate-50 border border-slate-250 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+                <button
+                  type="submit"
+                  className="p-1 px-2.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg cursor-pointer font-black text-xs h-[32px] flex items-center justify-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah</span>
+                </button>
+              </form>
+
+              {/* Template Items List */}
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                <span className="text-[9px] font-black tracking-widest text-slate-400 block uppercase mb-1">Daftar Aktif</span>
+                {checklistItems.map((item, index) => (
+                  <div 
+                    key={item}
+                    className="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg"
+                  >
+                    <span className="text-xs font-bold text-slate-800">{index + 1}. {item}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`Yakin ingin menghapus item checklist "${item}"?`)) {
+                          const updated = checklistItems.filter(i => i !== item);
+                          setChecklistItems(updated);
+                          localStorage.setItem('ji_roomlist_checklist_items', JSON.stringify(updated));
+                        }
+                      }}
+                      className="p-1 text-rose-500 hover:bg-rose-50 rounded-md transition-all cursor-pointer"
+                      title="Hapus Item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Options */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("Reset seluruh template perlengkapan ke pengaturan bawaan awal?")) {
+                      const defaults = ['Tentcard Greeting', 'Cover Key', 'Zamzam 5L', 'Handuk Sesuai', 'Amenities Sesuai', 'Kamar Bersih'];
+                      setChecklistItems(defaults);
+                      localStorage.setItem('ji_roomlist_checklist_items', JSON.stringify(defaults));
+                    }
+                  }}
+                  className="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase underline cursor-pointer"
+                >
+                  Reset ke Bawaan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditChecklistTemplateOpen(false)}
+                  className="px-4 py-1.5 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] font-extrabold text-[10px] rounded-lg transition-all"
+                >
+                  Simpan & Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. MODAL REKAP CHECKLIST ANALYTICS (MANAGER PORTAL VIEW REPORT) */}
+      {isRekapanChecklistOpen && (() => {
+        // Compute report stats on active group/hotel filter
+        const visibleRooms = filteredRooms;
+        const total = visibleRooms.length;
+        
+        let completedCount = 0;
+        let partialCount = 0;
+        let unstartedCount = 0;
+        
+        const itemStatMap: Record<string, number> = {};
+        checklistItems.forEach(item => { itemStatMap[item] = 0; });
+        
+        visibleRooms.forEach(room => {
+          const checklistObj = room.checklist || {};
+          const checkedKeys = Object.keys(checklistObj).filter(k => checklistItems.includes(k) && checklistObj[k] === true);
+          const checkedCount = checkedKeys.length;
+          
+          if (checkedCount === checklistItems.length && checklistItems.length > 0) {
+            completedCount++;
+          } else if (checkedCount > 0) {
+            partialCount++;
+          } else {
+            unstartedCount++;
+          }
+          
+          checkedKeys.forEach(k => {
+            if (itemStatMap[k] !== undefined) itemStatMap[k]++;
+          });
+        });
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-120 max-h-[90vh] flex flex-col">
+              <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+                  <div>
+                    <span className="text-[10px] uppercase font-black text-slate-400 block tracking-wider">Analisis Manager</span>
+                    <span className="text-xs font-bold text-white">Laporan Rekap Kesiapan & Checklist Kamar</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsRekapanChecklistOpen(false)} 
+                  className="text-slate-400 hover:text-white bg-slate-850 p-1 rounded-full transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="p-5 space-y-5 overflow-y-auto flex-1">
+                {/* Visual Summary Cards */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center">
+                    <span className="text-[9px] font-black block text-emerald-600 uppercase tracking-wide">SIAP 100%</span>
+                    <h5 className="text-lg font-black text-emerald-800 mt-1">{completedCount} <span className="text-xs font-semibold text-emerald-600">kamar</span></h5>
+                    <p className="text-[10px] text-emerald-500 font-bold mt-0.5">{total > 0 ? Math.round((completedCount/total)*100) : 0}% Kesiapan</p>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl text-center">
+                    <span className="text-[9px] font-black block text-amber-600 uppercase tracking-wide">SEBAGIAN</span>
+                    <h5 className="text-lg font-black text-amber-800 mt-1">{partialCount} <span className="text-xs font-semibold text-amber-600">kamar</span></h5>
+                    <p className="text-[10px] text-amber-500 font-bold mt-0.5">{total > 0 ? Math.round((partialCount/total)*100) : 0}% Proses</p>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+                    <span className="text-[9px] font-black block text-slate-500 uppercase tracking-wide">BELUM MULAI</span>
+                    <h5 className="text-lg font-black text-slate-800 mt-1">{unstartedCount} <span className="text-xs font-semibold text-slate-500">kamar</span></h5>
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">{total > 0 ? Math.round((unstartedCount/total)*100) : 0}% Antrean</p>
+                  </div>
+                </div>
+
+                {/* Progress bars for checklist items */}
+                <div className="space-y-3 bg-slate-50 border border-slate-100 p-4 rounded-xl">
+                  <span className="text-[9px] font-black tracking-widest text-slate-400 block uppercase">REKAP PERLENGKAPAN (% KELENGKAPAN)</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {checklistItems.map(item => {
+                      const count = itemStatMap[item] || 0;
+                      const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                      return (
+                        <div key={item} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                            <span>{item}</span>
+                            <span>{count} / {total} Kamar ({percentage}%)</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden border border-slate-300 shadow-3xs">
+                            <div className="bg-indigo-600 h-2 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Detailed Table Audit Checklist */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-black tracking-widest text-[#D4AF37] block uppercase">AUDIT HASIL CHECKLIST PER KAMAR</span>
+                  <div className="border border-slate-100 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+                    <table className="w-full text-left text-[11px] border-collapse bg-white">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-150 text-slate-500 font-extrabold uppercase tracking-wider text-[9px] sticky top-0">
+                          <th className="py-2.5 px-3">No. RL / No. Kamar</th>
+                          <th className="py-2.5 px-3">Status Checklist Perlengkapan</th>
+                          <th className="py-2.5 px-3 text-center">Item Berhasil</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-sans">
+                        {visibleRooms.map(room => {
+                          const checklistObj = room.checklist || {};
+                          const doneItems = checklistItems.filter(i => !!checklistObj[i]);
+                          return (
+                            <tr key={room.id} className="hover:bg-slate-50/60">
+                              <td className="py-2.5 px-3 font-mono">
+                                <span className="font-extrabold text-slate-800">#{room.roomNumber || 'TBD'}</span>
+                                <span className="text-slate-400 font-medium ml-1.5">(RL #{room.id.split('-').pop()})</span>
+                              </td>
+                              <td className="py-2.5 px-3 font-medium text-[10px]">
+                                {doneItems.length === checklistItems.length ? (
+                                  <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 font-extrabold px-1.5 py-0.5 rounded-md border border-emerald-200">
+                                    <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                                    <span>Lengkap Siap Pakai</span>
+                                  </span>
+                                ) : doneItems.length > 0 ? (
+                                  <span className="text-amber-850 font-bold bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
+                                    Sebagian Didistribusikan ({doneItems.length} item)
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-450 font-bold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">
+                                    Kosong / Belum Mulai
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-3 text-center font-bold font-mono text-indigo-700">
+                                {doneItems.length} / {checklistItems.length}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-3.5 bg-slate-50 border-t flex justify-between gap-1.5 shrink-0 font-sans text-xs">
+                <span className="text-slate-500 font-semibold self-center">Filter: {selectedGroup || 'Semua'} | {selectedHotelFilter || 'Semua Hotel'}</span>
+                <button 
+                  onClick={() => setIsRekapanChecklistOpen(false)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-950 text-[#D4AF37] font-extrabold rounded-lg transition-all text-[11px] cursor-pointer"
+                >
+                  Tutup Laporan
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 4. MODAL DETAILED CHECKLIST RECAP PDF / PRINT VIEW PREVIEW */}
+      {isPreviewChecklistPDFOpen && (() => {
+        const visibleRooms = filteredRooms;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-slate-950/85 backdrop-blur-xs font-sans">
+            <div className="w-full max-w-5xl bg-white sm:rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 h-full sm:h-auto max-h-[100vh] flex flex-col">
+              <div className="px-3.5 py-3 bg-[#1A1A1A] text-white flex items-center justify-between border-b border-slate-700 shrink-0">
+                <span className="font-bold text-xs text-[#D4AF37] uppercase font-black tracking-wide">PREVIEW DOKUMEN CHECKLIST PDF</span>
+                <button onClick={() => setIsPreviewChecklistPDFOpen(false)} className="text-slate-400 hover:text-white bg-slate-800 p-1 rounded-full cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-8 overflow-y-auto bg-slate-200 print:bg-white print:p-0 print:overflow-visible flex-1">
+                <div id="checklist-printable-area" className="bg-white mx-auto shadow-md print:shadow-none min-h-[297mm] text-black w-full font-sans" style={{ width: '210mm', maxWidth: '100%', padding: '15mm' }}>
+                  <div className="text-center border-b-[2px] border-black pb-4 mb-6">
+                    <h3 className="font-bold text-[14pt] tracking-tight uppercase text-black">PT. JEJAK IMANI BERKAH BERSAMA</h3>
+                    <p className="text-[12pt] font-semibold mt-1 uppercase text-black">REKAP DOKUMEN CHECKLIST PERLENGKAPAN KAMAR</p>
+                    <div className="mt-4 text-[11pt] font-medium space-y-1.5 text-left mb-2 text-black">
+                      <p><span className="font-semibold uppercase w-20 inline-block">Grup</span>: {selectedGroup || 'Semua Grup'}</p>
+                      <p><span className="font-semibold uppercase w-20 inline-block">Hotel</span>: {selectedHotelFilter || 'Semua Hotel'}</p>
+                      <p><span className="font-semibold uppercase w-20 inline-block">Dicetak</span>: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+
+                  {/* Summary of Statistics */}
+                  <div className="grid grid-cols-4 gap-3 border border-black p-3 mb-6 bg-gray-50 leading-snug">
+                    <div>
+                      <span className="text-[8.5pt] font-semibold text-gray-500 block uppercase">TOTAL KAMAR</span>
+                      <span className="text-xl font-bold">{visibleRooms.length} Kamar</span>
+                    </div>
+                    <div>
+                      <span className="text-[8.5pt] font-semibold text-gray-500 block uppercase">SELESAI (SIAP 100%)</span>
+                      <span className="text-xl font-bold font-mono">
+                        {visibleRooms.filter(r => checklistItems.every(item => !!(r.checklist || {})[item])).length} / {visibleRooms.length}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[8.5pt] font-semibold text-gray-500 block uppercase">SEBAGIAN TERSEBAR</span>
+                      <span className="text-xl font-bold font-mono">
+                        {visibleRooms.filter(r => {
+                          const keys = Object.keys(r.checklist || {}).filter(k => checklistItems.includes(k) && r.checklist?.[k] === true);
+                          return keys.length > 0 && keys.length < checklistItems.length;
+                        }).length} Kamar
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[8.5pt] font-semibold text-gray-500 block uppercase">BELUM MULAI</span>
+                      <span className="text-xl font-bold font-mono">
+                        {visibleRooms.filter(r => {
+                          const keys = Object.keys(r.checklist || {}).filter(k => checklistItems.includes(k) && r.checklist?.[k] === true);
+                          return keys.length === 0;
+                        }).length} Kamar
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Table */}
+                  <div className="w-full">
+                    <table className="w-full text-[10pt] text-left border-collapse border border-black mb-10">
+                      <thead>
+                        <tr className="bg-gray-100 border-b border-black text-black">
+                          <th className="p-2 border border-black text-center font-bold w-14">No. RL</th>
+                          <th className="p-2 border border-black text-center font-bold w-20">Kamar</th>
+                          <th className="p-2 border border-black text-center font-bold w-20">Type Bed</th>
+                          <th className="p-2 border border-black font-bold w-60">Nama Penghuni</th>
+                          <th className="p-2 border border-black font-bold">Status Perlengkapan Logistik</th>
+                          <th className="p-2 border border-black text-center font-bold w-16">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black bg-white leading-relaxed text-black">
+                        {visibleRooms.length > 0 ? (
+                          visibleRooms.map((room) => {
+                            const roomlistNumber = room.id.split('-').pop() || '-';
+                            const checklistObj = room.checklist || {};
+                            
+                            return (
+                              <tr key={room.id} className="text-black print:break-inside-avoid">
+                                <td className="p-2 border border-black text-center font-semibold align-top">{roomlistNumber}</td>
+                                <td className="p-2 border border-black text-center font-bold align-top">{room.roomNumber || 'TBD'}</td>
+                                <td className="p-2 border border-black text-center font-semibold uppercase align-top font-mono text-[9pt]">{room.roomType}</td>
+                                <td className="p-2 border border-black font-medium align-top leading-tight text-[9.5pt]">
+                                  <div className="space-y-1">
+                                    {room.jamaahNames.map((name, i) => (
+                                      <div key={i}>{i + 1}. {name}</div>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="p-2 border border-black font-medium align-top text-[9pt]">
+                                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                                    {checklistItems.map(item => {
+                                      const isChecked = !!checklistObj[item];
+                                      return (
+                                        <div key={item} className="flex items-center gap-1.5">
+                                          <span>{isChecked ? '☑' : '☐'}</span>
+                                          <span className={isChecked ? 'font-semibold text-black' : 'text-gray-400'}>{item}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </td>
+                                <td className="p-2 border border-black font-semibold text-center align-top font-mono text-[10pt]">
+                                  {Object.values(checklistObj).filter(Boolean).length} / {checklistItems.length}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="p-4 text-center text-gray-500 font-bold">
+                              Tidak ada data yang cocok untuk dicetak.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="text-center text-[9pt] text-gray-800 border-t border-black pt-4 lowercase font-mono pb-4">
+                    REKAPAN LAPORAN CHECKLIST OPERASIONAL JEJAK IMANI SAUDI ARABIA. PRINTED ON-SITE.
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 border-t flex justify-end gap-1.5 shrink-0">
+                <button 
+                  onClick={() => {
+                    const originalTitle = document.title;
+                    const hotelNameClean = selectedHotelFilter || 'Semua Hotel';
+                    document.title = `Checklist-Recap-[${hotelNameClean}]`;
+                    
+                    const printableArea = document.getElementById('checklist-printable-area');
+                    let printContainer = document.getElementById('print-container');
+                    
+                    if (printableArea) {
+                      if (!printContainer) {
+                        printContainer = document.createElement('div');
+                        printContainer.id = 'print-container';
+                        document.body.appendChild(printContainer);
+                      }
+                      
+                      printContainer.innerHTML = printableArea.innerHTML;
+                      
+                      window.setTimeout(() => {
+                        window.print();
+                        if (printContainer) printContainer.innerHTML = '';
+                        document.title = originalTitle;
+                      }, 100);
+                    } else {
+                      window.print();
+                      document.title = originalTitle;
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-black cursor-pointer shadow-3xs"
+                >
+                  Cetak / Download PDF Laporan
+                </button>
+                <button 
+                  onClick={() => setIsPreviewChecklistPDFOpen(false)}
+                  className="px-3 py-2 bg-slate-200 text-slate-800 rounded text-xs font-bold cursor-pointer"
+                >
+                  Tutup Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
